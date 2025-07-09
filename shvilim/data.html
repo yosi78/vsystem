@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מאגר מידע למורות</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '📚';
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px 20px;
+            min-height: 400px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .main-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sub-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .sub-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            color: #333;
+        }
+
+        .sub-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .resource-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .drive-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #4285f4;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .drive-link:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+        }
+
+        .comment-section {
+            margin-top: 20px;
+        }
+
+        .comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .comment-input {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .send-btn {
+            padding: 15px 25px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            align-self: flex-start;
+        }
+
+        .send-btn:hover {
+            background: #218838;
+        }
+
+        .send-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .comments-list {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .comment {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .comment:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .comment-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .comment-text {
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .admin-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .admin-section {
+            margin-bottom: 30px;
+        }
+
+        .admin-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .topic-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topic-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .edit-btn:hover {
+            background: #0056b3;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .add-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .add-input {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .add-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            align-self: flex-start;
+        }
+
+        .edit-form {
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .edit-form h4 {
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .firebase-setup {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .firebase-setup h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .firebase-setup p {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                font-size: 1.1rem;
+                padding: 15px;
+            }
+            
+            .sub-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .comment-form {
+                gap: 8px;
+            }
+
+            .add-form {
+                flex-direction: column;
+            }
+
+            .topic-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>מאגר מידע למורות</h1>
+            <p>version 1.0 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
+        </div>
+
+        <div class="content">
+            <!-- הודעת הגדרת Firebase -->
+            <div class="firebase-setup" id="firebase-setup">
+                <h3>🔧 הגדרת Firebase נדרשת</h3>
+                <p>כדי שההערות יישמרו ויהיו זמינות לכל המורות, יש צורך בהגדרה קצרה של Firebase.</p>
+                <p>עקבי אחרי ההוראות למטה כדי להפעיל את המערכת במלואה.</p>
+            </div>
+
+            <!-- מסך ראשי -->
+            <div id="main-screen" class="screen active">
+                <div class="main-buttons" id="main-buttons">
+                    <!-- הכפתורים יתווספו כאן דינמית -->
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="showAdminLogin()" style="background: #6c757d; font-size: 1rem; padding: 10px 20px;">
+                        ניהול
+                    </button>
+                </div>
+            </div>
+
+            <!-- מסך תתי נושאים -->
+            <div id="sub-screen" class="screen">
+                <button class="back-btn" onclick="showMainScreen()">← חזרה</button>
+                <h2 id="sub-title"></h2>
+                <div class="sub-buttons" id="sub-buttons">
+                    <!-- תתי הנושאים יתווספו כאן -->
+                </div>
+            </div>
+
+            <!-- מסך משאב -->
+            <div id="resource-screen" class="screen">
+                <button class="back-btn" onclick="showSubScreen()">← חזרה</button>
+                <h2 id="resource-title"></h2>
+                
+                <div class="resource-section">
+                    <a href="#" id="drive-link" class="drive-link" target="_blank">
+                        🔗 פתח קובץ בגוגל דרייב
+                    </a>
+                    
+                    <div class="comment-section">
+                        <h3>הערות וביקורת</h3>
+                        
+                        <div id="comment-error" class="error" style="display: none;"></div>
+                        <div id="comment-success" class="success" style="display: none;"></div>
+                        
+                        <div class="comment-form">
+                            <input type="text" class="name-input" id="user-name" placeholder="השם שלך (אופציונלי)">
+                            <textarea class="comment-input" id="comment-input" placeholder="הכנסי הערה או ביקורת..."></textarea>
+                            <button class="send-btn" id="send-btn" onclick="addComment()">שלח</button>
+                        </div>
+                        
+                        <div class="comments-list" id="comments-list">
+                            <div class="loading">טוען הערות...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- מסך כניסה למנהל -->
+            <div id="login-screen" class="screen">
+                <button class="back-btn" onclick="showMainScreen()">← חזרה</button>
+                <div class="login-form">
+                    <h2>כניסה למנהל</h2>
+                    <input type="password" class="login-input" id="admin-password" placeholder="הכנס סיסמה">
+                    <button class="btn" onclick="adminLogin()">כניסה</button>
+                </div>
+            </div>
+
+            <!-- מסך מנהל -->
+            <div id="admin-screen" class="screen">
+                <button class="back-btn" onclick="showMainScreen()">← חזרה</button>
+                <h2>פאנל מנהל</h2>
+                
+                <div class="admin-panel">
+                    <div class="admin-section">
+                        <h3>נושאים ראשיים</h3>
+                        <div id="main-topics-list">
+                            <!-- רשימת נושאים ראשיים -->
+                        </div>
+                        <div class="add-form">
+                            <input type="text" class="add-input" id="new-main-topic" placeholder="נושא חדש">
+                            <button class="add-btn" onclick="addMainTopic()">הוסף</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>תתי נושאים</h3>
+                        <select id="topic-select" class="add-input" style="margin-bottom: 10px;">
+                            <option value="">בחר נושא ראשי</option>
+                        </select>
+                        <div id="sub-topics-list">
+                            <!-- רשימת תתי נושאים -->
+                        </div>
+                        <div class="add-form">
+                            <input type="text" class="add-input" id="new-sub-topic" placeholder="תת נושא חדש">
+                            <input type="text" class="add-input" id="new-drive-link" placeholder="קישור לגוגל דרייב">
+                            <button class="add-btn" type="button" onclick="addSubTopic()">הוסף תת נושא</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+		apiKey: "AIzaSyC3IWkqDjwOLb4tTtgtfgkXdLSri8Voeag",
+		authDomain: "data-storage-8c9ca.firebaseapp.com",
+		databaseURL: "https://data-storage-8c9ca-default-rtdb.firebaseio.com",
+		projectId: "data-storage-8c9ca",
+		storageBucket: "data-storage-8c9ca.firebasestorage.app",
+		messagingSenderId: "505046082965",
+	    appId: "1:505046082965:web:e722ae19e5b5cbbfb2029c",
+	    measurementId: "G-Q9HYH3ZWCJ"
+	     };
+
+        let database;
+        let firebaseInitialized = false;
+
+        // פונקציה לאתחול Firebase
+        function initFirebase() {
+            try {
+                if (typeof firebase === 'undefined') {
+                    console.log('Firebase SDK לא נטען');
+                    return false;
+                }
+
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                firebaseInitialized = true;
+                document.getElementById('firebase-setup').style.display = 'none';
+                updateConnectionStatus(true);
+                console.log('Firebase הוגדר בהצלחה');
+                
+                // טען נתונים מהבסיס
+                loadDataFromFirebase();
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                updateConnectionStatus(false);
+                return false;
+            }
+        }
+
+        // עדכון סטטוס חיבור
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connection-status');
+            if (connected) {
+                statusEl.textContent = 'מחובר';
+                statusEl.className = 'status-indicator status-connected';
+            } else {
+                statusEl.textContent = 'לא מחובר';
+                statusEl.className = 'status-indicator status-disconnected';
+            }
+        }
+
+        // שמירת נתונים ב-Firebase
+        async function saveDataToFirebase() {
+            if (!firebaseInitialized) {
+                console.log('Firebase לא מוגדר, שומר מקומית');
+                saveDataLocally();
+                return;
+            }
+
+            try {
+                await database.ref('appData').set(appData);
+                console.log('נתונים נשמרו בהצלחה ב-Firebase');
+                showSuccess('השינויים נשמרו בהצלחה!');
+            } catch (error) {
+                console.error('שגיאה בשמירה ב-Firebase:', error);
+                saveDataLocally(); // גיבוי מקומי
+                showError('שגיאה בשמירה. הנתונים נשמרו מקומית.');
+            }
+        }
+
+        // טעינת נתונים מ-Firebase
+        function loadDataFromFirebase() {
+            if (!firebaseInitialized) {
+                loadDataLocally();
+                return;
+            }
+
+            database.ref('appData').once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        appData = data;
+                        console.log('נתונים נטענו מ-Firebase');
+                    } else {
+                        // אם אין נתונים ב-Firebase, שמור את הנתונים הבסיסיים
+                        saveDataToFirebase();
+                    }
+                    renderMainTopics();
+                })
+                .catch((error) => {
+                    console.error('שגיאה בטעינה מ-Firebase:', error);
+                    loadDataLocally();
+                });
+        }
+
+        // שמירה מקומית כגיבוי
+        function saveDataLocally() {
+            localStorage.setItem('teacherAppData', JSON.stringify(appData));
+            console.log('נתונים נשמרו מקומית');
+        }
+
+        // טעינה מקומית
+        function loadDataLocally() {
+            const saved = localStorage.getItem('teacherAppData');
+            if (saved) {
+                try {
+                    const loadedData = JSON.parse(saved);
+                    appData = loadedData;
+                    console.log('נתונים נטענו מקומית');
+                } catch (e) {
+                    console.error('שגיאה בטעינת נתונים מקומיים:', e);
+                }
+            }
+            renderMainTopics();
+        }
+
+        // פונקציה להוספת הערה
+        window.addCommentToFirebase = async function(resourceId, commentText, userName) {
+            if (!firebaseInitialized) {
+                throw new Error('Firebase לא מוגדר');
+            }
+
+            const commentsRef = database.ref(`comments/${resourceId}`);
+            await commentsRef.push({
+                text: commentText,
+                author: userName || 'אנונימי',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        };
+
+        // פונקציה לטעינת הערות
+        window.loadCommentsFromFirebase = function(resourceId, callback) {
+            if (!firebaseInitialized) {
+                console.log('Firebase לא מוגדר, משתמש בנתונים מקומיים');
+                callback([]);
+                return;
+            }
+
+            const commentsRef = database.ref(`comments/${resourceId}`);
+            commentsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const comments = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        comments.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                }
+                
+                comments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                callback(comments);
+            });
+        };
+
+        // אתחול Firebase כשהעמוד נטען
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+                    initFirebase();
+                } else {
+                    loadDataLocally();
+                }
+            }, 100);
+        });
+    </script>
+
+    <script>
+        // נתונים ראשיים
+        let appData = {
+            mainTopics: [
+                {
+                    id: 1,
+                    name: "",
+                    subTopics: [
+                        { id: 1, name: "תכנון שנתי", driveLink: "https://docs.google.com/document/d/sample1" },
+                        { id: 2, name: "תכנון חודשי", driveLink: "https://docs.google.com/document/d/sample2" },
+                        { id: 3, name: "תכנון יומי", driveLink: "https://docs.google.com/document/d/sample3" }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "",
+                    subTopics: [
+                        { id: 4, name: "מבחנים", driveLink: "https://docs.google.com/document/d/sample4" },
+                        { id: 5, name: "משימות", driveLink: "https://docs.google.com/document/d/sample5" },
+                        { id: 6, name: "פרויקטים", driveLink: "https://docs.google.com/document/d/sample6" }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: "",
+                    subTopics: [
+                        { id: 7, name: "משמעת", driveLink: "https://docs.google.com/document/d/sample7" },
+                        { id: 8, name: "מוטיבציה", driveLink: "https://docs.google.com/document/d/sample8" },
+                        { id: 9, name: "תקשורת", driveLink: "https://docs.google.com/document/d/sample9" }
+                    ]
+                }
+            ],
+            adminPassword: "n0987"
+        };
+
+        let currentMainTopic = null;
+        let currentSubTopic = null;
+        let editingMainTopic = null;
+        let editingSubTopic = null;
+
+        // אתחול האתר
+        function initApp() {
+            renderMainTopics();
+        }
+
+        // הצגת הנושאים הראשיים
+        function renderMainTopics() {
+            const container = document.getElementById('main-buttons');
+            container.innerHTML = '';
+            
+            appData.mainTopics.forEach(topic => {
+                const button = document.createElement('button');
+                button.className = 'btn';
+                button.textContent = topic.name;
+                button.onclick = () => showSubTopics(topic);
+                container.appendChild(button);
+            });
+        }
+
+        // הצגת תתי נושאים
+        function showSubTopics(topic) {
+            currentMainTopic = topic;
+            document.getElementById('sub-title').textContent = topic.name;
+            
+            const container = document.getElementById('sub-buttons');
+            container.innerHTML = '';
+            
+            topic.subTopics.forEach(subTopic => {
+                const button = document.createElement('button');
+                button.className = 'sub-btn';
+                button.textContent = subTopic.name;
+                button.onclick = () => showResource(subTopic);
+                container.appendChild(button);
+            });
+            
+            showScreen('sub-screen');
+        }
+
+        // הצגת משאב
+        function showResource(subTopic) {
+            currentSubTopic = subTopic;
+            document.getElementById('resource-title').textContent = subTopic.name;
+            document.getElementById('drive-link').href = subTopic.driveLink;
+            
+            loadResourceComments(subTopic.id);
+            showScreen('resource-screen');
+        }
+
+        // הוספת הערה
+        async function addComment() {
+            const commentInput = document.getElementById('comment-input');
+            const nameInput = document.getElementById('user-name');
+            const sendBtn = document.getElementById('send-btn');
+            const errorDiv = document.getElementById('comment-error');
+            const successDiv = document.getElementById('comment-success');
+            
+            const commentText = commentInput.value.trim();
+            const userName = nameInput.value.trim();
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!commentText) {
+                showError('אנא הכנסי הערה');
+                return;
+            }
+            
+            if (!currentSubTopic) {
+                showError('שגיאה: לא נבחר נושא');
+                return;
+            }
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'שולח...';
+            
+            try {
+                if (firebaseInitialized && window.addCommentToFirebase) {
+                    await window.addCommentToFirebase(currentSubTopic.id, commentText, userName);
+                    commentInput.value = '';
+                    nameInput.value = '';
+                    showSuccess('ההערה נשלחה בהצלחה!');
+                } else {
+                    addCommentLocally(currentSubTopic.id, commentText, userName);
+                    commentInput.value = '';
+                    nameInput.value = '';
+                    showSuccess('ההערה נשמרה מקומית (Firebase לא מוגדר)');
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+                showError('שגיאה בשליחת ההערה. אנא נסי שוב.');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'שלח';
+            }
+        }
+
+        // שמירה מקומית כגיבוי
+        let localComments = {};
+
+        function addCommentLocally(resourceId, commentText, userName) {
+            if (!localComments[resourceId]) {
+                localComments[resourceId] = [];
+            }
+            
+            localComments[resourceId].unshift({
+                text: commentText,
+                author: userName || 'אנונימי',
+                timestamp: Date.now()
+            });
+            
+            localStorage.setItem('teacherComments', JSON.stringify(localComments));
+            loadResourceComments(resourceId);
+        }
+
+        function loadLocalComments() {
+            const saved = localStorage.getItem('teacherComments');
+            if (saved) {
+                try {
+                    localComments = JSON.parse(saved);
+                } catch (e) {
+                    localComments = {};
+                }
+            }
+        }
+
+        // טעינת הערות לשאב
+        function loadResourceComments(resourceId) {
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '<div class="loading">טוען הערות...</div>';
+            
+            if (window.loadCommentsFromFirebase) {
+                window.loadCommentsFromFirebase(resourceId, (comments) => {
+                    displayComments(comments);
+                });
+            } else {
+                setTimeout(() => {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d;">מערכת ההערות לא מוגדרת</p>';
+                }, 1000);
+            }
+        }
+
+        // הצגת הערות
+        function displayComments(comments) {
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '';
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6c757d;">אין הערות עדיין</p>';
+                return;
+            }
+            
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment';
+                
+                const timestamp = comment.timestamp ? 
+                    new Date(comment.timestamp).toLocaleString('he-IL') : 
+                    'זמן לא ידוע';
+                
+                commentDiv.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${comment.author || 'אנונימי'}</span>
+                        <span class="comment-time">${timestamp}</span>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                `;
+                container.appendChild(commentDiv);
+            });
+        }
+
+        // הצגת הודעת שגיאה (גלובלית)
+        function showError(message) {
+            const errorDiv = document.getElementById('comment-error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            } else {
+                alert(message);
+            }
+        }
+
+        // הצגת הודעת הצלחה (גלובלית)
+        function showSuccess(message) {
+            const successDiv = document.getElementById('comment-success');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            } else {
+                console.log('הצלחה: ' + message);
+            }
+        }
+
+        // מעבר בין מסכים
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showMainScreen() {
+            showScreen('main-screen');
+        }
+
+        function showSubScreen() {
+            showScreen('sub-screen');
+        }
+
+        function showAdminLogin() {
+            showScreen('login-screen');
+        }
+
+        // כניסת מנהל
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === appData.adminPassword) {
+                showAdminPanel();
+            } else {
+                alert('סיסמה שגויה');
+            }
+        }
+
+        function showAdminPanel() {
+            renderAdminPanel();
+            showScreen('admin-screen');
+        }
+
+        // עמוד מנהל
+        function renderAdminPanel() {
+            renderMainTopicsAdmin();
+            renderTopicSelect();
+            renderSubTopics();
+        }
+
+        function renderMainTopicsAdmin() {
+            const mainTopicsList = document.getElementById('main-topics-list');
+            mainTopicsList.innerHTML = '';
+            
+            appData.mainTopics.forEach(topic => {
+                if (editingMainTopic && editingMainTopic.id === topic.id) {
+                    // מצב עריכה
+                    const editDiv = document.createElement('div');
+                    editDiv.className = 'edit-form';
+                    editDiv.innerHTML = `
+                        <h4>עריכת נושא ראשי</h4>
+                        <input type="text" class="add-input" id="edit-main-topic-${topic.id}" value="${topic.name}">
+                        <div class="edit-actions">
+                            <button class="save-btn" onclick="saveMainTopic(${topic.id})">שמור</button>
+                            <button class="cancel-btn" onclick="cancelEditMainTopic()">ביטול</button>
+                        </div>
+                    `;
+                    mainTopicsList.appendChild(editDiv);
+                } else {
+                    // מצב רגיל
+                    const topicDiv = document.createElement('div');
+                    topicDiv.className = 'topic-item';
+                    topicDiv.innerHTML = `
+                        <span>${topic.name}</span>
+                        <div class="topic-actions">
+                            <button class="edit-btn" onclick="editMainTopic(${topic.id})">ערוך</button>
+                            <button class="delete-btn" onclick="deleteMainTopic(${topic.id})">מחק</button>
+                        </div>
+                    `;
+                    mainTopicsList.appendChild(topicDiv);
+                }
+            });
+        }
+
+        function renderTopicSelect() {
+            const topicSelect = document.getElementById('topic-select');
+            topicSelect.innerHTML = '<option value="">בחר נושא ראשי</option>';
+            
+            appData.mainTopics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic.id;
+                option.textContent = topic.name;
+                topicSelect.appendChild(option);
+            });
+
+            topicSelect.onchange = renderSubTopics;
+        }
+
+        function renderSubTopics() {
+            const topicSelect = document.getElementById('topic-select');
+            const subTopicsList = document.getElementById('sub-topics-list');
+            subTopicsList.innerHTML = '';
+            
+            const selectedTopicId = topicSelect.value;
+            if (!selectedTopicId) return;
+            
+            const topic = appData.mainTopics.find(t => t.id == selectedTopicId);
+            if (!topic) return;
+            
+            topic.subTopics.forEach(subTopic => {
+                if (editingSubTopic && editingSubTopic.id === subTopic.id) {
+                    // מצב עריכה
+                    const editDiv = document.createElement('div');
+                    editDiv.className = 'edit-form';
+                    editDiv.innerHTML = `
+                        <h4>עריכת תת נושא</h4>
+                        <input type="text" class="add-input" id="edit-sub-topic-name-${subTopic.id}" value="${subTopic.name}" placeholder="שם תת נושא">
+                        <input type="text" class="add-input" id="edit-sub-topic-link-${subTopic.id}" value="${subTopic.driveLink}" placeholder="קישור גוגל דרייב">
+                        <div class="edit-actions">
+                            <button class="save-btn" onclick="saveSubTopic(${topic.id}, ${subTopic.id})">שמור</button>
+                            <button class="cancel-btn" onclick="cancelEditSubTopic()">ביטול</button>
+                        </div>
+                    `;
+                    subTopicsList.appendChild(editDiv);
+                } else {
+                    // מצב רגיל
+                    const subTopicDiv = document.createElement('div');
+                    subTopicDiv.className = 'topic-item';
+                    subTopicDiv.innerHTML = `
+                        <div>
+                            <strong>${subTopic.name}</strong><br>
+                            <small>${subTopic.driveLink}</small>
+                        </div>
+                        <div class="topic-actions">
+                            <button class="edit-btn" onclick="editSubTopic(${subTopic.id})">ערוך</button>
+                            <button class="delete-btn" onclick="deleteSubTopic(${topic.id}, ${subTopic.id})">מחק</button>
+                        </div>
+                    `;
+                    subTopicsList.appendChild(subTopicDiv);
+                }
+            });
+        }
+
+        // פונקציות עריכה לנושאים ראשיים
+        function editMainTopic(topicId) {
+            const topic = appData.mainTopics.find(t => t.id === topicId);
+            editingMainTopic = topic;
+            renderMainTopicsAdmin();
+        }
+
+        function saveMainTopic(topicId) {
+            const newName = document.getElementById(`edit-main-topic-${topicId}`).value.trim();
+            if (newName) {
+                const topic = appData.mainTopics.find(t => t.id === topicId);
+                topic.name = newName;
+                editingMainTopic = null;
+                saveDataToFirebase();
+                renderMainTopics();
+                renderAdminPanel();
+            }
+        }
+
+        function cancelEditMainTopic() {
+            editingMainTopic = null;
+            renderMainTopicsAdmin();
+        }
+
+        // פונקציות עריכה לתתי נושאים
+        function editSubTopic(subTopicId) {
+            const topicSelect = document.getElementById('topic-select');
+            const selectedTopicId = topicSelect.value;
+            const topic = appData.mainTopics.find(t => t.id == selectedTopicId);
+            
+            if (topic) {
+                const subTopic = topic.subTopics.find(st => st.id === subTopicId);
+                editingSubTopic = subTopic;
+                renderSubTopics();
+            }
+        }
+
+        function saveSubTopic(topicId, subTopicId) {
+            const newName = document.getElementById(`edit-sub-topic-name-${subTopicId}`).value.trim();
+            const newLink = document.getElementById(`edit-sub-topic-link-${subTopicId}`).value.trim();
+            
+            if (newName && newLink) {
+                const topic = appData.mainTopics.find(t => t.id === topicId);
+                const subTopic = topic.subTopics.find(st => st.id === subTopicId);
+                
+                subTopic.name = newName;
+                subTopic.driveLink = newLink;
+                editingSubTopic = null;
+                
+                saveDataToFirebase();
+                renderSubTopics();
+            }
+        }
+
+        function cancelEditSubTopic() {
+            editingSubTopic = null;
+            renderSubTopics();
+        }
+
+        // הוספת נושא ראשי - עם וידוא מערך תתי נושאים
+        function addMainTopic() {
+            const input = document.getElementById('new-main-topic');
+            const name = input.value.trim();
+            
+            if (name) {
+                const newId = Math.max(...appData.mainTopics.map(t => t.id)) + 1;
+                appData.mainTopics.push({
+                    id: newId,
+                    name: name,
+                    subTopics: [] // וידוא שתמיד יש מערך תתי נושאים
+                });
+                
+                input.value = '';
+                saveDataToFirebase();
+                renderMainTopics();
+                renderAdminPanel();
+                alert('נושא ראשי נוסף בהצלחה!');
+            } else {
+                alert('אנא הכנס שם לנושא');
+            }
+        }
+
+        // הוספת תת נושא - עם תיקון לבעיית undefined
+        function addSubTopic() {
+            try {
+                console.log('=== Starting addSubTopic ===');
+                
+                // קבלת הערכים
+                const topicSelect = document.getElementById('topic-select');
+                const nameInput = document.getElementById('new-sub-topic');
+                const linkInput = document.getElementById('new-drive-link');
+                
+                if (!topicSelect || !nameInput || !linkInput) {
+                    console.error('Elements not found!');
+                    alert('שגיאה: אלמנטים לא נמצאו');
+                    return;
+                }
+                
+                const topicId = parseInt(topicSelect.value);
+                const name = nameInput.value.trim();
+                const driveLink = linkInput.value.trim();
+                
+                console.log('Parsed values:', {topicId, name, driveLink});
+                
+                // בדיקות
+                if (!topicId || isNaN(topicId)) {
+                    alert('אנא בחר נושא ראשי');
+                    return;
+                }
+                
+                if (!name) {
+                    alert('אנא הכנס שם לתת נושא');
+                    nameInput.focus();
+                    return;
+                }
+                
+                if (!driveLink) {
+                    alert('אנא הכנס קישור לגוגל דרייב');
+                    linkInput.focus();
+                    return;
+                }
+                
+                // חיפוש הנושא
+                const topic = appData.mainTopics.find(t => t.id === topicId);
+                console.log('Found topic:', topic);
+                
+                if (!topic) {
+                    alert('שגיאה: נושא לא נמצא');
+                    return;
+                }
+                
+                // וידוא שיש מערך תתי נושאים
+                if (!topic.subTopics) {
+                    topic.subTopics = [];
+                    console.log('Created subTopics array for topic');
+                }
+                
+                // יצירת ID חדש
+                let maxId = 0;
+                appData.mainTopics.forEach(topic => {
+                    if (topic.subTopics && Array.isArray(topic.subTopics)) {
+                        topic.subTopics.forEach(subTopic => {
+                            if (subTopic.id > maxId) {
+                                maxId = subTopic.id;
+                            }
+                        });
+                    }
+                });
+                const newId = maxId + 1;
+                
+                console.log('New ID:', newId);
+                
+                // יצירת תת נושא חדש
+                const newSubTopic = {
+                    id: newId,
+                    name: name,
+                    driveLink: driveLink
+                };
+                
+                console.log('New subtopic:', newSubTopic);
+                
+                // הוספה למערך
+                topic.subTopics.push(newSubTopic);
+                
+                console.log('Updated topic:', topic);
+                
+                // ניקוי השדות
+                nameInput.value = '';
+                linkInput.value = '';
+                
+                // שמירה ועדכון
+                saveDataToFirebase();
+                renderSubTopics();
+                
+                alert('תת נושא נוסף בהצלחה!');
+                console.log('=== addSubTopic completed ===');
+                
+            } catch (error) {
+                console.error('Error in addSubTopic:', error);
+                alert('שגיאה: ' + error.message);
+            }
+        }
+
+        // מחיקת נושא ראשי
+        function deleteMainTopic(topicId) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את הנושא?')) {
+                appData.mainTopics = appData.mainTopics.filter(t => t.id !== topicId);
+                saveDataToFirebase();
+                renderMainTopics();
+                renderAdminPanel();
+            }
+        }
+
+        // מחיקת תת נושא
+        function deleteSubTopic(topicId, subTopicId) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את תת הנושא?')) {
+                const topic = appData.mainTopics.find(t => t.id === topicId);
+                if (topic) {
+                    topic.subTopics = topic.subTopics.filter(st => st.id !== subTopicId);
+                    saveDataToFirebase();
+                    renderSubTopics();
+                }
+            }
+        }
+
+        // אירועי מקלדת
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enter בשדה הערה
+            document.getElementById('comment-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addComment();
+                }
+            });
+
+            // Enter בשם משתמש
+            document.getElementById('user-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('comment-input').focus();
+                }
+            });
+
+            // Enter בהוספת נושא ראשי
+            document.getElementById('new-main-topic').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addMainTopic();
+                }
+            });
+
+            // Enter בהוספת תת נושא
+            document.getElementById('new-sub-topic').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('new-drive-link').focus();
+                }
+            });
+
+            document.getElementById('new-drive-link').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addSubTopic();
+                }
+            });
+        });
+
+        // אתחול האתר
+        initApp();
+    </script>
+</body>
+</html>
