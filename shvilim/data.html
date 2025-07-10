@@ -130,6 +130,23 @@
             transform: translateY(-2px);
         }
 
+        .sub-btn.nested {
+            background: #e8f4fd;
+            border-color: #007bff;
+            margin-right: 20px;
+            position: relative;
+        }
+
+        .sub-btn.nested::before {
+            content: '└─';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #007bff;
+            font-weight: bold;
+        }
+
         .back-btn {
             background: #6c757d;
             color: white;
@@ -143,6 +160,20 @@
 
         .back-btn:hover {
             background: #5a6268;
+        }
+
+        .breadcrumb {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .breadcrumb span {
+            color: #007bff;
+            font-weight: bold;
         }
 
         .resource-section {
@@ -324,6 +355,64 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .topic-item.nested {
+            margin-right: 20px;
+            border-right: 3px solid #007bff;
+            background: #f0f8ff;
+        }
+
+        /* סגנונות גרירה */
+        .topic-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .topic-item.drag-over {
+            border: 3px dashed #28a745;
+            background: #d4edda;
+            transform: scale(1.02);
+        }
+
+        .drop-zone {
+            min-height: 40px;
+            border: 2px dashed #28a745;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #28a745;
+            margin-top: 10px;
+            background: rgba(40, 167, 69, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(40, 167, 69, 0.2);
+            border-color: #155724;
+        }
+
+        .drag-handle {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: grab;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle:hover {
+            background: #5a6268;
         }
 
         .topic-actions {
@@ -357,6 +446,20 @@
 
         .delete-btn:hover {
             background: #c82333;
+        }
+
+        .add-nested-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .add-nested-btn:hover {
+            background: #138496;
         }
 
         .add-form {
@@ -455,6 +558,49 @@
             color: #721c24;
         }
 
+        .level-selector {
+            margin-bottom: 20px;
+        }
+
+        .level-selector select {
+            padding: 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-left: 10px;
+            font-size: 1rem;
+        }
+
+        .drag-mode-toggle {
+            background: #ffc107;
+            color: #212529;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .drag-mode-toggle:hover {
+            background: #e0a800;
+        }
+
+        .drag-mode-toggle.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .drag-instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #0c5460;
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.5rem;
@@ -481,6 +627,14 @@
                 flex-direction: column;
                 gap: 5px;
             }
+
+            .sub-btn.nested {
+                margin-right: 10px;
+            }
+
+            .topic-item.nested {
+                margin-right: 10px;
+            }
         }
     </style>
 </head>
@@ -488,7 +642,7 @@
     <div class="container">
         <div class="header">
             <h1>מאגר מידע למורות</h1>
-            <p>version 1.0 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
+            <p>version 2.0 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
         </div>
 
         <div class="content">
@@ -514,7 +668,8 @@
 
             <!-- מסך תתי נושאים -->
             <div id="sub-screen" class="screen">
-                <button class="back-btn" onclick="showMainScreen()">← חזרה</button>
+                <button class="back-btn" onclick="navigateBack()">← חזרה</button>
+                <div class="breadcrumb" id="breadcrumb"></div>
                 <h2 id="sub-title"></h2>
                 <div class="sub-buttons" id="sub-buttons">
                     <!-- תתי הנושאים יתווספו כאן -->
@@ -523,7 +678,8 @@
 
             <!-- מסך משאב -->
             <div id="resource-screen" class="screen">
-                <button class="back-btn" onclick="showSubScreen()">← חזרה</button>
+                <button class="back-btn" onclick="navigateBack()">← חזרה</button>
+                <div class="breadcrumb" id="resource-breadcrumb"></div>
                 <h2 id="resource-title"></h2>
                 
                 <div class="resource-section">
@@ -566,6 +722,19 @@
                 <h2>פאנל מנהל</h2>
                 
                 <div class="admin-panel">
+                    <!-- מצב גרירה -->
+                    <button class="drag-mode-toggle" id="drag-mode-toggle" onclick="toggleDragMode()">
+                        🔄 הפעל מצב גרירה
+                    </button>
+                    
+                    <div class="drag-instructions" id="drag-instructions">
+                        <strong>🎯 מצב גרירה פעיל!</strong><br>
+                        • גרור נושאים באמצעות כפתור ה"⋮⋮"<br>
+                        • שחרר על נושא אחר כדי להזיז תחתיו<br>
+                        • שחרר על האזור הירוק כדי להזיז לרמה הראשונה<br>
+                        • לחץ שוב על כפתור הגרירה כדי לצאת מהמצב
+                    </div>
+
                     <div class="admin-section">
                         <h3>נושאים ראשיים</h3>
                         <div id="main-topics-list">
@@ -579,15 +748,26 @@
 
                     <div class="admin-section">
                         <h3>תתי נושאים</h3>
-                        <select id="topic-select" class="add-input" style="margin-bottom: 10px;">
-                            <option value="">בחר נושא ראשי</option>
-                        </select>
+                        <div class="level-selector">
+                            <label>בחר נושא ראשי:</label>
+                            <select id="topic-select" class="add-input" style="margin-bottom: 10px;">
+                                <option value="">בחר נושא ראשי</option>
+                            </select>
+                        </div>
+                        
+                        <div class="level-selector" id="parent-selector" style="display: none;">
+                            <label>בחר תת נושא עליון (אופציונלי):</label>
+                            <select id="parent-select" class="add-input">
+                                <option value="">ללא נושא עליון (רמה ראשונה)</option>
+                            </select>
+                        </div>
+                        
                         <div id="sub-topics-list">
                             <!-- רשימת תתי נושאים -->
                         </div>
                         <div class="add-form">
                             <input type="text" class="add-input" id="new-sub-topic" placeholder="תת נושא חדש">
-                            <input type="text" class="add-input" id="new-drive-link" placeholder="קישור לגוגל דרייב">
+                            <input type="text" class="add-input" id="new-drive-link" placeholder="קישור לגוגל דרייב (רק אם זה מסמך סופי)">
                             <button class="add-btn" type="button" onclick="addSubTopic()">הוסף תת נושא</button>
                         </div>
                     </div>
@@ -686,7 +866,6 @@
                         appData = data;
                         console.log('נתונים נטענו מ-Firebase');
                     } else {
-                        // אם אין נתונים ב-Firebase, שמור את הנתונים הבסיסיים
                         saveDataToFirebase();
                     }
                     renderMainTopics();
@@ -772,34 +951,85 @@
     </script>
 
     <script>
-        // נתונים ראשיים
+        // נתונים ראשיים - עם תמיכה בתתי נושאים מקוננים
         let appData = {
             mainTopics: [
                 {
                     id: 1,
-                    name: "",
+                    name: "ימי חוץ",
                     subTopics: [
-                        { id: 1, name: "תכנון שנתי", driveLink: "https://docs.google.com/document/d/sample1" },
-                        { id: 2, name: "תכנון חודשי", driveLink: "https://docs.google.com/document/d/sample2" },
-                        { id: 3, name: "תכנון יומי", driveLink: "https://docs.google.com/document/d/sample3" }
+                        { 
+                            id: 1, 
+                            name: "תכנון שנתי", 
+                            driveLink: "",
+                            subTopics: []
+                        },
+                        { 
+                            id: 2, 
+                            name: "חונכות", 
+                            driveLink: "", 
+                            subTopics: [
+                                { id: 10, name: "תכנון לחודש ספטמבר", driveLink: "", subTopics: [] },
+                                { id: 11, name: "תכנון לחודש אוקטובר", driveLink: "", subTopics: [] }
+                            ]
+                        },
+                        { 
+                            id: 3, 
+                            name: "מדריכים", 
+                            driveLink: "",
+                            subTopics: []
+                        }
                     ]
                 },
                 {
                     id: 2,
-                    name: "",
+                    name: "משולשים",
                     subTopics: [
-                        { id: 4, name: "מבחנים", driveLink: "https://docs.google.com/document/d/sample4" },
-                        { id: 5, name: "משימות", driveLink: "https://docs.google.com/document/d/sample5" },
-                        { id: 6, name: "פרויקטים", driveLink: "https://docs.google.com/document/d/sample6" }
+                        { 
+                            id: 4, 
+                            name: "מבחנים", 
+                            driveLink: "",
+                            subTopics: [
+                                { id: 12, name: "מבחני מתמטיקה", driveLink: "", subTopics: [] },
+                                { id: 13, name: "מבחני עברית", driveLink: "", subTopics: [] }
+                            ]
+                        },
+                        { 
+                            id: 5, 
+                            name: "משימות", 
+                            driveLink: "",
+                            subTopics: []
+                        },
+                        { 
+                            id: 6, 
+                            name: "פרויקטים", 
+                            driveLink: "",
+                            subTopics: []
+                        }
                     ]
                 },
                 {
                     id: 3,
-                    name: "",
+                    name: "מדריכים",
                     subTopics: [
-                        { id: 7, name: "משמעת", driveLink: "https://docs.google.com/document/d/sample7" },
-                        { id: 8, name: "מוטיבציה", driveLink: "https://docs.google.com/document/d/sample8" },
-                        { id: 9, name: "תקשורת", driveLink: "https://docs.google.com/document/d/sample9" }
+                        { 
+                            id: 7, 
+                            name: "משמעת", 
+                            driveLink: "",
+                            subTopics: []
+                        },
+                        { 
+                            id: 8, 
+                            name: "מוטיבציה", 
+                            driveLink: "",
+                            subTopics: []
+                        },
+                        { 
+                            id: 9, 
+                            name: "תקשורת", 
+                            driveLink: "",
+                            subTopics: []
+                        }
                     ]
                 }
             ],
@@ -808,8 +1038,14 @@
 
         let currentMainTopic = null;
         let currentSubTopic = null;
+        let currentPath = [];
         let editingMainTopic = null;
         let editingSubTopic = null;
+        
+        // משתני גרירה
+        let isDragMode = false;
+        let draggedElement = null;
+        let draggedData = null;
 
         // אתחול האתר
         function initApp() {
@@ -830,23 +1066,82 @@
             });
         }
 
-        // הצגת תתי נושאים
-        function showSubTopics(topic) {
+        // הצגת תתי נושאים - עם תמיכה בנתיב
+        function showSubTopics(topic, parentPath = []) {
             currentMainTopic = topic;
+            currentPath = [...parentPath, topic];
+            
+            // עדכון כותרת
             document.getElementById('sub-title').textContent = topic.name;
+            
+            // עדכון breadcrumb
+            updateBreadcrumb();
             
             const container = document.getElementById('sub-buttons');
             container.innerHTML = '';
             
-            topic.subTopics.forEach(subTopic => {
-                const button = document.createElement('button');
-                button.className = 'sub-btn';
-                button.textContent = subTopic.name;
-                button.onclick = () => showResource(subTopic);
-                container.appendChild(button);
-            });
+            if (topic.subTopics && topic.subTopics.length > 0) {
+                topic.subTopics.forEach(subTopic => {
+                    const button = document.createElement('button');
+                    
+                    // בדיקה אם זה מסמך סופי או יש עוד תתי נושאים
+                    if (subTopic.subTopics && subTopic.subTopics.length > 0) {
+                        // יש עוד תתי נושאים - כפתור לנווט הלאה
+                        button.className = 'sub-btn';
+                        button.textContent = subTopic.name + ' ►';
+                        button.onclick = () => showSubTopics(subTopic, currentPath);
+                    } else if (subTopic.driveLink && subTopic.driveLink.trim()) {
+                        // מסמך סופי - כפתור לפתיחת המשאב
+                        button.className = 'sub-btn';
+                        button.textContent = subTopic.name;
+                        button.onclick = () => showResource(subTopic);
+                    } else {
+                        // אין קישור ואין תתי נושאים - תת נושא ריק
+                        button.className = 'sub-btn';
+                        button.textContent = subTopic.name + ' (ריק)';
+                        button.style.opacity = '0.6';
+                        button.onclick = () => showSubTopics(subTopic, currentPath);
+                    }
+                    
+                    container.appendChild(button);
+                });
+            } else {
+                // אין תתי נושאים
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.textAlign = 'center';
+                emptyDiv.style.color = '#6c757d';
+                emptyDiv.style.padding = '20px';
+                emptyDiv.textContent = 'אין תתי נושאים עדיין';
+                container.appendChild(emptyDiv);
+            }
             
             showScreen('sub-screen');
+        }
+
+        // עדכון breadcrumb
+        function updateBreadcrumb() {
+            const breadcrumbEl = document.getElementById('breadcrumb');
+            if (currentPath.length <= 1) {
+                breadcrumbEl.style.display = 'none';
+                return;
+            }
+            
+            breadcrumbEl.style.display = 'block';
+            const pathText = currentPath.map(item => item.name).join(' ← ');
+            breadcrumbEl.innerHTML = 'מיקום: <span>' + pathText + '</span>';
+        }
+
+        // ניווט חזרה חכם
+        function navigateBack() {
+            if (currentPath.length > 1) {
+                // חזרה לרמה הקודמת
+                currentPath.pop();
+                const parentTopic = currentPath[currentPath.length - 1];
+                showSubTopics(parentTopic, currentPath.slice(0, -1));
+            } else {
+                // חזרה למסך הראשי
+                showMainScreen();
+            }
         }
 
         // הצגת משאב
@@ -854,6 +1149,12 @@
             currentSubTopic = subTopic;
             document.getElementById('resource-title').textContent = subTopic.name;
             document.getElementById('drive-link').href = subTopic.driveLink;
+            
+            // עדכון breadcrumb למשאב
+            const resourceBreadcrumb = document.getElementById('resource-breadcrumb');
+            const fullPath = [...currentPath, subTopic];
+            const pathText = fullPath.map(item => item.name).join(' ← ');
+            resourceBreadcrumb.innerHTML = 'מיקום: <span>' + pathText + '</span>';
             
             loadResourceComments(subTopic.id);
             showScreen('resource-screen');
@@ -936,7 +1237,7 @@
             }
         }
 
-        // טעינת הערות לשאב
+        // טעינת הערות למשאב
         function loadResourceComments(resourceId) {
             const container = document.getElementById('comments-list');
             container.innerHTML = '<div class="loading">טוען הערות...</div>';
@@ -981,7 +1282,7 @@
             });
         }
 
-        // הצגת הודעת שגיאה (גלובלית)
+        // הצגת הודעת שגיאה
         function showError(message) {
             const errorDiv = document.getElementById('comment-error');
             if (errorDiv) {
@@ -995,7 +1296,7 @@
             }
         }
 
-        // הצגת הודעת הצלחה (גלובלית)
+        // הצגת הודעת הצלחה
         function showSuccess(message) {
             const successDiv = document.getElementById('comment-success');
             if (successDiv) {
@@ -1018,6 +1319,7 @@
         }
 
         function showMainScreen() {
+            currentPath = [];
             showScreen('main-screen');
         }
 
@@ -1044,6 +1346,115 @@
             showScreen('admin-screen');
         }
 
+        // פונקציות גרירה
+        function toggleDragMode() {
+            isDragMode = !isDragMode;
+            const toggleBtn = document.getElementById('drag-mode-toggle');
+            const instructions = document.getElementById('drag-instructions');
+            
+            if (isDragMode) {
+                toggleBtn.classList.add('active');
+                toggleBtn.innerHTML = '🔒 צא ממצב גרירה';
+                instructions.style.display = 'block';
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.innerHTML = '🔄 הפעל מצב גרירה';
+                instructions.style.display = 'none';
+            }
+            
+            renderSubTopics(); // רענן את הרשימה עם/בלי כפתורי גרירה
+        }
+
+        function setupDropZone(element, targetData) {
+            element.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (draggedElement && draggedElement !== element) {
+                    element.classList.add('drag-over');
+                }
+            });
+            
+            element.addEventListener('dragleave', (e) => {
+                element.classList.remove('drag-over');
+            });
+            
+            element.addEventListener('drop', (e) => {
+                e.preventDefault();
+                element.classList.remove('drag-over');
+                
+                if (!draggedData) return;
+                
+                const { subTopicId: draggedId, mainTopicId: draggedMainId } = draggedData;
+                const { subTopicId: targetId, mainTopicId: targetMainId, isNested } = targetData;
+                
+                if (draggedId === targetId) return; // לא ניתן להזיז לעצמו
+                
+                moveSubTopic(draggedId, draggedMainId, targetId, targetMainId, isNested);
+            });
+        }
+
+        function moveSubTopic(draggedId, draggedMainId, targetId, targetMainId, isNested) {
+            // מצא ומסיר את הנושא הנגרר
+            const draggedTopic = removeSubTopicById(draggedMainId, draggedId);
+            if (!draggedTopic) {
+                showError('שגיאה: לא ניתן למצוא את הנושא הנגרר');
+                return;
+            }
+            
+            // הוסף לייעד החדש
+            if (targetId && targetMainId) {
+                // הזחה תחת נושא קיים
+                if (isNested) {
+                    addSubTopicUnder(targetMainId, targetId, draggedTopic);
+                } else {
+                    addSubTopicAfter(targetMainId, targetId, draggedTopic);
+                }
+            } else {
+                // הזחה לרמה הראשונה של נושא ראשי
+                const mainTopic = appData.mainTopics.find(t => t.id === targetMainId);
+                if (mainTopic) {
+                    mainTopic.subTopics.push(draggedTopic);
+                }
+            }
+            
+            saveDataToFirebase();
+            renderParentSelect();
+            renderSubTopics();
+            showSuccess('הנושא הועבר בהצלחה!');
+        }
+
+        function removeSubTopicById(mainTopicId, subTopicId) {
+            const mainTopic = appData.mainTopics.find(t => t.id === mainTopicId);
+            if (!mainTopic) return null;
+            
+            function removeRecursively(subTopics) {
+                for (let i = 0; i < subTopics.length; i++) {
+                    if (subTopics[i].id === subTopicId) {
+                        return subTopics.splice(i, 1)[0];
+                    }
+                    if (subTopics[i].subTopics) {
+                        const found = removeRecursively(subTopics[i].subTopics);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+            
+            return removeRecursively(mainTopic.subTopics);
+        }
+
+        function addSubTopicUnder(mainTopicId, parentId, newSubTopic) {
+            const mainTopic = appData.mainTopics.find(t => t.id === mainTopicId);
+            if (!mainTopic) return;
+            
+            const parentSubTopic = findSubTopicById(mainTopic.subTopics, parentId);
+            if (parentSubTopic) {
+                if (!parentSubTopic.subTopics) {
+                    parentSubTopic.subTopics = [];
+                }
+                parentSubTopic.subTopics.push(newSubTopic);
+            }
+        }
+
         // עמוד מנהל
         function renderAdminPanel() {
             renderMainTopicsAdmin();
@@ -1057,7 +1468,6 @@
             
             appData.mainTopics.forEach(topic => {
                 if (editingMainTopic && editingMainTopic.id === topic.id) {
-                    // מצב עריכה
                     const editDiv = document.createElement('div');
                     editDiv.className = 'edit-form';
                     editDiv.innerHTML = `
@@ -1070,7 +1480,6 @@
                     `;
                     mainTopicsList.appendChild(editDiv);
                 } else {
-                    // מצב רגיל
                     const topicDiv = document.createElement('div');
                     topicDiv.className = 'topic-item';
                     topicDiv.innerHTML = `
@@ -1096,11 +1505,81 @@
                 topicSelect.appendChild(option);
             });
 
-            topicSelect.onchange = renderSubTopics;
+            topicSelect.onchange = () => {
+                renderParentSelect();
+                renderSubTopics();
+            };
+        }
+
+        // רנדור בחירת נושא עליון
+        function renderParentSelect() {
+            const topicSelect = document.getElementById('topic-select');
+            const parentSelect = document.getElementById('parent-select');
+            const parentSelector = document.getElementById('parent-selector');
+            
+            const selectedTopicId = topicSelect.value;
+            
+            if (!selectedTopicId) {
+                parentSelector.style.display = 'none';
+                return;
+            }
+            
+            parentSelector.style.display = 'block';
+            parentSelect.innerHTML = '<option value="">ללא נושא עליון (רמה ראשונה)</option>';
+            
+            const topic = appData.mainTopics.find(t => t.id == selectedTopicId);
+            if (topic && topic.subTopics) {
+                populateParentOptions(topic.subTopics, parentSelect, '');
+            }
+            
+            parentSelect.onchange = renderSubTopics;
+        }
+
+        // פונקציה רקורסיבית למילוי אופציות נושא עליון
+        function populateParentOptions(subTopics, selectElement, prefix) {
+            subTopics.forEach(subTopic => {
+                const option = document.createElement('option');
+                option.value = subTopic.id;
+                option.textContent = prefix + subTopic.name;
+                selectElement.appendChild(option);
+                
+                if (subTopic.subTopics && subTopic.subTopics.length > 0) {
+                    populateParentOptions(subTopic.subTopics, selectElement, prefix + '  └─ ');
+                }
+            });
+        }
+
+        // פונקציה למציאת תת נושא לפי ID
+        function findSubTopicById(subTopics, id) {
+            for (let subTopic of subTopics) {
+                if (subTopic.id == id) {
+                    return subTopic;
+                }
+                if (subTopic.subTopics) {
+                    const found = findSubTopicById(subTopic.subTopics, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        // פונקציה למציאת תת נושא והורה שלו
+        function findSubTopicWithParent(subTopics, id, parent = null) {
+            for (let subTopic of subTopics) {
+                if (subTopic.id == id) {
+                    return { subTopic, parent };
+                }
+                if (subTopic.subTopics) {
+                    const found = findSubTopicWithParent(subTopic.subTopics, id, subTopic);
+                    if (found) return found;
+                }
+            }
+            return null;
         }
 
         function renderSubTopics() {
             const topicSelect = document.getElementById('topic-select');
+            const parentSelect = document.getElementById('parent-select');
             const subTopicsList = document.getElementById('sub-topics-list');
             subTopicsList.innerHTML = '';
             
@@ -1110,36 +1589,128 @@
             const topic = appData.mainTopics.find(t => t.id == selectedTopicId);
             if (!topic) return;
             
-            topic.subTopics.forEach(subTopic => {
+            const parentId = parentSelect.value;
+            let targetSubTopics;
+            
+            if (parentId) {
+                const parentSubTopic = findSubTopicById(topic.subTopics, parentId);
+                targetSubTopics = parentSubTopic ? parentSubTopic.subTopics : [];
+            } else {
+                targetSubTopics = topic.subTopics;
+            }
+            
+            if (targetSubTopics) {
+                renderSubTopicsList(targetSubTopics, subTopicsList, topic.id, 0);
+            }
+            
+            // הוסף אזור הטלה כללי במצב גרירה
+            if (isDragMode && targetSubTopics.length > 0) {
+                const dropZone = document.createElement('div');
+                dropZone.className = 'drop-zone';
+                dropZone.textContent = 'שחרר כאן כדי להוסיף לרמה הראשונה';
+                
+                setupDropZone(dropZone, { 
+                    subTopicId: null, 
+                    mainTopicId: parseInt(selectedTopicId), 
+                    isNested: false 
+                });
+                
+                subTopicsList.appendChild(dropZone);
+            }
+        }
+
+        function renderSubTopicsList(subTopics, container, mainTopicId, level = 0) {
+            subTopics.forEach(subTopic => {
                 if (editingSubTopic && editingSubTopic.id === subTopic.id) {
-                    // מצב עריכה
                     const editDiv = document.createElement('div');
                     editDiv.className = 'edit-form';
+                    if (level > 0) editDiv.className += ' nested';
                     editDiv.innerHTML = `
                         <h4>עריכת תת נושא</h4>
                         <input type="text" class="add-input" id="edit-sub-topic-name-${subTopic.id}" value="${subTopic.name}" placeholder="שם תת נושא">
-                        <input type="text" class="add-input" id="edit-sub-topic-link-${subTopic.id}" value="${subTopic.driveLink}" placeholder="קישור גוגל דרייב">
+                        <input type="text" class="add-input" id="edit-sub-topic-link-${subTopic.id}" value="${subTopic.driveLink || ''}" placeholder="קישור גוגל דרייב (אופציונלי)">
                         <div class="edit-actions">
-                            <button class="save-btn" onclick="saveSubTopic(${topic.id}, ${subTopic.id})">שמור</button>
+                            <button class="save-btn" onclick="saveSubTopic(${mainTopicId}, ${subTopic.id})">שמור</button>
                             <button class="cancel-btn" onclick="cancelEditSubTopic()">ביטול</button>
                         </div>
                     `;
-                    subTopicsList.appendChild(editDiv);
+                    container.appendChild(editDiv);
                 } else {
-                    // מצב רגיל
                     const subTopicDiv = document.createElement('div');
                     subTopicDiv.className = 'topic-item';
+                    if (level > 0) subTopicDiv.className += ' nested';
+                    
+                    const hasSubTopics = subTopic.subTopics && subTopic.subTopics.length > 0;
+                    const hasLink = subTopic.driveLink && subTopic.driveLink.trim();
+                    
+                    let statusText = '';
+                    if (hasSubTopics && hasLink) {
+                        statusText = ' <span style="color: #28a745;">(קטגוריה + מסמך)</span>';
+                    } else if (hasSubTopics) {
+                        statusText = ' <span style="color: #007bff;">(קטגוריה)</span>';
+                    } else if (hasLink) {
+                        statusText = ' <span style="color: #17a2b8;">(מסמך)</span>';
+                    } else {
+                        statusText = ' <span style="color: #6c757d;">(ריק)</span>';
+                    }
+                    
                     subTopicDiv.innerHTML = `
                         <div>
-                            <strong>${subTopic.name}</strong><br>
-                            <small>${subTopic.driveLink}</small>
+                            <strong>${subTopic.name}</strong>${statusText}
+                            ${hasLink ? '<br><small style="color: #007bff;">🔗 ' + subTopic.driveLink + '</small>' : ''}
+                            ${hasSubTopics ? '<br><small style="color: #28a745;">📁 ' + subTopic.subTopics.length + ' תתי נושאים</small>' : ''}
                         </div>
                         <div class="topic-actions">
-                            <button class="edit-btn" onclick="editSubTopic(${subTopic.id})">ערוך</button>
-                            <button class="delete-btn" onclick="deleteSubTopic(${topic.id}, ${subTopic.id})">מחק</button>
+                            <button class="add-nested-btn" onclick="addNestedSubTopic(${subTopic.id})" title="הוסף תת נושא תחת ${subTopic.name}">הוסף תחת</button>
+                            <button class="edit-btn" onclick="editSubTopic(${subTopic.id})" title="ערוך ${subTopic.name}">ערוך</button>
+                            <button class="delete-btn" onclick="deleteSubTopic(${mainTopicId}, ${subTopic.id})" title="מחק ${subTopic.name}">מחק</button>
                         </div>
                     `;
-                    subTopicsList.appendChild(subTopicDiv);
+                    container.appendChild(subTopicDiv);
+                    
+                    // הוסף כפתור גרירה במצב גרירה
+                    if (isDragMode) {
+                        const dragHandle = document.createElement('button');
+                        dragHandle.className = 'drag-handle';
+                        dragHandle.innerHTML = '⋮⋮';
+                        dragHandle.title = 'גרור לשינוי מיקום';
+                        dragHandle.draggable = true;
+                        
+                        // הוסף את כפתור הגרירה לתחילת הפעולות
+                        const actionsDiv = subTopicDiv.querySelector('.topic-actions');
+                        actionsDiv.insertBefore(dragHandle, actionsDiv.firstChild);
+                        
+                        // הגדר אירועי גרירה
+                        dragHandle.addEventListener('dragstart', (e) => {
+                            draggedData = { subTopicId: subTopic.id, mainTopicId: mainTopicId };
+                            draggedElement = subTopicDiv;
+                            draggedElement.classList.add('dragging');
+                            e.dataTransfer.setData('text/plain', '');
+                        });
+                        
+                        dragHandle.addEventListener('dragend', (e) => {
+                            if (draggedElement) {
+                                draggedElement.classList.remove('dragging');
+                            }
+                            document.querySelectorAll('.topic-item, .drop-zone').forEach(item => {
+                                item.classList.remove('drag-over');
+                            });
+                            draggedElement = null;
+                            draggedData = null;
+                        });
+                        
+                        // הגדר אזור הטלה
+                        setupDropZone(subTopicDiv, { 
+                            subTopicId: subTopic.id, 
+                            mainTopicId: mainTopicId, 
+                            isNested: true 
+                        });
+                    }
+                    
+                    // רנדור תתי נושאים מקוננים
+                    if (hasSubTopics) {
+                        renderSubTopicsList(subTopic.subTopics, container, mainTopicId, level + 1);
+                    }
                 }
             });
         }
@@ -1175,7 +1746,7 @@
             const topic = appData.mainTopics.find(t => t.id == selectedTopicId);
             
             if (topic) {
-                const subTopic = topic.subTopics.find(st => st.id === subTopicId);
+                const subTopic = findSubTopicById(topic.subTopics, subTopicId);
                 editingSubTopic = subTopic;
                 renderSubTopics();
             }
@@ -1185,16 +1756,22 @@
             const newName = document.getElementById(`edit-sub-topic-name-${subTopicId}`).value.trim();
             const newLink = document.getElementById(`edit-sub-topic-link-${subTopicId}`).value.trim();
             
-            if (newName && newLink) {
+            if (newName) {
                 const topic = appData.mainTopics.find(t => t.id === topicId);
-                const subTopic = topic.subTopics.find(st => st.id === subTopicId);
+                const subTopic = findSubTopicById(topic.subTopics, subTopicId);
                 
-                subTopic.name = newName;
-                subTopic.driveLink = newLink;
-                editingSubTopic = null;
-                
-                saveDataToFirebase();
-                renderSubTopics();
+                if (subTopic) {
+                    subTopic.name = newName;
+                    subTopic.driveLink = newLink;
+                    editingSubTopic = null;
+                    
+                    saveDataToFirebase();
+                    renderParentSelect();
+                    renderSubTopics();
+                    showSuccess('תת הנושא עודכן בהצלחה!');
+                }
+            } else {
+                showError('שם תת הנושא לא יכול להיות ריק');
             }
         }
 
@@ -1203,17 +1780,17 @@
             renderSubTopics();
         }
 
-        // הוספת נושא ראשי - עם וידוא מערך תתי נושאים
+        // הוספת נושא ראשי
         function addMainTopic() {
             const input = document.getElementById('new-main-topic');
             const name = input.value.trim();
             
             if (name) {
-                const newId = Math.max(...appData.mainTopics.map(t => t.id)) + 1;
+                const newId = Math.max(...appData.mainTopics.map(t => t.id), 0) + 1;
                 appData.mainTopics.push({
                     id: newId,
                     name: name,
-                    subTopics: [] // וידוא שתמיד יש מערך תתי נושאים
+                    subTopics: []
                 });
                 
                 input.value = '';
@@ -1226,29 +1803,43 @@
             }
         }
 
-        // הוספת תת נושא - עם תיקון לבעיית undefined
+        // פונקציה למציאת הID הגבוה ביותר
+        function getMaxSubTopicId() {
+            let maxId = 0;
+            
+            function searchInSubTopics(subTopics) {
+                subTopics.forEach(subTopic => {
+                    if (subTopic.id > maxId) {
+                        maxId = subTopic.id;
+                    }
+                    if (subTopic.subTopics) {
+                        searchInSubTopics(subTopic.subTopics);
+                    }
+                });
+            }
+            
+            appData.mainTopics.forEach(topic => {
+                if (topic.subTopics) {
+                    searchInSubTopics(topic.subTopics);
+                }
+            });
+            
+            return maxId;
+        }
+
+        // הוספת תת נושא
         function addSubTopic() {
             try {
-                console.log('=== Starting addSubTopic ===');
-                
-                // קבלת הערכים
                 const topicSelect = document.getElementById('topic-select');
+                const parentSelect = document.getElementById('parent-select');
                 const nameInput = document.getElementById('new-sub-topic');
                 const linkInput = document.getElementById('new-drive-link');
                 
-                if (!topicSelect || !nameInput || !linkInput) {
-                    console.error('Elements not found!');
-                    alert('שגיאה: אלמנטים לא נמצאו');
-                    return;
-                }
-                
                 const topicId = parseInt(topicSelect.value);
+                const parentId = parentSelect.value ? parseInt(parentSelect.value) : null;
                 const name = nameInput.value.trim();
                 const driveLink = linkInput.value.trim();
                 
-                console.log('Parsed values:', {topicId, name, driveLink});
-                
-                // בדיקות
                 if (!topicId || isNaN(topicId)) {
                     alert('אנא בחר נושא ראשי');
                     return;
@@ -1260,66 +1851,46 @@
                     return;
                 }
                 
-                if (!driveLink) {
-                    alert('אנא הכנס קישור לגוגל דרייב');
-                    linkInput.focus();
-                    return;
-                }
-                
-                // חיפוש הנושא
                 const topic = appData.mainTopics.find(t => t.id === topicId);
-                console.log('Found topic:', topic);
-                
                 if (!topic) {
                     alert('שגיאה: נושא לא נמצא');
                     return;
                 }
                 
-                // וידוא שיש מערך תתי נושאים
                 if (!topic.subTopics) {
                     topic.subTopics = [];
-                    console.log('Created subTopics array for topic');
                 }
                 
-                // יצירת ID חדש
-                let maxId = 0;
-                appData.mainTopics.forEach(topic => {
-                    if (topic.subTopics && Array.isArray(topic.subTopics)) {
-                        topic.subTopics.forEach(subTopic => {
-                            if (subTopic.id > maxId) {
-                                maxId = subTopic.id;
-                            }
-                        });
-                    }
-                });
-                const newId = maxId + 1;
+                const newId = getMaxSubTopicId() + 1;
                 
-                console.log('New ID:', newId);
-                
-                // יצירת תת נושא חדש
                 const newSubTopic = {
                     id: newId,
                     name: name,
-                    driveLink: driveLink
+                    driveLink: driveLink || '',
+                    subTopics: []
                 };
                 
-                console.log('New subtopic:', newSubTopic);
+                // הוספה למקום הנכון
+                if (parentId) {
+                    const parentSubTopic = findSubTopicById(topic.subTopics, parentId);
+                    if (parentSubTopic) {
+                        if (!parentSubTopic.subTopics) {
+                            parentSubTopic.subTopics = [];
+                        }
+                        parentSubTopic.subTopics.push(newSubTopic);
+                    }
+                } else {
+                    topic.subTopics.push(newSubTopic);
+                }
                 
-                // הוספה למערך
-                topic.subTopics.push(newSubTopic);
-                
-                console.log('Updated topic:', topic);
-                
-                // ניקוי השדות
                 nameInput.value = '';
                 linkInput.value = '';
                 
-                // שמירה ועדכון
                 saveDataToFirebase();
+                renderParentSelect();
                 renderSubTopics();
                 
                 alert('תת נושא נוסף בהצלחה!');
-                console.log('=== addSubTopic completed ===');
                 
             } catch (error) {
                 console.error('Error in addSubTopic:', error);
@@ -1327,9 +1898,32 @@
             }
         }
 
+        // הוספת תת נושא מקונן
+        function addNestedSubTopic(parentId) {
+            const topicSelect = document.getElementById('topic-select');
+            const selectedTopicId = topicSelect.value;
+            
+            if (!selectedTopicId) {
+                alert('אנא בחר נושא ראשי');
+                return;
+            }
+            
+            // מילוי אוטומטי של הנושא העליון
+            const parentSelect = document.getElementById('parent-select');
+            parentSelect.value = parentId;
+            
+            // מיקוד בשדה השם
+            document.getElementById('new-sub-topic').focus();
+            
+            const parentSubTopic = findSubTopicById(appData.mainTopics.find(t => t.id == selectedTopicId).subTopics, parentId);
+            if (parentSubTopic) {
+                showSuccess('כעת תוכל להוסיף תת נושא תחת "' + parentSubTopic.name + '"');
+            }
+        }
+
         // מחיקת נושא ראשי
         function deleteMainTopic(topicId) {
-            if (confirm('האם אתה בטוח שברצונך למחוק את הנושא?')) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את הנושא? כל תתי הנושאים יימחקו גם כן.')) {
                 appData.mainTopics = appData.mainTopics.filter(t => t.id !== topicId);
                 saveDataToFirebase();
                 renderMainTopics();
@@ -1339,13 +1933,33 @@
 
         // מחיקת תת נושא
         function deleteSubTopic(topicId, subTopicId) {
-            if (confirm('האם אתה בטוח שברצונך למחוק את תת הנושא?')) {
-                const topic = appData.mainTopics.find(t => t.id === topicId);
-                if (topic) {
+            const topic = appData.mainTopics.find(t => t.id === topicId);
+            if (!topic) return;
+            
+            const result = findSubTopicWithParent(topic.subTopics, subTopicId);
+            if (!result) return;
+            
+            const { subTopic, parent } = result;
+            const hasSubTopics = subTopic.subTopics && subTopic.subTopics.length > 0;
+            
+            let confirmMessage = `האם אתה בטוח שברצונך למחוק את "${subTopic.name}"?`;
+            if (hasSubTopics) {
+                confirmMessage += `\n\nשים לב: הנושא הזה מכיל ${subTopic.subTopics.length} תתי נושאים שגם יימחקו!`;
+            }
+            
+            if (confirm(confirmMessage)) {
+                if (parent) {
+                    // מחיקה מתוך הורה
+                    parent.subTopics = parent.subTopics.filter(st => st.id !== subTopicId);
+                } else {
+                    // מחיקה מהרמה הראשונה
                     topic.subTopics = topic.subTopics.filter(st => st.id !== subTopicId);
-                    saveDataToFirebase();
-                    renderSubTopics();
                 }
+                
+                saveDataToFirebase();
+                renderParentSelect();
+                renderSubTopics();
+                showSuccess(`"${subTopic.name}" נמחק בהצלחה!`);
             }
         }
 
@@ -1385,6 +1999,13 @@
                     addSubTopic();
                 }
             });
+
+            // Enter בסיסמת מנהל
+            document.getElementById('admin-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    adminLogin();
+                }
+            });
         });
 
         // אתחול האתר
@@ -1392,3 +2013,4 @@
     </script>
 </body>
 </html>
+                
