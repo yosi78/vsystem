@@ -16,6 +16,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
         
         .container {
@@ -26,6 +28,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
             min-height: 90vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         .header {
@@ -63,6 +68,30 @@
         
         .content {
             padding: 30px 25px;
+            flex: 1;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .footer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 8px;
+        }
+        
+        .footer-copyright {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            opacity: 0.8;
         }
         
         .screen {
@@ -1298,6 +1327,12 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-name">ByteLogicx</div>
+            <div class="footer-copyright">© 2025 כל הזכויות שמורות</div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -1524,7 +1559,7 @@
         function loadDataFromFirebase() {
             if (!database) return;
             
-            database.ref().once('value')
+            database.ref('slaptop').once('value')
                 .then((snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.val();
@@ -1574,7 +1609,7 @@
             if (!database) return;
             
             // Listen for config changes
-            database.ref('config').on('value', (snapshot) => {
+            database.ref('slaptop/config').on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     systemData.config = { ...defaultConfig, ...snapshot.val() };
                     populateAllSelectors();
@@ -1582,7 +1617,7 @@
             });
             
             // Listen for cart changes
-            database.ref('carts').on('value', (snapshot) => {
+            database.ref('slaptop/carts').on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     systemData.carts = snapshot.val();
                     populateAllSelectors();
@@ -1590,7 +1625,7 @@
             });
             
             // Listen for new loans
-            database.ref('loans').on('child_added', (snapshot) => {
+            database.ref('slaptop/loans').on('child_added', (snapshot) => {
                 const loan = snapshot.val();
                 const existingIndex = systemData.loans.findIndex(l => l.id === loan.id);
                 if (existingIndex === -1) {
@@ -1600,7 +1635,7 @@
             });
 
             // Listen for loan updates
-            database.ref('loans').on('child_changed', (snapshot) => {
+            database.ref('slaptop/loans').on('child_changed', (snapshot) => {
                 const updatedLoan = snapshot.val();
                 const existingIndex = systemData.loans.findIndex(l => l.id === updatedLoan.id);
                 if (existingIndex !== -1) {
@@ -1610,14 +1645,14 @@
             });
 
             // Listen for loan deletions
-            database.ref('loans').on('child_removed', (snapshot) => {
+            database.ref('slaptop/loans').on('child_removed', (snapshot) => {
                 const deletedLoan = snapshot.val();
                 systemData.loans = systemData.loans.filter(l => l.id !== deletedLoan.id);
                 console.log('📥 Loan deleted from Firebase');
             });
 
             // Listen for recurring loan changes
-            database.ref('recurringLoans').on('child_added', (snapshot) => {
+            database.ref('slaptop/recurringLoans').on('child_added', (snapshot) => {
                 const recurringLoan = snapshot.val();
                 const existingIndex = systemData.recurringLoans.findIndex(l => l.id === recurringLoan.id);
                 if (existingIndex === -1) {
@@ -1626,7 +1661,7 @@
                 }
             });
 
-            database.ref('recurringLoans').on('child_changed', (snapshot) => {
+            database.ref('slaptop/recurringLoans').on('child_changed', (snapshot) => {
                 const updatedRecurringLoan = snapshot.val();
                 const existingIndex = systemData.recurringLoans.findIndex(l => l.id === updatedRecurringLoan.id);
                 if (existingIndex !== -1) {
@@ -1635,7 +1670,7 @@
                 }
             });
 
-            database.ref('recurringLoans').on('child_removed', (snapshot) => {
+            database.ref('slaptop/recurringLoans').on('child_removed', (snapshot) => {
                 const deletedRecurringLoan = snapshot.val();
                 systemData.recurringLoans = systemData.recurringLoans.filter(l => l.id !== deletedRecurringLoan.id);
                 console.log('📥 Recurring loan deleted from Firebase');
@@ -1660,12 +1695,12 @@
                 recurringLoansObject[recurringLoan.id] = recurringLoan;
             });
             
-            database.ref().set({
-                config: systemData.config,
-                carts: systemData.carts,
-                loans: loansObject,
-                recurringLoans: recurringLoansObject
-            }).then(() => {
+            database.ref('slaptop').set({
+			config: systemData.config,
+			carts: systemData.carts,
+			loans: loansObject,
+			recurringLoans: recurringLoansObject
+			}).then(() => {
                 console.log('✅ Data saved to Firebase');
             }).catch((error) => {
                 console.error('❌ Error saving data:', error);
@@ -1679,8 +1714,7 @@
                 return Promise.reject('Firebase not available');
             }
             
-            return database.ref(`loans/${loanId}`).remove()
-                .then(() => {
+				return database.ref(`slaptop/loans/${loanId}`).remove()                .then(() => {
                     console.log('✅ Loan deleted from Firebase');
                     systemData.loans = systemData.loans.filter(l => l.id != loanId);
                 })
@@ -1697,7 +1731,7 @@
                 return Promise.reject('Firebase not available');
             }
             
-            return database.ref(`recurringLoans/${recurringLoanId}`).remove()
+            return database.ref(`slaptop/recurringLoans/${recurringLoanId}`).remove()
                 .then(() => {
                     console.log('✅ Recurring loan deleted from Firebase');
                     systemData.recurringLoans = systemData.recurringLoans.filter(l => l.id != recurringLoanId);

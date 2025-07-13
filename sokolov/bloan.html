@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת השאלת ספרים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            min-height: 90vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #e91e63, #19B7BB);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .connection-status.connected {
+            background: rgba(76, 175, 80, 0.8);
+        }
+        
+        .connection-status.disconnected {
+            background: rgba(244, 67, 54, 0.8);
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 193, 7, 0.8);
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .content {
+            padding: 30px 25px;
+            flex: 1;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .footer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 8px;
+        }
+        
+        .footer-copyright {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            opacity: 0.8;
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .main-options {
+            text-align: center;
+            margin-top: 60px;
+        }
+        
+        .main-options h2 {
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 1.6em;
+        }
+        
+        .option-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 25px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .option-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .option-btn.return {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+        }
+        
+        .option-btn.admin {
+            background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 8px;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .step.active {
+            background: #e91e63;
+            color: white;
+        }
+        
+        .step.completed {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            width: 16px;
+            height: 2px;
+            background: #ddd;
+            transform: translateY(-50%);
+        }
+        
+        .step.completed:not(:last-child)::after {
+            background: #e91e63;
+        }
+        
+        .screen-title {
+            text-align: center;
+            color: #333;
+            font-size: 1.4em;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1em;
+            background: white;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e91e63;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #e91e63, #c2185b);
+            color: white;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #757575, #616161);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+            font-size: 0.9em;
+            padding: 8px 12px;
+            margin-right: 10px;
+            min-width: auto;
+            flex: none;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.8em;
+            margin: 5px;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+        }
+        
+        .success-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .success-icon {
+            font-size: 4em;
+            color: #e91e63;
+            margin-bottom: 20px;
+        }
+        
+        .success-content h2 {
+            color: #e91e63;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .success-content p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-right: 4px solid #f44336;
+        }
+
+        .loans-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .loan-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .loan-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .loan-item.selected {
+            background-color: #fce4ec;
+            border-left: 4px solid #e91e63;
+        }
+
+        .loan-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .loan-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .no-loans {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .loan-management-item {
+            background: white; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-right: 4px solid #e91e63; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .loan-management-item.returned {
+            border-right-color: #4caf50;
+            background: #f1f8e9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #e91e63;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .management-tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .management-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .management-tab.active {
+            background: #e91e63;
+            color: white;
+        }
+
+        .management-tab:hover:not(.active) {
+            background: #fce4ec;
+        }
+
+        .management-content {
+            display: none;
+        }
+
+        .management-content.active {
+            display: block;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .list-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item:hover {
+            background: #f5f5f5;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .config-form {
+            background: #fce4ec;
+            border: 2px solid #e91e63;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-form h4 {
+            color: #ad1457;
+            margin-bottom: 15px;
+        }
+
+        .config-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .config-form input,
+        .config-form select {
+            padding: 10px;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 5px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+
+            .management-tabs {
+                flex-direction: column;
+            }
+            
+            .connection-status {
+                position: static;
+                display: inline-block;
+                margin-bottom: 10px;
+            }
+            
+            .footer {
+                padding: 15px;
+            }
+            
+            .footer-name {
+                font-size: 1.1em;
+            }
+            
+            .footer-copyright {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
+            <h1>📚 מערכת השאלת ספרים</h1>
+            <p>version 0.1</p>
+        </div>
+        
+        <div class="content">
+            <!-- מסך ראשי -->
+            <div id="mainScreen" class="screen active">
+                <div class="main-options">
+                    <h2>בחרי פעולה</h2>
+                    <button class="option-btn" id="loanBtn">
+                        📖 השאלת ספרים
+                    </button>
+                    <button class="option-btn return" id="returnBtn">
+                        ↩️ החזרת ספרים
+                    </button>
+                    <button class="option-btn admin" id="adminBtn">
+                        ⚙️ מנהל
+                    </button>
+                </div>
+            </div>
+            
+            <!-- מסך 1: פרטי מורה (השאלה) -->
+            <div id="teacherScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                </div>
+                
+                <h2 class="screen-title">פרטי המורה</h2>
+                
+                <div class="form-group">
+                    <label for="teacherName">שם המורה:</label>
+                    <select id="teacherName" required>
+                        <option value="">בחרי מורה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacherClass">כיתה:</label>
+                    <select id="teacherClass" required>
+                        <option value="">בחרי כיתה...</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMain1">חזרה</button>
+                    <button class="btn btn-primary" id="nextToLoanDetails">הבא</button>
+                </div>
+            </div>
+            
+            <!-- מסך 2: פרטי השאלה -->
+            <div id="loanDetailsScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step completed">1</div>
+                    <div class="step active">2</div>
+                </div>
+                
+                <h2 class="screen-title">פרטי השאלה</h2>
+                
+                <div class="form-group">
+                    <label for="loanDate">תאריך השאלה:</label>
+                    <input type="date" id="loanDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loanTime">שעת השאלה:</label>
+                    <select id="loanTime" required>
+                        <option value="">בחרי שעה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bookName">שם הספר:</label>
+                    <input type="text" id="bookName" placeholder="הכנס שם הספר..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="studentName">שם התלמיד/ה:</label>
+                    <input type="text" id="studentName" placeholder="הכנס שם התלמיד/ה..." required>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToTeacher">חזרה</button>
+                    <button class="btn btn-primary" id="submitLoan">שלח</button>
+                </div>
+            </div>
+
+            <!-- מסך החזרה - שלב 1: בחירת מורה -->
+            <div id="returnTeacherScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                </div>
+                
+                <h2 class="screen-title">החזרת ספרים - בחירת מורה</h2>
+                
+                <div class="form-group">
+                    <label for="returnTeacher">איזו מורה מחזירה ספר:</label>
+                    <select id="returnTeacher" required>
+                        <option value="">בחרי מורה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="returnClass">כיתה:</label>
+                    <select id="returnClass" required>
+                        <option value="">בחרי כיתה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="returnStudentName">שם הילד/ה:</label>
+                    <input type="text" id="returnStudentName" placeholder="הכנס שם התלמיד/ה..." required>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromReturn1">חזרה</button>
+                    <button class="btn btn-primary" id="nextToReturnDetails">הבא</button>
+                </div>
+            </div>
+
+            <!-- מסך החזרה - שלב 2: פרטי החזרה -->
+            <div id="returnDetailsScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step completed">1</div>
+                    <div class="step active">2</div>
+                </div>
+                
+                <h2 class="screen-title">פרטי החזרה</h2>
+                
+                <div id="foundBooksSection" style="display: none;">
+                    <div class="form-group">
+                        <label>ספרים מושאלים לתלמיד/ה:</label>
+                        <div class="loans-list" id="foundBooksList">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noBookFoundSection" style="display: none;">
+                    <div class="error-message">
+                        לא נמצאו ספרים מושאלים עבור התלמיד/ה הזה/ה
+                    </div>
+                </div>
+                
+                <div class="form-group" id="returnNotesSection" style="display: none;">
+                    <label for="returnNotes">הערה (אופציונלי):</label>
+                    <textarea id="returnNotes" rows="3" placeholder="הערות נוספות..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToReturnTeacher">חזרה</button>
+                    <button class="btn btn-primary" id="submitReturn" disabled>החזר</button>
+                </div>
+            </div>
+
+            <!-- מסך סיסמת מנהל -->
+            <div id="passwordScreen" class="screen">
+                <h2 class="screen-title">🔐 הזדהות מנהל</h2>
+                
+                <div class="form-group">
+                    <label for="adminPassword">הכנס סיסמת ניהול:</label>
+                    <input type="password" id="adminPassword" placeholder="סיסמה...">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromPassword">חזרה</button>
+                    <button class="btn btn-primary" id="submitPassword">כניסה</button>
+                </div>
+            </div>
+
+            <!-- מסך מנהל -->
+            <div id="managementScreen" class="screen">
+                <h2 class="screen-title">⚙️ מסך מנהל</h2>
+                
+                <!-- טאבים לניהול -->
+                <div class="management-tabs">
+                    <button class="management-tab active" onclick="switchManagementTab('overview')">📊 סקירה</button>
+                    <button class="management-tab" onclick="switchManagementTab('reports')">📋 דוחות</button>
+                    <button class="management-tab" onclick="switchManagementTab('settings')">⚙️ הגדרות</button>
+                </div>
+
+                <!-- תוכן הסקירה -->
+                <div id="overviewContent" class="management-content active">
+                    <!-- סטטיסטיקות כלליות -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalLoans">0</div>
+                            <div class="stat-label">סה"כ השאלות</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="activeLoans">0</div>
+                            <div class="stat-label">השאלות פעילות</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="returnedLoans">0</div>
+                            <div class="stat-label">ספרים שהוחזרו</div>
+                        </div>
+                    </div>
+                    
+                    <!-- השאלות פעילות -->
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #f57c00; margin-bottom: 10px;">📚 השאלות פעילות</h3>
+                        <div id="currentActiveLoans">
+                            <div style="text-align: center; color: #999; font-style: italic;">אין השאלות פעילות</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן דוחות -->
+                <div id="reportsContent" class="management-content">
+                    <div class="config-section">
+                        <h3>📋 דוחות</h3>
+                        
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <h4 style="color: #1976d2; margin-bottom: 15px;">📊 ייצוא דוחות</h4>
+                            
+                            <div class="form-group">
+                                <label for="reportDateFrom">מתאריך:</label>
+                                <input type="date" id="reportDateFrom">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reportDateTo">עד תאריך:</label>
+                                <input type="date" id="reportDateTo">
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="exportLoansReport()">
+                                    📊 ייצא דוח השאלות
+                                </button>
+                                <button class="btn btn-info" onclick="exportReturnsReport()">
+                                    📋 ייצא דוח החזרות
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן הגדרות -->
+                <div id="settingsContent" class="management-content">
+                    <div class="config-section">
+                        <h3>⚙️ הגדרות מערכת</h3>
+                        
+                        <div class="form-group">
+                            <label>מצב חיבור לענן:</label>
+                            <div id="cloudStatus" style="padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                                🔄 בודק חיבור...
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-info" onclick="refreshData()">
+                                🔄 רענון נתונים מהענן
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="resetConfirm">איפוס מלא של המערכת:</label>
+                            <button class="btn btn-danger" onclick="resetSystem()">
+                                🗑️ איפוס מלא
+                            </button>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                ⚠️ פעולה זו תמחק את כל הנתונים באופן בלתי הפיך
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromManagement">חזרה לתפריט הראשי</button>
+                </div>
+            </div>
+            
+            <!-- מסך הצלחה -->
+            <div id="successScreen" class="screen">
+                <div class="success-content">
+                    <div class="success-icon">✅</div>
+                    <h2 id="successTitle">אושרה הבקשה!</h2>
+                    <p id="successMessage">הבקשה נשלחה בהצלחה ונרשמה במערכת.</p>
+                    <button class="btn btn-primary" id="backToMainSuccess">חזרה לתפריט הראשי</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-name">ByteLogicx</div>
+            <div class="footer-copyright">© 2025 כל הזכויות שמורות</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+			apiKey: "AIzaSyAbjHl-0nafBGZpUg3-4jEWdr5qupAIurs",
+			authDomain: "sokolov-lap.firebaseapp.com",
+			databaseURL: "https://sokolov-lap-default-rtdb.firebaseio.com",
+			projectId: "sokolov",
+			storageBucket: "sokolov-lap.firebasestorage.app",
+			messagingSenderId: "752501526935",
+			appId: "1:752501526935:web:b9fc629fe8992f51b4b4d2",
+			measurementId: "G-MYZ4T71E80"
+		};
+
+        // Global Variables
+        let app, database;
+        let isConnected = false;
+        let systemData = {
+            loans: [],
+            config: {
+                teachers: [
+                    "מרים כהן", "רחל לוי", "שרה אברהם", "לאה יעקב",
+                    "רבקה יוסף", "דינה משה", "תמר אהרון", "עדנה דוד",
+                    "נעמה שלמה", "הדס בנימין", "יעל גד", "מיכל אשר",
+                    "אורית זבולון", "חנה יששכר", "צפורה נפתלי", "ברכה ראובן"
+                ],
+                classes: ["א'", "ב'", "ג'", "ד'", "ה'", "ו'"],
+                timeSlots: [
+                    "08:00", "08:45", "09:30", "10:15", "11:00",
+                    "11:45", "12:30", "13:15", "14:00", "14:45"
+                ]
+            }
+        };
+        
+        let currentLoan = {};
+        let selectedLoanForReturn = null;
+        let activeManagementTab = 'overview';
+
+        // ==================== Firebase Functions ====================
+        
+        // Initialize Firebase
+        function initFirebase() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    firebase.initializeApp(firebaseConfig);
+                    database = firebase.database();
+                    
+                    // Listen for connection status
+                    const connectedRef = database.ref('.info/connected');
+                    connectedRef.on('value', (snapshot) => {
+                        isConnected = snapshot.val();
+                        updateConnectionStatus(isConnected);
+                        
+                        if (isConnected) {
+                            loadDataFromFirebase();
+                            setupFirebaseListeners();
+                        }
+                    });
+                    
+                    console.log('✅ Firebase initialized successfully');
+                    return true;
+                } else {
+                    throw new Error('Firebase SDK not loaded');
+                }
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+                updateConnectionStatus(false);
+                return false;
+            }
+        }
+        
+        // Update Connection Status
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            const cloudStatusElement = document.getElementById('cloudStatus');
+            
+            if (connected) {
+                statusElement.textContent = '🟢 מחוברת לענן';
+                statusElement.className = 'connection-status connected';
+                if (cloudStatusElement) {
+                    cloudStatusElement.textContent = '🟢 מחובר לענן Firebase - הנתונים מסונכרנים';
+                    cloudStatusElement.style.background = '#e8f5e8';
+                    cloudStatusElement.style.color = '#2e7d32';
+                    cloudStatusElement.style.border = '1px solid #4caf50';
+                }
+            } else {
+                statusElement.textContent = '🔴 מנותקת';
+                statusElement.className = 'connection-status disconnected';
+                if (cloudStatusElement) {
+                    cloudStatusElement.textContent = '🔴 מנותק מהענן - עובד במצב אופליין';
+                    cloudStatusElement.style.background = '#ffebee';
+                    cloudStatusElement.style.color = '#c62828';
+                    cloudStatusElement.style.border = '1px solid #f44336';
+                }
+            }
+        }
+        
+        // Load Data from Firebase
+        function loadDataFromFirebase() {
+            if (!database) return;
+            
+            database.ref('sbooks').once('value')
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        
+                        // Load configuration
+                        if (data.config) {
+                            systemData.config = { ...systemData.config, ...data.config };
+                        }
+                        
+                        // Load loans
+                        if (data.loans) {
+                            systemData.loans = Object.values(data.loans);
+                        }
+                        
+                        console.log('✅ Data loaded from Firebase');
+                        populateSelectors();
+                        updateOverviewData();
+                    } else {
+                        // First time - save default data
+                        saveToFirebase();
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Error loading data:', error);
+                    populateSelectors();
+                });
+        }
+        
+        // Setup Firebase Listeners
+        function setupFirebaseListeners() {
+            if (!database) return;
+            
+            // Listen for new loans
+            database.ref('sbooks/loans').on('child_added', (snapshot) => {
+                const loan = snapshot.val();
+                const existingIndex = systemData.loans.findIndex(l => l.id === loan.id);
+                if (existingIndex === -1) {
+                    systemData.loans.push(loan);
+                    console.log('📥 New loan received from Firebase');
+                    updateOverviewData();
+                }
+            });
+
+            // Listen for loan updates
+            database.ref('sbooks/loans').on('child_changed', (snapshot) => {
+                const updatedLoan = snapshot.val();
+                const existingIndex = systemData.loans.findIndex(l => l.id === updatedLoan.id);
+                if (existingIndex !== -1) {
+                    systemData.loans[existingIndex] = updatedLoan;
+                    console.log('📥 Loan updated from Firebase');
+                    updateOverviewData();
+                }
+            });
+
+            // Listen for loan deletions
+            database.ref('sbooks/loans').on('child_removed', (snapshot) => {
+                const deletedLoan = snapshot.val();
+                systemData.loans = systemData.loans.filter(l => l.id !== deletedLoan.id);
+                console.log('📥 Loan deleted from Firebase');
+                updateOverviewData();
+            });
+        }
+        
+        // Save to Firebase
+        function saveToFirebase() {
+            if (!database || !isConnected) {
+                console.log('⚠️ Firebase not available, saving locally only');
+                saveToLocalStorage();
+                return;
+            }
+            
+            // Convert arrays to objects for Firebase
+            const loansObject = {};
+            systemData.loans.forEach(loan => {
+                loansObject[loan.id] = loan;
+            });
+            
+            database.ref('sbooks').set({
+			config: systemData.config,
+			loans: loansObject
+			}).then(() => {
+                console.log('✅ Data saved to Firebase');
+            }).catch((error) => {
+                console.error('❌ Error saving data:', error);
+                saveToLocalStorage(); // Fallback to local storage
+            });
+        }
+
+        // Local Storage Fallback
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('bookLoanSystem', JSON.stringify(systemData));
+                console.log('✅ Data saved to local storage');
+            } catch (error) {
+                console.error('❌ Error saving to local storage:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem('bookLoanSystem');
+                if (saved) {
+                    const loadedData = JSON.parse(saved);
+                    systemData = {
+                        loans: loadedData.loans || [],
+                        config: { ...systemData.config, ...loadedData.config }
+                    };
+                    console.log('✅ Data loaded from local storage');
+                }
+            } catch (error) {
+                console.error('❌ Error loading from local storage:', error);
+            }
+        }
+
+        // ==================== UI Functions ====================
+
+        // Initialize selectors
+        function populateSelectors() {
+            // Teachers
+            const teacherSelects = ['teacherName', 'returnTeacher'];
+            teacherSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">בחרי מורה...</option>';
+                    systemData.config.teachers.forEach(teacher => {
+                        const option = document.createElement('option');
+                        option.value = teacher;
+                        option.textContent = teacher;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            // Classes
+            const classSelects = ['teacherClass', 'returnClass'];
+            classSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">בחרי כיתה...</option>';
+                    systemData.config.classes.forEach(className => {
+                        const option = document.createElement('option');
+                        option.value = className;
+                        option.textContent = className;
+                        select.appendChild(option);
+                    });
+                }
+            });
+
+            // Time slots
+            const timeSelects = ['loanTime'];
+            timeSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">בחרי שעה...</option>';
+                    systemData.config.timeSlots.forEach(time => {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = time;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        // Show/Hide screens
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Show error message
+        function showError(message) {
+            const existingErrors = document.querySelectorAll('.error-message');
+            existingErrors.forEach(error => error.remove());
+            
+            if (!message || message.trim() === '') return;
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            const activeScreen = document.querySelector('.screen.active');
+            if (activeScreen) {
+                activeScreen.insertBefore(errorDiv, activeScreen.firstChild);
+            }
+            
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 4000);
+        }
+
+        // Navigation Functions
+        function goToLoanDetails() {
+            const teacherName = document.getElementById('teacherName').value;
+            const teacherClass = document.getElementById('teacherClass').value;
+            
+            if (!teacherName || !teacherClass) {
+                showError('אנא בחרי מורה וכיתה');
+                return;
+            }
+            
+            currentLoan.teacherName = teacherName;
+            currentLoan.teacherClass = teacherClass;
+            
+            showScreen('loanDetailsScreen');
+        }
+
+        function goToReturnDetails() {
+            const teacherName = document.getElementById('returnTeacher').value;
+            const teacherClass = document.getElementById('returnClass').value;
+            const studentName = document.getElementById('returnStudentName').value.trim();
+            
+            if (!teacherName || !teacherClass || !studentName) {
+                showError('אנא מלאי את כל השדות');
+                return;
+            }
+            
+            // חיפוש ספרים מושאלים לתלמיד
+            const studentLoans = systemData.loans.filter(loan => 
+                !loan.returned && 
+                loan.teacherName === teacherName &&
+                loan.teacherClass === teacherClass &&
+                loan.studentName.toLowerCase().includes(studentName.toLowerCase())
+            );
+            
+            if (studentLoans.length === 0) {
+                document.getElementById('foundBooksSection').style.display = 'none';
+                document.getElementById('noBookFoundSection').style.display = 'block';
+                document.getElementById('returnNotesSection').style.display = 'none';
+            } else {
+                displayFoundBooks(studentLoans);
+                document.getElementById('foundBooksSection').style.display = 'block';
+                document.getElementById('noBookFoundSection').style.display = 'none';
+                document.getElementById('returnNotesSection').style.display = 'block';
+            }
+            
+            showScreen('returnDetailsScreen');
+        }
+
+        function displayFoundBooks(loans) {
+            const container = document.getElementById('foundBooksList');
+            container.innerHTML = '';
+            
+            loans.forEach(loan => {
+                const loanItem = document.createElement('div');
+                loanItem.className = 'loan-item';
+                loanItem.setAttribute('data-loan-id', loan.id);
+                
+                const loanHeader = document.createElement('div');
+                loanHeader.className = 'loan-header';
+                loanHeader.textContent = loan.bookName;
+                
+                const loanDetails = document.createElement('div');
+                loanDetails.className = 'loan-details';
+                loanDetails.textContent = `הושאל בתאריך ${loan.loanDate} בשעה ${loan.loanTime}`;
+                
+                loanItem.appendChild(loanHeader);
+                loanItem.appendChild(loanDetails);
+                
+                loanItem.addEventListener('click', () => selectBookForReturn(loan, loanItem));
+                
+                container.appendChild(loanItem);
+            });
+        }
+
+        function selectBookForReturn(loan, element) {
+            document.querySelectorAll('.loan-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            selectedLoanForReturn = loan;
+            
+            updateReturnSubmitButton();
+        }
+
+        function updateReturnSubmitButton() {
+            const submitBtn = document.getElementById('submitReturn');
+            submitBtn.disabled = !selectedLoanForReturn;
+        }
+
+        // Submit Functions
+        function submitLoan() {
+            const loanDate = document.getElementById('loanDate').value;
+            const loanTime = document.getElementById('loanTime').value;
+            const bookName = document.getElementById('bookName').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!loanDate || !loanTime || !bookName || !studentName) {
+                showError('אנא מלאי את כל השדות');
+                return;
+            }
+            
+            const loan = {
+                id: Date.now(),
+                teacherName: currentLoan.teacherName,
+                teacherClass: currentLoan.teacherClass,
+                loanDate: loanDate,
+                loanTime: loanTime,
+                bookName: bookName,
+                studentName: studentName,
+                returned: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            systemData.loans.push(loan);
+            saveToFirebase();
+            
+            document.getElementById('successTitle').textContent = 'אושרה הבקשה!';
+            document.getElementById('successMessage').textContent = `הספר "${bookName}" הושאל בהצלחה ל${studentName}.`;
+            showScreen('successScreen');
+            
+            // איפוס הטופס
+            currentLoan = {};
+        }
+
+        function submitReturn() {
+            const returnNotes = document.getElementById('returnNotes').value.trim();
+            
+            if (!selectedLoanForReturn) {
+                showError('אנא בחרי ספר להחזרה');
+                return;
+            }
+            
+            const loanIndex = systemData.loans.findIndex(l => l.id === selectedLoanForReturn.id);
+            if (loanIndex !== -1) {
+                systemData.loans[loanIndex].returned = true;
+                systemData.loans[loanIndex].returnDate = new Date().toISOString().split('T')[0];
+                systemData.loans[loanIndex].returnTime = new Date().toTimeString().split(' ')[0].substring(0, 5);
+                systemData.loans[loanIndex].returnNotes = returnNotes;
+                systemData.loans[loanIndex].returnedAt = new Date().toISOString();
+            }
+            
+            saveToFirebase();
+            
+            document.getElementById('successTitle').textContent = 'החזרה אושרה!';
+            document.getElementById('successMessage').textContent = `הספר "${selectedLoanForReturn.bookName}" הוחזר בהצלחה.`;
+            showScreen('successScreen');
+            
+            selectedLoanForReturn = null;
+        }
+
+        // Management Functions
+        function checkPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 's0987') {
+                showManagementScreen();
+            } else {
+                showError('סיסמה שגויה! נסי שוב.');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function showManagementScreen() {
+            switchManagementTab('overview');
+            showScreen('managementScreen');
+        }
+
+        function switchManagementTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.management-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchManagementTab('${tabName}')"]`).classList.add('active');
+            
+            // Update active content
+            document.querySelectorAll('.management-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}Content`).classList.add('active');
+            
+            activeManagementTab = tabName;
+            
+            // Load specific content
+            if (tabName === 'overview') {
+                updateOverviewData();
+            }
+        }
+
+        function updateOverviewData() {
+            // Statistics
+            const totalLoans = systemData.loans.length;
+            const activeLoans = systemData.loans.filter(loan => !loan.returned).length;
+            const returnedLoans = systemData.loans.filter(loan => loan.returned).length;
+            
+            document.getElementById('totalLoans').textContent = totalLoans;
+            document.getElementById('activeLoans').textContent = activeLoans;
+            document.getElementById('returnedLoans').textContent = returnedLoans;
+            
+            // Active loans list
+            updateActiveLoansDisplay();
+        }
+
+        function updateActiveLoansDisplay() {
+            const container = document.getElementById('currentActiveLoans');
+            const activeLoans = systemData.loans.filter(loan => !loan.returned);
+            
+            if (activeLoans.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">אין השאלות פעילות</div>';
+                return;
+            }
+            
+            let html = '';
+            activeLoans.forEach(loan => {
+                html += `
+                    <div class="loan-management-item">
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: #333;">📖 ${loan.bookName}</div>
+                            <div style="font-size: 0.9em; color: #666;">
+                                👩‍🏫 ${loan.teacherName} - כיתה ${loan.teacherClass}<br>
+                                👦👧 ${loan.studentName} • 📅 ${loan.loanDate} • ⏰ ${loan.loanTime}
+                            </div>
+                        </div>
+                        <button onclick="markAsReturned('${loan.id}')" class="btn-success btn-small">
+                            ✅ סמן כהוחזר
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function markAsReturned(loanId) {
+            const loanIndex = systemData.loans.findIndex(loan => loan.id == loanId);
+            
+            if (loanIndex === -1) {
+                alert('❌ השאלה לא נמצאה!');
+                return;
+            }
+            
+            const loan = systemData.loans[loanIndex];
+            const confirm = window.confirm(`⚠️ האם לסמן את הספר "${loan.bookName}" כהוחזר?\n\nתלמיד/ה: ${loan.studentName}\nמורה: ${loan.teacherName}`);
+            
+            if (!confirm) return;
+            
+            systemData.loans[loanIndex].returned = true;
+            systemData.loans[loanIndex].returnDate = new Date().toISOString().split('T')[0];
+            systemData.loans[loanIndex].returnTime = new Date().toTimeString().split(' ')[0].substring(0, 5);
+            systemData.loans[loanIndex].returnNotes = 'סומן כהוחזר ממסך מנהל';
+            systemData.loans[loanIndex].returnedAt = new Date().toISOString();
+            
+            saveToFirebase();
+            updateOverviewData();
+            
+            alert(`✅ הושלם!\n\nהספר "${loan.bookName}" סומן כהוחזר.`);
+        }
+
+        function refreshData() {
+            if (isConnected && database) {
+                loadDataFromFirebase();
+                alert('🔄 הנתונים רוענו מהענן');
+            } else {
+                alert('❌ לא ניתן לרענן - אין חיבור לענן');
+            }
+        }
+
+        function exportLoansReport() {
+            const fromDate = document.getElementById('reportDateFrom').value;
+            const toDate = document.getElementById('reportDateTo').value;
+            
+            let filteredLoans = [...systemData.loans];
+            
+            // Filter by date if specified
+            if (fromDate) {
+                filteredLoans = filteredLoans.filter(loan => loan.loanDate >= fromDate);
+            }
+            if (toDate) {
+                filteredLoans = filteredLoans.filter(loan => loan.loanDate <= toDate);
+            }
+            
+            if (filteredLoans.length === 0) {
+                alert('אין השאלות להצגה בתקופה שנבחרה');
+                return;
+            }
+            
+            // Sort by loan date
+            filteredLoans.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
+            
+            // Build CSV
+            let csvContent = '\uFEFF'; // BOM for Hebrew support
+            csvContent += 'שם המורה,כיתה,תאריך השאלה,שעת השאלה,שם הספר,שם התלמיד,תאריך החזרה,שעת החזרה,הערות החזרה,סטטוס\n';
+            
+            filteredLoans.forEach(loan => {
+                const status = loan.returned ? 'הוחזר' : 'פעיל';
+                const returnDate = loan.returnDate || '';
+                const returnTime = loan.returnTime || '';
+                const notes = loan.returnNotes ? loan.returnNotes.replace(/"/g, '""').replace(/\n/g, ' ') : '';
+                
+                csvContent += `"${loan.teacherName}","${loan.teacherClass}","${loan.loanDate}","${loan.loanTime}","${loan.bookName}","${loan.studentName}","${returnDate}","${returnTime}","${notes}","${status}"\n`;
+            });
+            
+            downloadCSV(csvContent, `דוח_השאלות_ספרים_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function exportReturnsReport() {
+            const fromDate = document.getElementById('reportDateFrom').value;
+            const toDate = document.getElementById('reportDateTo').value;
+            
+            let filteredLoans = systemData.loans.filter(loan => loan.returned);
+            
+            // Filter by return date if specified
+            if (fromDate) {
+                filteredLoans = filteredLoans.filter(loan => loan.returnDate >= fromDate);
+            }
+            if (toDate) {
+                filteredLoans = filteredLoans.filter(loan => loan.returnDate <= toDate);
+            }
+            
+            if (filteredLoans.length === 0) {
+                alert('אין החזרות להצגה בתקופה שנבחרה');
+                return;
+            }
+            
+            // Sort by return date
+            filteredLoans.sort((a, b) => new Date(b.returnDate) - new Date(a.returnDate));
+            
+            // Build CSV
+            let csvContent = '\uFEFF'; // BOM for Hebrew support
+            csvContent += 'שם המורה,כיתה,שם הספר,שם התלמיד,תאריך השאלה,תאריך החזרה,שעת החזרה,הערות החזרה\n';
+            
+            filteredLoans.forEach(loan => {
+                const notes = loan.returnNotes ? loan.returnNotes.replace(/"/g, '""').replace(/\n/g, ' ') : '';
+                csvContent += `"${loan.teacherName}","${loan.teacherClass}","${loan.bookName}","${loan.studentName}","${loan.loanDate}","${loan.returnDate}","${loan.returnTime}","${notes}"\n`;
+            });
+            
+            downloadCSV(csvContent, `דוח_החזרות_ספרים_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`✅ יוצא דוח: ${filename}`);
+        }
+
+        function resetSystem() {
+            const confirm1 = window.confirm('⚠️ האם אתה בטוח שברצונך לאפס את כל המערכת?\n\nפעולה זו תמחק את כל ההשאלות והחזרות שנרשמו!');
+            
+            if (!confirm1) return;
+            
+            const confirm2 = window.confirm('⚠️ אישור סופי!\n\nהמערכת תאופס לחלוטין ולא ניתן יהיה לשחזר את הנתונים.\n\nהאם להמשיך?');
+            
+            if (!confirm2) return;
+            
+            systemData.loans = [];
+            saveToFirebase();
+            updateOverviewData();
+            
+            alert('✅ המערכת אופסה בהצלחה!\n\nכל הנתונים נמחקו.');
+        }
+
+        // Global functions for management
+        window.switchManagementTab = switchManagementTab;
+        window.markAsReturned = markAsReturned;
+        window.exportLoansReport = exportLoansReport;
+        window.exportReturnsReport = exportReturnsReport;
+        window.refreshData = refreshData;
+        window.resetSystem = resetSystem;
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Main menu buttons
+            document.getElementById('loanBtn').addEventListener('click', () => {
+                showScreen('teacherScreen');
+                currentLoan = {};
+            });
+            
+            document.getElementById('returnBtn').addEventListener('click', () => {
+                showScreen('returnTeacherScreen');
+                selectedLoanForReturn = null;
+            });
+            
+            document.getElementById('adminBtn').addEventListener('click', () => {
+                document.getElementById('adminPassword').value = '';
+                showScreen('passwordScreen');
+            });
+            
+            // Loan navigation
+            document.getElementById('backToMain1').addEventListener('click', () => showScreen('mainScreen'));
+            document.getElementById('nextToLoanDetails').addEventListener('click', goToLoanDetails);
+            document.getElementById('backToTeacher').addEventListener('click', () => showScreen('teacherScreen'));
+            document.getElementById('submitLoan').addEventListener('click', submitLoan);
+            
+            // Return navigation
+            document.getElementById('backToMainFromReturn1').addEventListener('click', () => showScreen('mainScreen'));
+            document.getElementById('nextToReturnDetails').addEventListener('click', goToReturnDetails);
+            document.getElementById('backToReturnTeacher').addEventListener('click', () => showScreen('returnTeacherScreen'));
+            document.getElementById('submitReturn').addEventListener('click', submitReturn);
+            
+            // Success screen
+            document.getElementById('backToMainSuccess').addEventListener('click', () => showScreen('mainScreen'));
+            
+            // Management
+            document.getElementById('backToMainFromPassword').addEventListener('click', () => showScreen('mainScreen'));
+            document.getElementById('submitPassword').addEventListener('click', checkPassword);
+            document.getElementById('backToMainFromManagement').addEventListener('click', () => showScreen('mainScreen'));
+            
+            // Password screen - Enter key support
+            document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+        }
+
+        // Initialize System
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔄 מאתחל מערכת השאלת ספרים עם Firebase...');
+            
+            // Load local data as fallback
+            loadFromLocalStorage();
+            
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            const lastWeekStr = lastWeek.toISOString().split('T')[0];
+            
+            document.getElementById('loanDate').value = today;
+            document.getElementById('reportDateFrom').value = lastWeekStr;
+            document.getElementById('reportDateTo').value = today;
+            
+            // Populate selectors
+            populateSelectors();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize Firebase
+            initFirebase();
+            
+            console.log('✅ מערכת השאלת הספרים מוכנה לשימוש עם Firebase');
+        });
+    </script>
+</body>
+</html>
