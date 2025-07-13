@@ -16,6 +16,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
         
         .container {
@@ -26,6 +28,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
             min-height: 90vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         .header {
@@ -63,6 +68,30 @@
         
         .content {
             padding: 30px 25px;
+            flex: 1;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .footer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 8px;
+        }
+        
+        .footer-copyright {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            opacity: 0.8;
         }
         
         .screen {
@@ -1297,6 +1326,12 @@
                     <button class="btn btn-primary" id="backToMainSuccess">חזרה לתפריט הראשי</button>
                 </div>
             </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-name">ByteLogicx</div>
+            <div class="footer-copyright">© 2025 כל הזכויות שמורות</div>
         </div>
     </div>
 

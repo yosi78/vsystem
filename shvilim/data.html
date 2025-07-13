@@ -26,6 +26,9 @@
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			min-height: 90vh;
         }
 
         .header {
@@ -48,6 +51,27 @@
             margin-bottom: 10px;
         }
 
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+            border-radius: 0 0 20px 20px;
+        }
+ .footer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-bottom: 8px;
+        }
+        
+        .footer-copyright {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            opacity: 0.8;
+        }
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
@@ -774,6 +798,11 @@
                 </div>
             </div>
         </div>
+		<!-- Footer -->
+		<div class="footer">
+		<div class="footer-name">ByteLogicx</div>
+		<div class="footer-copyright">© 2025 כל הזכויות שמורות</div>
+		</div>
     </div>
 
     <!-- Firebase SDK -->
