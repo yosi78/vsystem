@@ -676,7 +676,7 @@
     <div class="container">
         <div class="header">
             <h1>מאגר מידע למורות</h1>
-            <p>version 0.2 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
+            <p>version 0.3 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
         </div>
 
         <div class="content">
@@ -720,6 +720,7 @@
                     <a href="#" id="drive-link" class="drive-link" target="_blank">
                         🔗 פתח קובץ בגוגל דרייב
                     </a>
+					<div id="file-owner-display" style="margin-top: 10px; font-size: 1rem; color: #333;"></div>
                     
                     <div class="comment-section">
                         <h3>הערות וביקורת</h3>
@@ -802,6 +803,7 @@
                         <div class="add-form">
                             <input type="text" class="add-input" id="new-sub-topic" placeholder="תת נושא חדש">
                             <input type="text" class="add-input" id="new-drive-link" placeholder="קישור לגוגל דרייב (רק אם זה מסמך סופי)">
+							<input type="text" class="add-input" id="new-file-owner" placeholder="שם בעל הקובץ (אופציונלי)">
                             <button class="add-btn" type="button" onclick="addSubTopic()">הוסף תת נושא</button>
                         </div>
                     </div>
@@ -892,28 +894,29 @@
         }
 
         // טעינת נתונים מ-Firebase
-        function loadDataFromFirebase() {
-            if (!firebaseInitialized) {
-                loadDataLocally();
-                return;
-            }
+		function loadDataFromFirebase() {
+			if (!firebaseInitialized) {
+				loadDataLocally();
+				return;
+			}
 
-            database.ref('appData').once('value')
-                .then((snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        appData = data;
-                        console.log('נתונים נטענו מ-Firebase');
-                    } else {
-                        saveDataToFirebase();
-                    }
-                    renderMainTopics();
-                })
-                .catch((error) => {
-                    console.error('שגיאה בטעינה מ-Firebase:', error);
-                    loadDataLocally();
-                });
-        }
+			database.ref('appData').once('value')
+				.then((snapshot) => {
+					const data = snapshot.val();
+					if (data) {
+						appData = data;  // קודם עדכן את הנתונים
+						updateExistingData(); // ואז הוסף שדות חסרים
+						console.log('נתונים נטענו מ-Firebase');
+					} else {
+						saveDataToFirebase();
+					}
+					renderMainTopics();
+				})
+				.catch((error) => {
+					console.error('שגיאה בטעינה מ-Firebase:', error);
+					loadDataLocally();
+				});
+		}
 
         // שמירה מקומית כגיבוי
         function saveDataLocally() {
@@ -922,19 +925,20 @@
         }
 
         // טעינה מקומית
-        function loadDataLocally() {
-            const saved = localStorage.getItem('teacherAppData');
-            if (saved) {
-                try {
-                    const loadedData = JSON.parse(saved);
-                    appData = loadedData;
-                    console.log('נתונים נטענו מקומית');
-                } catch (e) {
-                    console.error('שגיאה בטעינת נתונים מקומיים:', e);
-                }
-            }
-            renderMainTopics();
-        }
+		function loadDataLocally() {
+			const saved = localStorage.getItem('teacherAppData');
+			if (saved) {
+				try {
+					const loadedData = JSON.parse(saved);
+					appData = loadedData;
+					updateExistingData(); // הוסף את השורה הזו
+					console.log('נתונים נטענו מקומית');
+				} catch (e) {
+					console.error('שגיאה בטעינת נתונים מקומיים:', e);
+				}
+			}
+			renderMainTopics();
+		}
 
         // פונקציה להוספת הערה
         window.addCommentToFirebase = async function(resourceId, commentText, userName) {
@@ -1001,21 +1005,24 @@
                             id: 1, 
                             name: "תכנון שנתי", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         },
                         { 
                             id: 2, 
                             name: "חונכות", 
                             driveLink: "", 
+							fileOwner: "",
                             subTopics: [
-                                { id: 10, name: "תכנון לחודש ספטמבר", driveLink: "", subTopics: [] },
-                                { id: 11, name: "תכנון לחודש אוקטובר", driveLink: "", subTopics: [] }
+                                { id: 10, name: "תכנון לחודש ספטמבר", driveLink: "", fileOwner: "", subTopics: [] },
+                                { id: 11, name: "תכנון לחודש אוקטובר", driveLink: "", fileOwner: "", subTopics: [] }
                             ]
                         },
                         { 
                             id: 3, 
                             name: "מדריכים", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         }
                     ]
@@ -1028,21 +1035,24 @@
                             id: 4, 
                             name: "מבחנים", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: [
-                                { id: 12, name: "מבחני מתמטיקה", driveLink: "", subTopics: [] },
-                                { id: 13, name: "מבחני עברית", driveLink: "", subTopics: [] }
+                                { id: 12, name: "מבחני מתמטיקה", driveLink: "", fileOwner: "", subTopics: [] },
+                                { id: 13, name: "מבחני עברית", driveLink: "", fileOwner: "", subTopics: [] }
                             ]
                         },
                         { 
                             id: 5, 
                             name: "משימות", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         },
                         { 
                             id: 6, 
                             name: "פרויקטים", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         }
                     ]
@@ -1055,18 +1065,21 @@
                             id: 7, 
                             name: "משמעת", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         },
                         { 
                             id: 8, 
                             name: "מוטיבציה", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         },
                         { 
                             id: 9, 
                             name: "תקשורת", 
                             driveLink: "",
+							fileOwner: "",
                             subTopics: []
                         }
                     ]
@@ -1088,8 +1101,29 @@
 
         // אתחול האתר
         function initApp() {
+			updateExistingData();
             renderMainTopics();
         }
+
+		// פונקציה להוספת שדה fileOwner לנתונים קיימים
+		function updateExistingData() {
+			function addFileOwnerField(subTopics) {
+				subTopics.forEach(subTopic => {
+					if (!subTopic.hasOwnProperty('fileOwner')) {
+						subTopic.fileOwner = '';
+					}
+					if (subTopic.subTopics && subTopic.subTopics.length > 0) {
+						addFileOwnerField(subTopic.subTopics);
+					}
+				});
+			}
+			
+			appData.mainTopics.forEach(mainTopic => {
+				if (mainTopic.subTopics) {
+					addFileOwnerField(mainTopic.subTopics);
+				}
+			});
+		}
 
         // הצגת הנושאים הראשיים
         function renderMainTopics() {
@@ -1189,6 +1223,14 @@
             document.getElementById('resource-title').textContent = subTopic.name;
             document.getElementById('drive-link').href = subTopic.driveLink;
             
+			const fileOwnerDisplay = document.getElementById('file-owner-display');
+			if (subTopic.fileOwner && subTopic.fileOwner.trim()) {
+				fileOwnerDisplay.innerHTML = '👤 <strong>בעל הקובץ:</strong> ' + subTopic.fileOwner;
+				fileOwnerDisplay.style.display = 'block';
+			} else {
+				fileOwnerDisplay.style.display = 'none';
+			}
+
             // עדכון breadcrumb למשאב
             const resourceBreadcrumb = document.getElementById('resource-breadcrumb');
             const fullPath = [...currentPath, subTopic];
@@ -1668,6 +1710,7 @@
                         <h4>עריכת תת נושא</h4>
                         <input type="text" class="add-input" id="edit-sub-topic-name-${subTopic.id}" value="${subTopic.name}" placeholder="שם תת נושא">
                         <input type="text" class="add-input" id="edit-sub-topic-link-${subTopic.id}" value="${subTopic.driveLink || ''}" placeholder="קישור גוגל דרייב (אופציונלי)">
+						<input type="text" class="add-input" id="edit-sub-topic-owner-${subTopic.id}" value="${subTopic.fileOwner || ''}" placeholder="שם בעל הקובץ (אופציונלי)">
                         <div class="edit-actions">
                             <button class="save-btn" onclick="saveSubTopic(${mainTopicId}, ${subTopic.id})">שמור</button>
                             <button class="cancel-btn" onclick="cancelEditSubTopic()">ביטול</button>
@@ -1696,7 +1739,7 @@
                     subTopicDiv.innerHTML = `
                         <div>
                             <strong>${subTopic.name}</strong>${statusText}
-                            ${hasLink ? '<br><small style="color: #007bff;">🔗 ' + subTopic.driveLink + '</small>' : ''}
+                            ${hasLink ? '<br><small style="color: #007bff;">🔗 ' + subTopic.driveLink + '</small>' + (subTopic.fileOwner ? '<br><small style="color: #28a745;">👤 ' + subTopic.fileOwner + '</small>' : '') : ''}
                             ${hasSubTopics ? '<br><small style="color: #28a745;">📁 ' + subTopic.subTopics.length + ' תתי נושאים</small>' : ''}
                         </div>
                         <div class="topic-actions">
@@ -1794,6 +1837,7 @@
         function saveSubTopic(topicId, subTopicId) {
             const newName = document.getElementById(`edit-sub-topic-name-${subTopicId}`).value.trim();
             const newLink = document.getElementById(`edit-sub-topic-link-${subTopicId}`).value.trim();
+			const newOwner = document.getElementById(`edit-sub-topic-owner-${subTopicId}`).value.trim();
             
             if (newName) {
                 const topic = appData.mainTopics.find(t => t.id === topicId);
@@ -1802,6 +1846,7 @@
                 if (subTopic) {
                     subTopic.name = newName;
                     subTopic.driveLink = newLink;
+					subTopic.fileOwner = newOwner;
                     editingSubTopic = null;
                     
                     saveDataToFirebase();
@@ -1873,11 +1918,13 @@
                 const parentSelect = document.getElementById('parent-select');
                 const nameInput = document.getElementById('new-sub-topic');
                 const linkInput = document.getElementById('new-drive-link');
+				const ownerInput = document.getElementById('new-file-owner');
                 
                 const topicId = parseInt(topicSelect.value);
                 const parentId = parentSelect.value ? parseInt(parentSelect.value) : null;
                 const name = nameInput.value.trim();
                 const driveLink = linkInput.value.trim();
+				const fileOwner = ownerInput.value.trim();
                 
                 if (!topicId || isNaN(topicId)) {
                     alert('אנא בחר נושא ראשי');
@@ -1906,6 +1953,7 @@
                     id: newId,
                     name: name,
                     driveLink: driveLink || '',
+					fileOwner: fileOwner || '',
                     subTopics: []
                 };
                 
@@ -1924,6 +1972,7 @@
                 
                 nameInput.value = '';
                 linkInput.value = '';
+				ownerInput.value = '';
                 
                 saveDataToFirebase();
                 renderParentSelect();
@@ -2002,7 +2051,7 @@
             }
         }
 
-        // אירועי מקלדת
+        // אירועי מקלדת - מתוקן
         document.addEventListener('DOMContentLoaded', function() {
             // Enter בשדה הערה
             document.getElementById('comment-input').addEventListener('keypress', function(e) {
@@ -2033,7 +2082,15 @@
                 }
             });
 
+            // Enter בקישור גוגל דרייב - מתוקן
             document.getElementById('new-drive-link').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('new-file-owner').focus();
+                }
+            });
+
+            // Enter בשם בעל הקובץ - חדש
+            document.getElementById('new-file-owner').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     addSubTopic();
                 }
@@ -2052,4 +2109,3 @@
     </script>
 </body>
 </html>
-                
