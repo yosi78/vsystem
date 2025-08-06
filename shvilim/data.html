@@ -676,7 +676,7 @@
     <div class="container">
         <div class="header">
             <h1>מאגר מידע למורות</h1>
-            <p>version 0.3 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
+            <p>version 0.4 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span></p>
         </div>
 
         <div class="content">
@@ -769,7 +769,31 @@
                         • שחרר על האזור הירוק כדי להזיז לרמה הראשונה<br>
                         • לחץ שוב על כפתור הגרירה כדי לצאת מהמצב
                     </div>
-
+			
+					<div class="admin-section">
+                        <h3>🔐 שינוי סיסמת מנהל</h3>
+                        <div class="password-change-section" style="background: #fff3cd; padding: 15px; border-radius: 10px; border: 1px solid #ffeaa7;">
+                            <div id="password-change-error" class="error" style="display: none;"></div>
+                            <div id="password-change-success" class="success" style="display: none;"></div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px;">
+                                <input type="password" class="add-input" id="current-password" placeholder="סיסמה נוכחית" style="margin-bottom: 10px;">
+                                <input type="password" class="add-input" id="new-password" placeholder="סיסמה חדשה" style="margin-bottom: 10px;">
+                                <input type="password" class="add-input" id="confirm-password" placeholder="אימוד סיסמה חדשה" style="margin-bottom: 15px;">
+                                <button class="btn" onclick="changeAdminPassword()" id="change-password-btn" style="background: #dc3545; font-size: 1rem; padding: 12px 20px; align-self: flex-start;">
+                                    שנה סיסמה
+                                </button>
+                            </div>
+                            
+                            <div style="margin-top: 15px; font-size: 0.9em; color: #856404;">
+                                <strong>הנחיות לסיסמה חזקה:</strong><br>
+                                • לפחות 6 תווים<br>
+                                • הימנע מסיסמאות פשוטות כמו "123456" או "password"<br>
+                                • אל תשתף את הסיסמה עם אחרים
+                            </div>
+                        </div>
+                    </div>
+		
                     <div class="admin-section">
                         <h3>נושאים ראשיים</h3>
                         <div id="main-topics-list">
@@ -861,7 +885,40 @@
                 return false;
             }
         }
+		// פונקציה להצפנת סיסמה
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
 
+        // פונקציה לשמירת סיסמה ראשונית
+        async function setInitialAdminPassword() {
+            if (!firebaseInitialized) {
+                console.error('Firebase לא מחובר - לא ניתן לשמור סיסמה');
+                return;
+            }
+            
+            try {
+                // בדוק אם כבר יש סיסמה
+                const snapshot = await database.ref('adminPassword').once('value');
+                if (snapshot.exists()) {
+                    console.log('סיסמת מנהל כבר קיימת בבסיס הנתונים');
+                    return;
+                }
+                
+                // הצפן ושמור את הסיסמה הקיימת
+                const hashedPassword = await hashPassword('n0987');
+                await database.ref('adminPassword').set(hashedPassword);
+                console.log('סיסמת מנהל נשמרה בבסיס הנתונים בהצפנה');
+                
+            } catch (error) {
+                console.error('שגיאה בשמירת סיסמת מנהל:', error);
+            }
+        }
         // עדכון סטטוס חיבור
         function updateConnectionStatus(connected) {
             const statusEl = document.getElementById('connection-status');
@@ -911,6 +968,7 @@
 						saveDataToFirebase();
 					}
 					renderMainTopics();
+					setInitialAdminPassword();
 				})
 				.catch((error) => {
 					console.error('שגיאה בטעינה מ-Firebase:', error);
@@ -1084,8 +1142,7 @@
                         }
                     ]
                 }
-            ],
-            adminPassword: "n0987"
+            ]
         };
 
         let currentMainTopic = null;
@@ -1413,14 +1470,49 @@
         }
 
         // כניסת מנהל
-        function adminLogin() {
-            const password = document.getElementById('admin-password').value;
-            if (password === appData.adminPassword) {
-                showAdminPanel();
-            } else {
-                alert('סיסמה שגויה');
-            }
+        async function adminLogin() {
+    const password = document.getElementById('admin-password').value;
+    const loginBtn = document.querySelector('#login-screen .btn');
+    
+    if (!password.trim()) {
+        alert('אנא הכנס סיסמה');
+        return;
+    }
+    
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'בודק...';
+    
+    try {
+        if (!firebaseInitialized) {
+            alert('שגיאה: מערכת לא מחוברת לבסיס הנתונים');
+            return;
         }
+        
+        // קבל את הסיסמה המוצפנת מהבסיס
+        const snapshot = await database.ref('adminPassword').once('value');
+        if (!snapshot.exists()) {
+            alert('שגיאה: לא נמצאה סיסמת מנהל');
+            return;
+        }
+        
+        const storedHash = snapshot.val();
+        const enteredHash = await hashPassword(password);
+        
+        if (storedHash === enteredHash) {
+            document.getElementById('admin-password').value = '';
+            showAdminPanel();
+        } else {
+            alert('סיסמה שגויה');
+        }
+        
+    } catch (error) {
+        console.error('שגיאה בבדיקת סיסמה:', error);
+        alert('שגיאה בבדיקת סיסמה');
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'כניסה';
+    }
+}
 
         function showAdminPanel() {
             renderAdminPanel();
@@ -2102,8 +2194,130 @@
                     adminLogin();
                 }
             });
+			// Enter בשדות שינוי סיסמה
+            document.getElementById('current-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('new-password').focus();
+                }
+            });
+            
+            document.getElementById('new-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('confirm-password').focus();
+                }
+            });
+            
+            document.getElementById('confirm-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    changeAdminPassword();
+                }
+            });
         });
+// פונקציה לשינוי סיסמת מנהל
+        async function changeAdminPassword() {
+            const currentPasswordInput = document.getElementById('current-password');
+            const newPasswordInput = document.getElementById('new-password');
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            const changeBtn = document.getElementById('change-password-btn');
+            const errorDiv = document.getElementById('password-change-error');
+            const successDiv = document.getElementById('password-change-success');
+            
+            // נקה הודעות קודמות
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            const currentPassword = currentPasswordInput.value.trim();
+            const newPassword = newPasswordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+            
+            // בדיקות תקינות
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showPasswordError('יש למלא את כל השדות');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showPasswordError('הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showPasswordError('הסיסמה החדשה ואימוד הסיסמה לא תואמים');
+                return;
+            }
+            
+            if (newPassword === currentPassword) {
+                showPasswordError('הסיסמה החדשה חייבת להיות שונה מהנוכחית');
+                return;
+            }
+            
+            changeBtn.disabled = true;
+            changeBtn.textContent = 'משנה סיסמה...';
+            
+            try {
+                if (!firebaseInitialized) {
+                    showPasswordError('שגיאה: מערכת לא מחוברת לבסיס הנתונים');
+                    return;
+                }
+                
+                // בדוק את הסיסמה הנוכחית
+                const snapshot = await database.ref('adminPassword').once('value');
+                if (!snapshot.exists()) {
+                    showPasswordError('שגיאה: לא נמצאה סיסמת מנהל');
+                    return;
+                }
+                
+                const storedHash = snapshot.val();
+                const currentPasswordHash = await hashPassword(currentPassword);
+                
+                if (storedHash !== currentPasswordHash) {
+                    showPasswordError('הסיסמה הנוכחית שגויה');
+                    return;
+                }
+                
+                // הצפן ושמור את הסיסמה החדשה
+                const newPasswordHash = await hashPassword(newPassword);
+                await database.ref('adminPassword').set(newPasswordHash);
+                
+                // נקה את השדות
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+                
+                showPasswordSuccess('הסיסמה שונתה בהצלחה! 🎉');
+                console.log('סיסמת המנהל שונתה בהצלחה');
+                
+            } catch (error) {
+                console.error('שגיאה בשינוי סיסמה:', error);
+                showPasswordError('שגיאה בשינוי הסיסמה. אנא נסה שוב.');
+            } finally {
+                changeBtn.disabled = false;
+                changeBtn.textContent = 'שנה סיסמה';
+            }
+        }
 
+        // פונקציות עזר להצגת הודעות
+        function showPasswordError(message) {
+            const errorDiv = document.getElementById('password-change-error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showPasswordSuccess(message) {
+            const successDiv = document.getElementById('password-change-success');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
         // אתחול האתר
         initApp();
     </script>
