@@ -25,7 +25,7 @@ let appData = {
             name: "ימי חוץ",
             subTopics: [
                 { id: 1, name: "תכנון שנתי", driveLink: "", fileOwner: "", subTopics: [] },
-                { id: 2, name: "חוניכות", driveLink: "", fileOwner: "", subTopics: [] },
+                { id: 2, name: "חונכות", driveLink: "", fileOwner: "", subTopics: [] },
                 { id: 3, name: "מדריכים", driveLink: "", fileOwner: "", subTopics: [] }
             ]
         },
