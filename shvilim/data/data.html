@@ -10,16 +10,69 @@
     <div class="container">
         <div class="header">
             <h1>מאגר מידע למורות</h1>
-            <p>version 0.5 
+            <p>version 0.6 
                 <span id="connection-status" class="status-indicator status-disconnected">מנותק</span>
                 <span id="user-info" class="user-info" style="display: none;"></span>
             </p>
         </div>
 
         <div class="content">
-            <!-- מסך כניסה -->
+            <!-- הודעת הגדרת Firebase -->
+            <div class="firebase-setup" id="firebase-setup">
+                <h3>🔧 הגדרת Firebase נדרשת</h3>
+                <p>כדי שההערות יישמרו ויהיו זמינות לכל המורות, יש צורך בהגדרה קצרה של Firebase.</p>
+                <p>עקבי אחרי ההוראות למטה כדי להפעיל את המערכת במלואה.</p>
+            </div>
+
+            <!-- מסך כניסה ראשוני -->
             <div id="auth-screen" class="screen active">
-                <!-- טפסי התחברות/הרשמה -->
+                <div class="auth-container">
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" onclick="showAuthTab('login')">התחברות</button>
+                        <button class="auth-tab" onclick="showAuthTab('register')">הרשמה</button>
+                    </div>
+
+                    <!-- טופס התחברות -->
+                    <div id="login-form" class="auth-form active">
+                        <h2>🔐 התחברות למערכת</h2>
+                        <div id="login-error" class="error" style="display: none;"></div>
+                        
+                        <input type="email" class="auth-input" id="login-email" placeholder="כתובת אימייל" required>
+                        <input type="password" class="auth-input" id="login-password" placeholder="סיסמה" required>
+                        
+                        <button class="auth-btn" id="login-btn" onclick="loginUser()">התחבר</button>
+                        
+                        <div class="auth-links">
+                            <a href="#" onclick="showForgotPassword()">שכחתי סיסמה</a>
+                        </div>
+                    </div>
+
+                    <!-- טופס הרשמה -->
+                    <div id="register-form" class="auth-form">
+                        <h2>📝 הרשמה למערכת</h2>
+                        <div id="register-error" class="error" style="display: none;"></div>
+                        <div id="register-success" class="success" style="display: none;"></div>
+                        
+                        <input type="text" class="auth-input" id="register-name" placeholder="שם מלא" required>
+                        <input type="email" class="auth-input" id="register-email" placeholder="כתובת אימייל" required>
+                        <input type="password" class="auth-input" id="register-password" placeholder="סיסמה (לפחות 6 תווים)" required>
+                        <input type="password" class="auth-input" id="register-confirm" placeholder="אימות סיסמה" required>
+                        
+                        <button class="auth-btn" id="register-btn" onclick="registerUser()">הרשם</button>
+                    </div>
+
+                    <!-- טופס איפוס סיסמה -->
+                    <div id="forgot-form" class="auth-form">
+                        <h2>🔄 איפוס סיסמה</h2>
+                        <div id="forgot-error" class="error" style="display: none;"></div>
+                        <div id="forgot-success" class="success" style="display: none;"></div>
+                        
+                        <input type="email" class="auth-input" id="forgot-email" placeholder="כתובת אימייל" required>
+                        
+                        <button class="auth-btn" id="forgot-btn" onclick="resetPassword()">שלח קישור איפוס</button>
+                        <button class="auth-btn secondary" onclick="showAuthTab('login')">חזור להתחברות</button>
+                    </div>
+                </div>
             </div>
 
             <!-- מסך ראשי -->
@@ -28,7 +81,11 @@
                     <span id="welcome-message">שלום, </span>
                     <button class="logout-btn" onclick="logoutUser()">התנתק</button>
                 </div>
-                <div class="main-buttons" id="main-buttons"></div>
+                
+                <div class="main-buttons" id="main-buttons">
+                    <!-- הכפתורים יתווספו כאן דינמית -->
+                </div>
+                
                 <div style="text-align: center; margin-top: 30px;" id="admin-section">
                     <button class="btn" onclick="showAdminLogin()" style="background: #6c757d; font-size: 1rem; padding: 10px 20px;">
                         ניהול
@@ -37,10 +94,44 @@
             </div>
 
             <!-- מסך תתי נושאים -->
-            <div id="sub-screen" class="screen"></div>
+            <div id="sub-screen" class="screen">
+                <button class="back-btn" onclick="navigateBack()">← חזרה</button>
+                <div class="breadcrumb" id="breadcrumb"></div>
+                <h2 id="sub-title"></h2>
+                <div class="sub-buttons" id="sub-buttons">
+                    <!-- תתי הנושאים יתווספו כאן -->
+                </div>
+            </div>
 
             <!-- מסך משאב -->
-            <div id="resource-screen" class="screen"></div>
+            <div id="resource-screen" class="screen">
+                <button class="back-btn" onclick="navigateBack()">← חזרה</button>
+                <div class="breadcrumb" id="resource-breadcrumb"></div>
+                <h2 id="resource-title"></h2>
+                
+                <div class="resource-section">
+                    <a href="#" id="drive-link" class="drive-link" target="_blank">
+                        🔗 פתח קובץ בגוגל דרייב
+                    </a>
+                    <div id="file-owner-display" style="margin-top: 10px; font-size: 1rem; color: #333;"></div>
+                    
+                    <div class="comment-section">
+                        <h3>הערות וביקורת</h3>
+                        
+                        <div id="comment-error" class="error" style="display: none;"></div>
+                        <div id="comment-success" class="success" style="display: none;"></div>
+                        
+                        <div class="comment-form">
+                            <textarea class="comment-input" id="comment-input" placeholder="הכנסי הערה או ביקורת..."></textarea>
+                            <button class="send-btn" id="send-btn" onclick="addComment()">שלח</button>
+                        </div>
+                        
+                        <div class="comments-list" id="comments-list">
+                            <div class="loading">טוען הערות...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- מסך מנהל -->
             <div id="admin-screen" class="screen">
@@ -49,7 +140,10 @@
                 
                 <div class="admin-panel">
                     <!-- מצב גרירה -->
-                    <button class="drag-mode-toggle" id="drag-mode-toggle" onclick="toggleDragMode()">🔄 הפעל מצב גרירה</button>
+                    <button class="drag-mode-toggle" id="drag-mode-toggle" onclick="toggleDragMode()">
+                        🔄 הפעל מצב גרירה
+                    </button>
+                    
                     <div class="drag-instructions" id="drag-instructions">
                         <strong>🎯 מצב גרירה פעיל!</strong><br>
                         • גרור נושאים באמצעות כפתור ה"⋮⋮"<br>
@@ -60,7 +154,9 @@
 
                     <div class="admin-section">
                         <h3>נושאים ראשיים</h3>
-                        <div id="main-topics-list"></div>
+                        <div id="main-topics-list">
+                            <!-- רשימת נושאים ראשיים -->
+                        </div>
                         <div class="add-form">
                             <input type="text" class="add-input" id="new-main-topic" placeholder="נושא חדש">
                             <button class="add-btn" onclick="addMainTopic()">הוסף</button>
@@ -71,7 +167,7 @@
                         <h3>תתי נושאים</h3>
                         <div class="level-selector">
                             <label>בחר נושא ראשי:</label>
-                            <select id="topic-select" class="add-input">
+                            <select id="topic-select" class="add-input" style="margin-bottom: 10px;">
                                 <option value="">בחר נושא ראשי</option>
                             </select>
                         </div>
@@ -82,8 +178,10 @@
                                 <option value="">ללא נושא עליון (רמה ראשונה)</option>
                             </select>
                         </div>
-
-                        <div id="sub-topics-list"></div>
+                        
+                        <div id="sub-topics-list">
+                            <!-- רשימת תתי נושאים -->
+                        </div>
                         <div class="add-form">
                             <input type="text" class="add-input" id="new-sub-topic" placeholder="תת נושא חדש">
                             <input type="text" class="add-input" id="new-drive-link" placeholder="קישור לגוגל דרייב (רק אם זה מסמך סופי)">
