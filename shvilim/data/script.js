@@ -944,12 +944,143 @@ function addSubTopicUnder(mainTopicId, parentId, newSubTopic) {
     }
 }
 
+// פונקציות חסרות מהקובץ המקורי
 function addSubTopicAfter(mainTopicId, targetId, newSubTopic) {
     const mainTopic = appData.mainTopics.find(t => t.id === mainTopicId);
     if (!mainTopic) return;
     
     if (!mainTopic.subTopics) mainTopic.subTopics = [];
     mainTopic.subTopics.push(newSubTopic);
+}
+
+// גרירת תתי נושאים מתוקנת
+function setupDropZone(element, targetData) {
+    element.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (draggedElement && draggedElement !== element) {
+            element.classList.add('drag-over');
+        }
+    });
+    
+    element.addEventListener('dragleave', (e) => {
+        element.classList.remove('drag-over');
+    });
+    
+    element.addEventListener('drop', (e) => {
+        e.preventDefault();
+        element.classList.remove('drag-over');
+        
+        if (!draggedData) return;
+        
+        if (draggedData.isMainTopic) return; // רק תתי נושאים
+        
+        const { subTopicId: draggedId, mainTopicId: draggedMainId } = draggedData;
+        const { subTopicId: targetId, mainTopicId: targetMainId, isNested } = targetData;
+        
+        if (draggedId === targetId) return;
+        
+        moveSubTopic(draggedId, draggedMainId, targetId, targetMainId, isNested);
+    });
+}
+
+// רינדור תתי נושאים מתוקן
+function renderSubTopicsList(subTopics, container, mainTopicId, level = 0) {
+    if (!subTopics) return;
+    
+    subTopics.forEach(subTopic => {
+        if (editingSubTopic && editingSubTopic.id === subTopic.id) {
+            const editDiv = document.createElement('div');
+            editDiv.className = 'edit-form';
+            if (level > 0) editDiv.className += ' nested';
+            editDiv.innerHTML = `
+                <h4>עריכת תת נושא</h4>
+                <input type="text" class="add-input" id="edit-sub-topic-name-${subTopic.id}" value="${subTopic.name}" placeholder="שם תת נושא">
+                <input type="text" class="add-input" id="edit-sub-topic-link-${subTopic.id}" value="${subTopic.driveLink || ''}" placeholder="קישור גוגל דרייב (אופציונלי)">
+                <input type="text" class="add-input" id="edit-sub-topic-owner-${subTopic.id}" value="${subTopic.fileOwner || ''}" placeholder="שם בעל הקובץ (אופציונלי)">
+                <div class="edit-actions">
+                    <button class="save-btn" onclick="saveSubTopic(${mainTopicId}, ${subTopic.id})">שמור</button>
+                    <button class="cancel-btn" onclick="cancelEditSubTopic()">ביטול</button>
+                </div>
+            `;
+            container.appendChild(editDiv);
+        } else {
+            const subTopicDiv = document.createElement('div');
+            subTopicDiv.className = 'topic-item';
+            if (level > 0) subTopicDiv.className += ' nested';
+            
+            const hasSubTopics = subTopic.subTopics && subTopic.subTopics.length > 0;
+            const hasLink = subTopic.driveLink && subTopic.driveLink.trim();
+            
+            let statusText = '';
+            if (hasSubTopics && hasLink) {
+                statusText = ' <span style="color: #28a745;">(קטגוריה + מסמך)</span>';
+            } else if (hasSubTopics) {
+                statusText = ' <span style="color: #007bff;">(קטגוריה)</span>';
+            } else if (hasLink) {
+                statusText = ' <span style="color: #17a2b8;">(מסמך)</span>';
+            } else {
+                statusText = ' <span style="color: #6c757d;">(ריק)</span>';
+            }
+            
+            subTopicDiv.innerHTML = `
+                <div>
+                    <strong>${subTopic.name}</strong>${statusText}
+                    ${hasLink ? '<br><small style="color: #007bff;">🔗 ' + subTopic.driveLink + '</small>' + (subTopic.fileOwner ? '<br><small style="color: #28a745;">👤 ' + subTopic.fileOwner + '</small>' : '') : ''}
+                    ${hasSubTopics ? '<br><small style="color: #28a745;">📁 ' + subTopic.subTopics.length + ' תתי נושאים</small>' : ''}
+                </div>
+                <div class="topic-actions">
+                    <button class="add-nested-btn" onclick="addNestedSubTopic(${subTopic.id})" title="הוסף תת נושא תחת ${subTopic.name}">הוסף תחת</button>
+                    <button class="edit-btn" onclick="editSubTopic(${subTopic.id})" title="ערוך ${subTopic.name}">ערוך</button>
+                    <button class="delete-btn" onclick="deleteSubTopic(${mainTopicId}, ${subTopic.id})" title="מחק ${subTopic.name}">מחק</button>
+                </div>
+            `;
+            container.appendChild(subTopicDiv);
+            
+            // הוסף כפתור גרירה במצב גרירה
+            if (isDragMode) {
+                const dragHandle = document.createElement('button');
+                dragHandle.className = 'drag-handle';
+                dragHandle.innerHTML = '⋮⋮';
+                dragHandle.title = 'גרור לשינוי מיקום';
+                dragHandle.draggable = true;
+                
+                const actionsDiv = subTopicDiv.querySelector('.topic-actions');
+                actionsDiv.insertBefore(dragHandle, actionsDiv.firstChild);
+                
+                // הגדר אירועי גרירה
+                dragHandle.addEventListener('dragstart', (e) => {
+                    draggedData = { subTopicId: subTopic.id, mainTopicId: mainTopicId, isMainTopic: false };
+                    draggedElement = subTopicDiv;
+                    draggedElement.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', '');
+                });
+                
+                dragHandle.addEventListener('dragend', (e) => {
+                    if (draggedElement) {
+                        draggedElement.classList.remove('dragging');
+                    }
+                    document.querySelectorAll('.topic-item, .drop-zone').forEach(item => {
+                        item.classList.remove('drag-over');
+                    });
+                    draggedElement = null;
+                    draggedData = null;
+                });
+                
+                // הגדר אזור הטלה
+                setupDropZone(subTopicDiv, { 
+                    subTopicId: subTopic.id, 
+                    mainTopicId: mainTopicId, 
+                    isNested: true,
+                    isMainTopic: false
+                });
+            }
+            
+            // רנדור תתי נושאים מקוננים
+            if (hasSubTopics) {
+                renderSubTopicsList(subTopic.subTopics, container, mainTopicId, level + 1);
+            }
+        }
+    });
 }
 
 function renderMainTopicsAdmin() {
@@ -1534,9 +1665,91 @@ function toggleDragMode() {
     console.log('החלפת מצב גרירה');
 }
 
+// פונקציות עריכה לנושאים ראשיים - מתוקן מהקובץ המקורי
+function editMainTopic(topicId) {
+    const topic = appData.mainTopics.find(t => t.id === topicId);
+    if (topic) {
+        editingMainTopic = topic;
+        renderMainTopicsAdmin();
+    }
+}
+
+function saveMainTopic(topicId) {
+    const input = document.getElementById(`edit-main-topic-${topicId}`);
+    if (!input) return;
+    
+    const newName = input.value.trim();
+    if (newName) {
+        const topic = appData.mainTopics.find(t => t.id === topicId);
+        if (topic) {
+            topic.name = newName;
+            editingMainTopic = null;
+            saveDataToFirebase();
+            renderMainTopics();
+            renderMainTopicsAdmin();
+            renderTopicSelect();
+            showSuccess('נושא ראשי עודכן בהצלחה!');
+        }
+    } else {
+        showError('שם הנושא לא יכול להיות ריק');
+    }
+}
+
+function cancelEditMainTopic() {
+    editingMainTopic = null;
+    renderMainTopicsAdmin();
+}
+
+function deleteMainTopic(topicId) {
+    const topic = appData.mainTopics.find(t => t.id === topicId);
+    if (!topic) return;
+    
+    const hasSubTopics = topic.subTopics && topic.subTopics.length > 0;
+    let confirmMessage = `האם אתה בטוח שברצונך למחוק את "${topic.name}"?`;
+    
+    if (hasSubTopics) {
+        confirmMessage += `\n\nשים לב: הנושא מכיל ${topic.subTopics.length} תתי נושאים שגם יימחקו!`;
+    }
+    
+    if (confirm(confirmMessage)) {
+        appData.mainTopics = appData.mainTopics.filter(t => t.id !== topicId);
+        saveDataToFirebase();
+        renderMainTopics();
+        renderMainTopicsAdmin();
+        renderTopicSelect();
+        showSuccess(`"${topic.name}" נמחק בהצלחה!`);
+    }
+}
+
+// תיקון hashing ו-admin - הסרה מהקובץ החדש
 function changeAdminPassword() {
     // פונקציה זו הוסרה - שינוי סיסמה מתבצע דרך Firebase Authentication
     console.log('ℹ️ שינוי סיסמה מתבצע דרך Firebase Authentication');
+}
+
+// הוספת setInitialAdminPassword מהקובץ המקורי
+async function setInitialAdminPassword() {
+    if (!firebaseInitialized) {
+        console.error('Firebase לא מחובר - לא ניתן לשמור סיסמה');
+        return;
+    }
+    
+    try {
+        // בדוק אם כבר יש סיסמה
+        const snapshot = await database.ref('adminPassword').once('value');
+        if (snapshot.exists()) {
+            console.log('סיסמת מנהל כבר קיימת בבסיס הנתונים');
+            return;
+        }
+        
+        // הצפן ושמור את הסיסמה הקיימת
+        const hashedPassword = await hashPassword('n0987');
+        await database.ref('adminPassword').set(hashedPassword);
+        console.log('סיסמת מנהל נשמרה בבסיס הנתונים בהצפנה');
+        
+    } catch (error) {
+        console.error('שגיאה בשמירת סיסמת מנהל:', error);
+    }
 }
 
 // הגדרת סיסמת מנהל ראשונית
