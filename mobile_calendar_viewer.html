@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יומן ארגוני</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .view-selector {
+            display: flex;
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 2px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .view-btn {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .view-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 2px 10px rgba(79, 172, 254, 0.3);
+        }
+
+        .view-btn:hover:not(.active) {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+        }
+
+        .refresh-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .calendar-container {
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+            min-height: 600px;
+        }
+
+        .calendar-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            color: #666;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(79, 172, 254, 0.2);
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tips {
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px;
+            color: #333;
+        }
+
+        .tips h3 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .tips ul {
+            list-style: none;
+            padding-right: 20px;
+        }
+
+        .tips li {
+            margin: 8px 0;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .tips li::before {
+            content: "✓";
+            position: absolute;
+            right: 0;
+            color: #4facfe;
+            font-weight: bold;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .container {
+                margin: 5px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .view-selector {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .view-btn {
+                flex: 1;
+                min-width: 0;
+                font-size: 12px;
+                padding: 10px 15px;
+            }
+
+            .calendar-frame {
+                height: 500px;
+            }
+
+            .calendar-container {
+                padding: 10px;
+            }
+
+            .tips {
+                margin: 15px 10px;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .header {
+                padding: 15px 10px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .view-btn {
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+
+            .calendar-frame {
+                height: 450px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            }
+
+            .container {
+                background: rgba(44, 62, 80, 0.95);
+                color: white;
+            }
+
+            .controls {
+                background: rgba(52, 73, 94, 0.8);
+            }
+
+            .calendar-container {
+                background: #34495e;
+            }
+
+            .tips {
+                background: rgba(79, 172, 254, 0.2);
+                color: #ecf0f1;
+            }
+        }
+
+        /* Animation for smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <div class="header">
+            <h1>📅 יומן ארגוני</h1>
+            <p>תצוגה מותאמת לניידים עם ניווט נוח</p>
+        </div>
+
+        <div class="controls">
+            <div class="view-selector">
+                <button class="view-btn active" onclick="changeView('month')">חודש</button>
+                <button class="view-btn" onclick="changeView('week')">שבוע</button>
+                <button class="view-btn" onclick="changeView('agenda')">סדר יום</button>
+            </div>
+            <button class="refresh-btn" onclick="refreshCalendar()">
+                <span>🔄</span>
+                רענון
+            </button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>טוען יומן...</p>
+            </div>
+            <iframe id="calendar" class="calendar-frame" style="display: none;"></iframe>
+        </div>
+
+        <div class="tips">
+            <h3>🔐 בעיות נפוצות ופתרונות:</h3>
+            <ul>
+                <li><strong>היומן לא נטען:</strong> ודא שאתה מחובר לחשבון Google הנכון</li>
+                <li><strong>הודעת שגיאה:</strong> פתח את הקישור בחלון חדש ובצע התחברות</li>
+                <li><strong>גישה נדחית:</strong> בדוק שהיומן מוגדר כציבורי או שיש לך הרשאות</li>
+                <li><strong>תצוגה לא עדכנית:</strong> השתמש בכפתור הרענון</li>
+            </ul>
+            
+            <div style="margin-top: 15px; padding: 10px; background: rgba(52, 152, 219, 0.1); border-radius: 8px; border: 1px solid rgba(52, 152, 219, 0.2);">
+                <strong>💡 עצה:</strong> אם היומן לא נטען, לחץ על הכפתור למטה לפתיחה בחלון נפרד:
+                <br>
+                <button onclick="openInNewWindow()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 8px 0; cursor: pointer; font-size: 14px;">
+                    🚀 פתח יומן בחלון חדש
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base calendar URL
+        const baseUrl = 'https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=Asia%2FJerusalem&showPrint=0&src=eW9zc2kyMkBzaHZpbGltLm9yZw&src=Y19jbGFzc3Jvb205OTZjMGMzNkBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&src=ZW4tZ2IuamV3aXNoI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&src=Y19jbGFzc3Jvb21jNWZhOGEzOUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&src=c2h2aWxpbS5vcmdfZnYwNTRsY25hOHQ3YXN1MmEycG43cmtmcGNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=Y19wcjN1bHRocmFkbWQzZWswNmg3NHFmb3Y2Z0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t&src=Y19jbGFzc3Jvb21lOTllODE5OEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23039be5&color=%23e4c441&color=%230b8043&color=%23202124&color=%234285f4&color=%23795548&color=%231967d2';
+
+        let currentView = 'month';
+        const calendar = document.getElementById('calendar');
+        const loading = document.getElementById('loading');
+
+        // View configurations
+        const viewConfigs = {
+            month: '&mode=MONTH',
+            week: '&mode=WEEK',
+            agenda: '&mode=AGENDA'
+        };
+
+        function changeView(view) {
+            currentView = view;
+            
+            // Update active button
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show loading
+            showLoading();
+            
+            // Update calendar URL
+            const newUrl = baseUrl + viewConfigs[view];
+            
+            setTimeout(() => {
+                calendar.src = newUrl;
+                hideLoading();
+            }, 500);
+        }
+
+        function refreshCalendar() {
+            showLoading();
+            
+            // Force reload by adding timestamp
+            const currentUrl = calendar.src;
+            const separator = currentUrl.includes('?') ? '&' : '?';
+            
+            setTimeout(() => {
+                calendar.src = currentUrl + separator + '_refresh=' + Date.now();
+                hideLoading();
+            }, 500);
+        }
+
+        function showLoading() {
+            loading.style.display = 'flex';
+            calendar.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            calendar.style.display = 'block';
+        }
+
+        // Initialize calendar
+        function initializeCalendar() {
+            showLoading();
+            calendar.src = baseUrl + viewConfigs[currentView];
+            
+            calendar.onload = function() {
+                hideLoading();
+            };
+            
+            // Fallback in case onload doesn't fire
+            setTimeout(() => {
+                hideLoading();
+            }, 3000);
+        }
+
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                refreshCalendar();
+            }, 500);
+        });
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (calendar.src) {
+                    refreshCalendar();
+                }
+            }, 250);
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCalendar();
+        });
+
+        // Add touch support for mobile
+        let startY = 0;
+        
+        calendar.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].clientY;
+        });
+
+        calendar.addEventListener('touchmove', function(e) {
+            // Allow scrolling within the iframe
+            const currentY = e.touches[0].clientY;
+            const diff = startY - currentY;
+            
+            if (Math.abs(diff) > 5) {
+                e.preventDefault();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        changeView('month');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        changeView('week');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        changeView('agenda');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshCalendar();
+                        break;
+                }
+            }
+        });
+
+        // Add smooth scrolling behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        console.log('📅 יומן ארגוני מותאם מובייל נטען בהצלחה!');
+    </script>
+</body>
+</html>
