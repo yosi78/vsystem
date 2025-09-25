@@ -833,7 +833,7 @@
         <div class="header">
             <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
 			<h1>🖥️ מערכת השאלת מחשבים</h1>
-            <p>version 0.3</p>
+            <p>version 0.4</p>
         </div>
         
         <div class="content">
@@ -2582,7 +2582,7 @@
                 });
             }
             
-            return allOccupied;
+			return [...new Set(allOccupied)]; // הסרת כפילויות
         }
 
         // Get Available Computers Count for Date
@@ -3402,6 +3402,14 @@
                 showError('אנא בחר עגלה ומספר המחשבים הנדרש');
                 return;
             }
+            // בדיקה שהמחשבים הנבחרים עדיין זמינים
+const occupiedNow = getOccupiedComputersMultiCart(selectedCart, currentLoan.loanDate, currentLoan.loanTime);
+const conflictingComputers = selectedComputers.filter(comp => occupiedNow.includes(comp));
+if (conflictingComputers.length > 0) {
+    showError(`המחשבים הבאים כבר תפוסים: ${conflictingComputers.join(', ')}`);
+    updateAvailableComputers(); // רענן את התצוגה
+    return;
+}
             
             const baseLoan = {
                 id: Date.now(),
@@ -3452,7 +3460,25 @@
                 showError('אנא בחר את מספר המחשבים הנדרש מהעגלות השונות');
                 return;
             }
-            
+            // בדיקה שכל המחשבים הנבחרים עדיין זמינים
+let hasConflicts = false;
+const conflictingComputers = [];
+
+Object.keys(selectedCarts).forEach(cartId => {
+    const occupiedNow = getOccupiedComputersMultiCart(cartId, currentLoan.loanDate, currentLoan.loanTime);
+    const cartConflicts = selectedCarts[cartId].filter(comp => occupiedNow.includes(comp));
+    
+    if (cartConflicts.length > 0) {
+        hasConflicts = true;
+        conflictingComputers.push(...cartConflicts);
+    }
+});
+
+if (hasConflicts) {
+    showError(`המחשבים הבאים כבר תפוסים: ${conflictingComputers.join(', ')}`);
+    setupMultiCartContainer(); // רענן את התצוגה
+    return;
+}
             const cleanCartSelections = {};
             Object.keys(selectedCarts).forEach(cartId => {
                 if (selectedCarts[cartId].length > 0) {
