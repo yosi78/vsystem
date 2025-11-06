@@ -515,3 +515,10 @@ async function isDateFullyBooked(date) {
 
 // הפיכת הפונקציה לגלובלית לשימוש ב-HTML
 window.deleteBooking = deleteBooking;
+
+// ===== אתחול האפליקציה =====
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFirebase();
+    setupEventListeners();
+    setupDateInputs();
+});
