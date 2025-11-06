@@ -4,7 +4,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDSM34F-l_Zt-MQmAbGWi-AHg-rInIJzhs",
   authDomain: "computer-room-booking.firebaseapp.com",
   projectId: "computer-room-booking",
-  storageBucket: "computer-room-booking.firebasestorage.app",
+  storageBucket: "https://computer-room-booking.firebasestorage.app",
   messagingSenderId: "1033131890195",
   appId: "1:1033131890195:web:9a497ab2da156d07c491e6",
   measurementId: "G-C24BG9R15L"
