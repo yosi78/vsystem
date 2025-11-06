@@ -3,12 +3,14 @@
 const firebaseConfig = {
   apiKey: "AIzaSyDSM34F-l_Zt-MQmAbGWi-AHg-rInIJzhs",
   authDomain: "computer-room-booking.firebaseapp.com",
+  databaseURL: "https://computer-room-booking-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "computer-room-booking",
-  storageBucket: "https://computer-room-booking.firebasestorage.app",
+  storageBucket: "computer-room-booking.firebasestorage.app",
   messagingSenderId: "1033131890195",
   appId: "1:1033131890195:web:9a497ab2da156d07c491e6",
   measurementId: "G-C24BG9R15L"
 };
+
 
 // ===== משתנים גלובליים =====
 const ADMIN_PASSWORD = "n0987";
