@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת השאלת מחשבים</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
+			<h1>🖥️ מערכת השאלת מחשבים</h1>
+            <p>version 0.4</p>
+        </div>
+        
+        <div class="content">
+            <!-- מסך ראשי -->
+            <div id="mainScreen" class="screen active">
+                <div class="main-options">
+                    <h2>בחרי פעולה</h2>
+                    <button class="option-btn" id="loanBtn">
+                        📝 השאלת מחשבים
+                    </button>
+                    <button class="option-btn return" id="returnBtn">
+                        ↩️ החזרת מחשבים
+                    </button>
+                    <button class="option-btn" id="managementBtn" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2);">
+                        ⚙️ ניהול
+                    </button>
+                </div>
+            </div>
+            
+            <!-- מסך 1: פרטי מורה -->
+            <div id="teacherScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                    <div class="step">3</div>
+                </div>
+                
+                <h2 class="screen-title">פרטי המורה</h2>
+                
+                <div class="form-group">
+                    <label for="teacherName">שם המורה:</label>
+                    <select id="teacherName" required>
+                        <option value="">בחרי מורה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacherClass">כיתה:</label>
+                    <select id="teacherClass" required>
+                        <option value="">בחרי כיתה...</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMain1">חזרה</button>
+                    <button class="btn btn-primary" id="nextToDate">הבא</button>
+                </div>
+            </div>
+            
+            <!-- מסך 2: תאריך ושעה -->
+            <div id="dateScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step completed">1</div>
+                    <div class="step active">2</div>
+                    <div class="step">3</div>
+                </div>
+                
+                <h2 class="screen-title">תאריך ושעת השאלה</h2>
+                
+                <div class="form-group">
+                    <label for="loanDate">תאריך השאלה:</label>
+                    <input type="date" id="loanDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loanTime">שעת השאלה:</label>
+                    <select id="loanTime" required>
+                        <option value="">בחרי שעה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="computerCount">מספר מחשבים מבוקש:</label>
+                    <select id="computerCount" required>
+                        <option value="">בחרי כמות...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expectedReturnTime">שעת החזרה מתוכננת:</label>
+                    <select id="expectedReturnTime" required>
+                        <option value="">בחרי שעה...</option>
+                    </select>
+                </div>
+
+                <!-- חלק חדש - השאלה קבועה -->
+                <div class="recurring-loan-section" id="recurringSection">
+                    <div class="recurring-checkbox-container">
+                        <input type="checkbox" id="isRecurringLoan" class="recurring-checkbox">
+                        <label for="isRecurringLoan" class="recurring-label">🔄 השאלה קבועה</label>
+                    </div>
+                    
+                    <div class="recurring-info" id="recurringInfo">
+                        <strong>💡 השאלה קבועה:</strong><br>
+                        המחשבים יהיו שמורים אוטומטית כל שבוע באותו יום ושעה.<br>
+                        לדוגמה: אם תבחרי יום רביעי בשעה 09:00, המחשבים יהיו תפוסים בכל יום רביעי בשעה זו.
+                    </div>
+
+                    <div class="recurring-warning" id="recurringWarning">
+                        ⚠️ <strong>שימי לב:</strong> השאלה קבועה תחסום את המחשבים בכל השבועות הבאים!<br>
+                        וודאי שזה באמת נדרש לפני שתמשיכי.
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToTeacher">חזרה</button>
+                    <button class="btn btn-primary" id="nextToComputer">הבא</button>
+                </div>
+            </div>
+            
+            <!-- מסך 3: בחירת מחשבים -->
+            <div id="computerScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step completed">1</div>
+                    <div class="step completed">2</div>
+                    <div class="step active">3</div>
+                </div>
+                
+                <h2 class="screen-title">בחירת מחשבים</h2>
+                
+                <!-- מסך בחירה רגיל מעגלה אחת -->
+                <div id="singleCartSelection">
+                    <div class="form-group">
+                        <label for="cartSelect">עגלה:</label>
+                        <select id="cartSelect" required>
+                            <option value="">בחרי עגלה...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="computer-section" id="computerSection" style="display: none;">
+                        <h4>בחר מחשבים זמינים:</h4>
+                        <div class="computer-count-info" id="computerCountInfo">
+                            נבחרו: 0 מתוך <span id="requiredCount">0</span>
+                        </div>
+                        <div class="computer-grid" id="computerGrid"></div>
+                    </div>
+                </div>
+
+                <!-- מסך בחירה מכמה עגלות -->
+                <div id="multiCartSelection" style="display: none;">
+                    <div class="availability-warning" id="availabilityWarning">
+                        ⚠️ אין מספיק מחשבים זמינים בעגלה אחת. אנא בחר מכמה עגלות:
+                    </div>
+                    
+                    <div class="multi-cart-section">
+                        <h4>בחירת עגלות ומחשבים:</h4>
+                        <div id="multiCartContainer"></div>
+                        
+                        <div class="computer-count-info" id="multiComputerCountInfo">
+                            נבחרו: 0 מתוך <span id="multiRequiredCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToDate">חזרה</button>
+                    <button class="btn btn-primary" id="submitLoan" disabled>שלחי</button>
+                </div>
+            </div>
+            
+            <!-- מסך סיסמת ניהול -->
+            <div id="passwordScreen" class="screen">
+                <h2 class="screen-title">🔒 הזדהות מנהל</h2>
+                
+                <div class="form-group">
+                    <label for="adminPassword">הכנס סיסמת ניהול:</label>
+                    <input type="password" id="adminPassword" placeholder="סיסמה...">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromPassword">חזרה</button>
+                    <button class="btn btn-primary" id="submitPassword">כניסה</button>
+                </div>
+            </div>
+            
+            <!-- מסך ניהול -->
+            <div id="managementScreen" class="screen">
+                <h2 class="screen-title">⚙️ מסך ניהול</h2>
+                
+                <!-- טאבים לניהול -->
+                <div class="management-tabs">
+                    <button class="management-tab active" onclick="switchManagementTab('overview')">📊 סקירה</button>
+                    <button class="management-tab" onclick="switchManagementTab('teachers')">👩‍🏫 מורות</button>
+                    <button class="management-tab" onclick="switchManagementTab('times')">⏰ שעות</button>
+                    <button class="management-tab" onclick="switchManagementTab('carts')">🛒 עגלות</button>
+                    <button class="management-tab" onclick="switchManagementTab('computers')">🖥️ מחשבים</button>
+                    <button class="management-tab" onclick="switchManagementTab('reports')">📋 דוחות</button>
+                </div>
+
+                <!-- תוכן הסקירה -->
+                <div id="overviewContent" class="management-content active">
+                    <!-- סטטיסטיקות כלליות -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalComputers">0</div>
+                            <div class="stat-label">סה"כ מחשבים</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="loanedComputers">0</div>
+                            <div class="stat-label">מושאלים כרגע</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="availableComputers">0</div>
+                            <div class="stat-label">זמינים</div>
+                        </div>
+                    </div>
+                    
+                    <!-- השאלות נוכחיות -->
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #f57c00; margin-bottom: 10px;">🔄 השאלות פעילות כרגע</h3>
+                        <div id="currentLoans">
+                            <div style="text-align: center; color: #999; font-style: italic;">אין השאלות פעילות</div>
+                        </div>
+                    </div>
+                    
+                    <!-- השאלות קבועות -->
+                    <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #7b1fa2; margin-bottom: 10px;">🔄 השאלות קבועות</h3>
+                        <div id="recurringLoans">
+                            <div style="text-align: center; color: #999; font-style: italic;">אין השאלות קבועות</div>
+                        </div>
+                    </div>
+                    
+                    <!-- השאלות עתידיות -->
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #2e7d32; margin-bottom: 10px;">📅 השאלות עתידיות</h3>
+                        <div id="futureLoans">
+                            <div style="text-align: center; color: #999; font-style: italic;">אין השאלות מתוכננות</div>
+                        </div>
+                    </div>
+                    
+                    <!-- פירוט לפי עגלות -->
+                    <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #7b1fa2; margin-bottom: 10px;">🛒 מצב עגלות</h3>
+                        <div id="cartStatus"></div>
+                    </div>
+                </div>
+
+                <!-- תוכן ניהול מורות -->
+                <div id="teachersContent" class="management-content">
+                    <div class="config-section">
+                        <h3>👩‍🏫 ניהול מורות</h3>
+                        
+                        <div class="config-form" id="teacherForm" style="display: none;">
+                            <h4 id="teacherFormTitle">הוספת מורה חדשה</h4>
+                            <div class="form-group">
+                                <label for="teacherNameInput">שם המורה:</label>
+                                <input type="text" id="teacherNameInput" placeholder="הכנס שם מורה...">
+                            </div>
+                            <div class="form-group">
+                                <label for="teacherClassInput">כיתה:</label>
+                                <select id="teacherClassInput">
+                                    <option value="">בחר כיתה...</option>
+                                </select>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-secondary" onclick="cancelTeacherForm()">ביטול</button>
+                                <button class="btn btn-success" onclick="saveTeacher()">שמור</button>
+                            </div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="showAddTeacherForm()">➕ הוסף מורה</button>
+                        </div>
+                        
+                        <div class="list-container" id="teachersList">
+                            <!-- מורות יוצגו כאן -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן ניהול שעות -->
+                <div id="timesContent" class="management-content">
+                    <div class="config-section">
+                        <h3>⏰ ניהול שעות השאלה</h3>
+                        
+                        <div class="config-form" id="timeForm" style="display: none;">
+                            <h4 id="timeFormTitle">הוספת שעה חדשה</h4>
+                            <div class="form-group">
+                                <label for="timeInput">שעה:</label>
+                                <input type="time" id="timeInput">
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-secondary" onclick="cancelTimeForm()">ביטול</button>
+                                <button class="btn btn-success" onclick="saveTime()">שמור</button>
+                            </div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="showAddTimeForm()">➕ הוסף שעה</button>
+                        </div>
+                        
+                        <div class="list-container" id="timesList">
+                            <!-- שעות יוצגו כאן -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן ניהול עגלות -->
+                <div id="cartsContent" class="management-content">
+                    <div class="config-section">
+                        <h3>🛒 ניהול עגלות</h3>
+                        
+                        <div class="config-form" id="cartForm" style="display: none;">
+                            <h4 id="cartFormTitle">הוספת עגלה חדשה</h4>
+                            <div class="form-group">
+                                <label for="cartNameInput">שם העגלה:</label>
+                                <input type="text" id="cartNameInput" placeholder="למשל: עגלה #1">
+                            </div>
+                            <div class="form-group">
+                                <label for="cartDescriptionInput">תיאור:</label>
+                                <input type="text" id="cartDescriptionInput" placeholder="למשל: CHROME BOOKS">
+                            </div>
+                            <div class="form-group">
+                                <label for="cartPrefixInput">קידומת מחשבים:</label>
+                                <input type="text" id="cartPrefixInput" placeholder="למשל: #1">
+                            </div>
+                            <div class="form-group">
+                                <label for="cartCountInput">מספר מחשבים:</label>
+                                <input type="number" id="cartCountInput" min="1" max="50" placeholder="24">
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-secondary" onclick="cancelCartForm()">ביטול</button>
+                                <button class="btn btn-success" onclick="saveCart()">שמור</button>
+                            </div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="showAddCartForm()">➕ הוסף עגלה</button>
+                        </div>
+                        
+                        <div class="list-container" id="cartsList">
+                            <!-- עגלות יוצגו כאן -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן ניהול מחשבים -->
+                <div id="computersContent" class="management-content">
+                    <div class="config-section">
+                        <h3>🖥️ ניהול מחשבים</h3>
+                        
+                        <div class="form-group">
+                            <label for="cartSelectForComputers">בחר עגלה:</label>
+                            <select id="cartSelectForComputers" onchange="loadComputersForCart()">
+                                <option value="">בחר עגלה...</option>
+                            </select>
+                        </div>
+                        
+                        <div id="computerManagementSection" style="display: none;">
+                            <div class="config-form" id="computerForm" style="display: none;">
+                                <h4 id="computerFormTitle">הוספת מחשב חדש</h4>
+                                <div class="form-group">
+                                    <label for="computerNameInput">שם המחשב:</label>
+                                    <input type="text" id="computerNameInput" placeholder="למשל: #1-001">
+                                </div>
+                                <div class="button-group">
+                                    <button class="btn btn-secondary" onclick="cancelComputerForm()">ביטול</button>
+                                    <button class="btn btn-success" onclick="saveComputer()">שמור</button>
+                                </div>
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="showAddComputerForm()">➕ הוסף מחשב</button>
+                                <button class="btn btn-warning" onclick="regenerateComputers()">🔄 יצור מחדש</button>
+                            </div>
+                            
+                            <div class="list-container" id="computersList">
+                                <!-- מחשבים יוצגו כאן -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- תוכן דוחות -->
+                <div id="reportsContent" class="management-content">
+                    <div class="config-section">
+                        <h3>📋 דוחות</h3>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalReturns">0</div>
+                                <div class="stat-label">סה"כ החזרות</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="returnsWithNotes">0</div>
+                                <div class="stat-label">החזרות עם הערות</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="activeLoansCount">0</div>
+                                <div class="stat-label">השאלות פעילות</div>
+                            </div>
+                        </div>
+
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <h4 style="color: #1976d2; margin-bottom: 15px;">📊 ייצוא דוחות</h4>
+                            
+                            <div class="form-group">
+                                <label for="reportDateFrom">מתאריך:</label>
+                                <input type="date" id="reportDateFrom">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reportDateTo">עד תאריך:</label>
+                                <input type="date" id="reportDateTo">
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="exportReturnNotesToExcel()">
+                                    📊 ייצא הערות החזרה לאקסל
+                                </button>
+                                <button class="btn btn-info" onclick="exportAllLoansToExcel()">
+                                    📋 ייצא כל ההשאלות לאקסל
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="background: #fff3e0; padding: 20px; border-radius: 12px;">
+                            <h4 style="color: #f57c00; margin-bottom: 15px;">📝 הערות החזרה האחרונות</h4>
+                            <div id="recentReturnNotes">
+                                <!-- הערות יוצגו כאן -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromManagement">חזרה לתפריט הראשי</button>
+                    <button class="btn btn-primary" id="refreshManagement">🔄 רענון נתונים</button>
+                </div>
+            </div>
+            
+            <!-- מסך החזרה - שלב 1: בחירת מורה -->
+            <div id="returnTeacherScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                </div>
+                
+                <h2 class="screen-title">החזרת מחשבים - בחירת מורה</h2>
+                
+                <div class="form-group">
+                    <label for="returnTeacher">איזו מורה מחזירה מחשבים:</label>
+                    <select id="returnTeacher" required>
+                        <option value="">בחרי מורה...</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToMainFromReturn1">חזרה</button>
+                    <button class="btn btn-primary" id="nextToReturnLoanSelect">הבא</button>
+                </div>
+            </div>
+            
+            <!-- מסך החזרה - שלב 2: בחירת השאלה -->
+            <div id="returnLoanSelectScreen" class="screen">
+                <div class="step-indicator">
+                    <div class="step completed">1</div>
+                    <div class="step active">2</div>
+                </div>
+                
+                <h2 class="screen-title">בחירת השאלה להחזרה</h2>
+                
+                <div class="form-group">
+                    <label>השאלות פעילות של <span id="selectedTeacherName"></span>:</label>
+                    <div class="loans-list" id="activeLoansList">
+                        <div class="no-loans">טוענת השאלות...</div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="returnDetailsSection" style="display: none;">
+                    <label for="returnDate">תאריך החזרה:</label>
+                    <input type="date" id="returnDate" required>
+                </div>
+                
+                <div class="form-group" id="returnTimeSection" style="display: none;">
+                    <label for="returnTime">שעת החזרה:</label>
+                    <select id="returnTime" required>
+                        <option value="">בחרי שעה...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="returnNotesSection" style="display: none;">
+                    <label for="returnNotes">הערות (אופציונלי):</label>
+                    <textarea id="returnNotes" rows="3" placeholder="הערות נוספות..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" id="backToReturnTeacher">חזרה</button>
+                    <button class="btn btn-primary" id="submitReturn" disabled>אשרי החזרה</button>
+                </div>
+            </div>
+            
+            <!-- מסך הצלחה -->
+            <div id="successScreen" class="screen">
+                <div class="success-content">
+                    <div class="success-icon">✅</div>
+                    <h2 id="successTitle">אושרה הבקשה!</h2>
+                    <p id="successMessage">הבקשה נשלחה בהצלחה ונרשמה במערכת.</p>
+                    <button class="btn btn-primary" id="backToMainSuccess">חזרה לתפריט הראשי</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <a href="mailto:yosiel3@gmail.com?subject=בנוגע למערכת השאלת מחשבים&body=שלום יוסי," class="footer-name">ByteLogicx</a>
+            <div class="footer-copyright">© 2023 כל הזכויות שמורות</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
