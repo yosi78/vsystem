@@ -31,6 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== אתחול Firebase =====
 function initializeFirebase() {
+    // בדיקה שהאלמנטים קיימים
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('connectionText');
+    
+    if (!statusDot || !statusText) {
+        console.error('לא נמצאו אלמנטי סטטוס בדף');
+        return;
+    }
+    
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
