@@ -10,6 +10,7 @@ const firebaseConfig = {
   measurementId: "G-C24BG9R15L"
 };
 
+
 // ===== משתנים גלובליים =====
 const ADMIN_PASSWORD = "n0987";
 const HOURS = ["8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
@@ -20,6 +21,13 @@ let currentTeacher = "";
 let selectedDate = "";
 let selectedHour = "";
 let weeklySchedule = {};
+
+// ===== אתחול =====
+document.addEventListener('DOMContentLoaded', () => {
+    initializeFirebase();
+    setupEventListeners();
+    setupDateInputs();
+});
 
 // ===== אתחול Firebase =====
 function initializeFirebase() {
@@ -39,6 +47,9 @@ function initializeFirebase() {
         // מעקב אחר סטטוס החיבור
         const connectedRef = db.ref('.info/connected');
         connectedRef.on('value', (snapshot) => {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('connectionText');
+            
             if (snapshot.val() === true) {
                 statusDot.className = 'status-dot connected';
                 statusText.textContent = 'מחובר לענן ✓';
@@ -53,6 +64,8 @@ function initializeFirebase() {
         
     } catch (error) {
         console.error('שגיאה באתחול Firebase:', error);
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('connectionText');
         statusDot.className = 'status-dot error';
         statusText.textContent = 'שגיאת חיבור - בדוק הגדרות Firebase';
     }
@@ -60,88 +73,51 @@ function initializeFirebase() {
 
 // ===== הגדרת מאזיני אירועים =====
 function setupEventListeners() {
-    // בדיקה שכל הכפתורים קיימים
-    const elements = {
-        btnNext1: document.getElementById('btnNext1'),
-        btnBack1: document.getElementById('btnBack1'),
-        btnNext2: document.getElementById('btnNext2'),
-        btnBack2: document.getElementById('btnBack2'),
-        btnConfirm: document.getElementById('btnConfirm'),
-        btnNewBooking: document.getElementById('btnNewBooking'),
-        btnAdmin: document.getElementById('btnAdmin'),
-        btnBackAdmin: document.getElementById('btnBackAdmin'),
-        btnAdminLogin: document.getElementById('btnAdminLogin'),
-        btnLogout: document.getElementById('btnLogout'),
-        btnSaveSchedule: document.getElementById('btnSaveSchedule'),
-        adminDatePicker: document.getElementById('adminDatePicker'),
-        dateInput: document.getElementById('dateInput'),
-        teacherName: document.getElementById('teacherName'),
-        adminPassword: document.getElementById('adminPassword')
-    };
-    
-    // בדיקה שכל האלמנטים קיימים
-    for (const [key, element] of Object.entries(elements)) {
-        if (!element) {
-            console.error(`אלמנט ${key} לא נמצא`);
-            return;
-        }
-    }
-    
     // זרימה ראשית
-    elements.btnNext1.addEventListener('click', goToDateScreen);
-    elements.btnBack1.addEventListener('click', goToLoginScreen);
-    elements.btnNext2.addEventListener('click', goToHoursScreen);
-    elements.btnBack2.addEventListener('click', goToDateScreen);
-    elements.btnConfirm.addEventListener('click', confirmBooking);
-    elements.btnNewBooking.addEventListener('click', goToLoginScreen);
+    document.getElementById('btnNext1').addEventListener('click', goToDateScreen);
+    document.getElementById('btnBack1').addEventListener('click', goToLoginScreen);
+    document.getElementById('btnNext2').addEventListener('click', goToHoursScreen);
+    document.getElementById('btnBack2').addEventListener('click', goToDateScreen);
+    document.getElementById('btnConfirm').addEventListener('click', confirmBooking);
+    document.getElementById('btnNewBooking').addEventListener('click', goToLoginScreen);
     
     // זרימת מנהל
-    elements.btnAdmin.addEventListener('click', goToAdminLoginScreen);
-    elements.btnBackAdmin.addEventListener('click', goToLoginScreen);
-    elements.btnAdminLogin.addEventListener('click', adminLogin);
-    elements.btnLogout.addEventListener('click', goToLoginScreen);
+    document.getElementById('btnAdmin').addEventListener('click', goToAdminLoginScreen);
+    document.getElementById('btnBackAdmin').addEventListener('click', goToLoginScreen);
+    document.getElementById('btnAdminLogin').addEventListener('click', adminLogin);
+    document.getElementById('btnLogout').addEventListener('click', goToLoginScreen);
     
     // טאבים במסך מנהל
     document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            switchTab(this.dataset.tab);
-        });
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
     
     // פעולות מנהל
-    elements.btnSaveSchedule.addEventListener('click', saveWeeklySchedule);
-    elements.adminDatePicker.addEventListener('change', loadBookingsForDate);
+    document.getElementById('btnSaveSchedule').addEventListener('click', saveWeeklySchedule);
+    document.getElementById('adminDatePicker').addEventListener('change', loadBookingsForDate);
     
     // שינוי תאריך
-    elements.dateInput.addEventListener('change', handleDateChange);
+    document.getElementById('dateInput').addEventListener('change', handleDateChange);
     
     // Enter במקלדת
-    elements.teacherName.addEventListener('keypress', (e) => {
+    document.getElementById('teacherName').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') goToDateScreen();
     });
     
-    elements.adminPassword.addEventListener('keypress', (e) => {
+    document.getElementById('adminPassword').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') adminLogin();
     });
 }
 
 // ===== הגדרת שדות תאריך =====
 function setupDateInputs() {
-    const dateInput = document.getElementById('dateInput');
-    const adminDatePicker = document.getElementById('adminDatePicker');
-    
-    if (!dateInput || !adminDatePicker) {
-        console.error('שדות תאריך לא נמצאו');
-        return;
-    }
-    
     const today = new Date();
     const dateStr = formatDateForInput(today);
     
-    dateInput.min = dateStr;
-    dateInput.value = dateStr;
-    adminDatePicker.min = dateStr;
-    adminDatePicker.value = dateStr;
+    document.getElementById('dateInput').min = dateStr;
+    document.getElementById('dateInput').value = dateStr;
+    document.getElementById('adminDatePicker').min = dateStr;
+    document.getElementById('adminDatePicker').value = dateStr;
 }
 
 // ===== פונקציות עזר לתאריכים =====
@@ -169,10 +145,7 @@ function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-    }
+    document.getElementById(screenId).classList.add('active');
 }
 
 function goToLoginScreen() {
@@ -250,9 +223,7 @@ async function renderHoursGrid() {
             // שעה זמינה
             slot.classList.add('available');
             slot.textContent = hour;
-            slot.addEventListener('click', function() {
-                selectHour(hour, this);
-            });
+            slot.addEventListener('click', () => selectHour(hour, slot));
         } else {
             // שעה לא זמינה
             slot.classList.add('unavailable');
@@ -341,7 +312,7 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    event.target.classList.add('active');
     
     // עדכון תוכן טאב
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -524,12 +495,29 @@ async function getBookingsForDate(date) {
     }
 }
 
+// ===== בדיקה אם תאריך תפוס לחלוטין =====
+async function isDateFullyBooked(date) {
+    const dayOfWeek = getDayOfWeek(date);
+    const availableHours = weeklySchedule[dayOfWeek] || [];
+    const bookings = await getBookingsForDate(date);
+    
+    // אם אין שעות זמינות בכלל
+    if (availableHours.length === 0) {
+        return true;
+    }
+    
+    // בדיקה אם כל השעות הזמינות תפוסות
+    const bookedHours = Object.keys(bookings);
+    const allBooked = availableHours.every(hour => bookedHours.includes(hour));
+    
+    return allBooked;
+}
+
 // הפיכת הפונקציה לגלובלית לשימוש ב-HTML
 window.deleteBooking = deleteBooking;
 
-// ===== אתחול האפליקציה - חייב להיות בסוף! =====
+// ===== אתחול האפליקציה =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM נטען - מאתחל אפליקציה...');
     initializeFirebase();
     setupEventListeners();
     setupDateInputs();
