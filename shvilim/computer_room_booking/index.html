@@ -5,142 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>הזמנת חדר מחשבים</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- מסך התחברות והזנת שם מורה -->
-        <div id="loginScreen" class="screen active">
-            <div class="header">
-                <h1>🖥️ הזמנת חדר מחשבים</h1>
-				<p>version 0.1</p>
+
+
+    <!-- מסך התחלה -->
+    <div id="homeScreen" class="screen active">
+        <div class="container">
+            <h1>🖥️ הזמנת חדר מחשבים</h1>
+                 <div class="connection-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">בדיקת חיבור...</span>
+        </div>
+            <div class="admin-link">
+                <button id="adminBtn" class="admin-button">⚙️ קישור מנהל</button>
             </div>
-            
-            <div class="connection-status">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="connectionStatus">מתחבר לענן...</span>
-            </div>
-            
+
             <div class="form-group">
-                <label for="teacherName">שם המורה:</label>
-                <input type="text" id="teacherName" placeholder="הזיני את שמך" autocomplete="off">
+                <label for="teacherName">👤 שם המורה:</label>
+                <input type="text" id="teacherName" placeholder="הכנס את שמך">
             </div>
-            
-            <button class="btn btn-primary" id="btnToDatePicker">הבא</button>
-            <button class="btn btn-admin" id="btnAdminAccess">כניסה למנהל</button>
-        </div>
 
-        <!-- מסך בחירת תאריך -->
-        <div id="dateScreen" class="screen">
-            <div class="header">
-                <h2>בחירת תאריך</h2>
-                <p class="teacher-info">שלום, <strong id="teacherNameDisplay"></strong></p>
-            </div>
-            
-            <div class="date-picker-wrapper">
-                <input type="date" id="datePicker" class="date-input">
-                
-                <div class="legend">
-                    <div class="legend-item">
-                        <span class="legend-dot available"></span>
-                        <span>ימים עם שעות פנויות</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-dot fully-booked"></span>
-                        <span>ימים ללא שעות פנויות</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-secondary" id="btnBackFromDate">חזור</button>
-                <button class="btn btn-primary" id="btnToHours">הבא</button>
-            </div>
-        </div>
-
-        <!-- מסך בחירת שעות -->
-        <div id="hoursScreen" class="screen">
-            <div class="header">
-                <h2>בחירת שעה</h2>
-                <p class="date-display" id="selectedDateDisplay"></p>
-            </div>
-            
-            <div class="hours-container" id="hoursContainer"></div>
-            
-            <div class="btn-group">
-                <button class="btn btn-secondary" id="btnBackFromHours">חזור</button>
-                <button class="btn btn-primary" id="btnConfirmBooking" disabled>אשר הזמנה</button>
-            </div>
-        </div>
-
-        <!-- מסך אישור הזמנה -->
-        <div id="confirmationScreen" class="screen">
-            <div class="confirmation-content">
-                <div class="success-icon">✓</div>
-                <h2>ההזמנה אושרה בהצלחה!</h2>
-                <div class="booking-summary" id="bookingSummary"></div>
-                <button class="btn btn-primary" id="btnNewBooking">הזמנה חדשה</button>
-            </div>
-        </div>
-
-        <!-- מסך כניסה למנהל -->
-        <div id="adminLoginScreen" class="screen">
-            <div class="header">
-                <h2>כניסה למנהל</h2>
-            </div>
-            
             <div class="form-group">
-                <label for="adminPassword">סיסמה:</label>
-                <input type="password" id="adminPassword" placeholder="הזן סיסמת מנהל">
+                <label for="datePicker">📅 בחר תאריך:</label>
+                <input type="date" id="datePicker">
             </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-secondary" id="btnBackFromAdminLogin">חזור</button>
-                <button class="btn btn-primary" id="btnAdminLogin">כניסה</button>
-            </div>
-        </div>
 
-        <!-- מסך מנהל -->
-        <div id="adminScreen" class="screen">
-            <div class="header">
-                <h2>פאנל ניהול</h2>
-            </div>
-            
-            <div class="admin-tabs">
-                <button class="tab-btn active" data-tab="weeklySchedule">מערכת שבועית</button>
-                <button class="tab-btn" data-tab="bookings">ניהול הזמנות</button>
-            </div>
-            
-            <!-- טאב מערכת שבועית -->
-            <div id="weeklyScheduleTab" class="tab-content active">
-                <h3>הגדרת שעות פעילות שבועיות</h3>
-                <p class="info-text">בחר את השעות בהן החדר זמין לכל יום בשבוע</p>
-                
-                <div class="weekly-schedule" id="weeklyScheduleContainer"></div>
-                
-                <button class="btn btn-success" id="btnSaveSchedule">שמור מערכת</button>
-            </div>
-            
-            <!-- טאב ניהול הזמנות -->
-            <div id="bookingsTab" class="tab-content">
-                <h3>ניהול הזמנות</h3>
-                
-                <div class="form-group">
-                    <label for="adminDatePicker">בחר תאריך:</label>
-                    <input type="date" id="adminDatePicker" class="date-input">
-                </div>
-                
-                <div class="bookings-list" id="bookingsList"></div>
-            </div>
-            
-            <button class="btn btn-secondary" id="btnLogoutAdmin">יציאה</button>
+            <div id="calendarContainer" class="calendar-container"></div>
+
+            <button id="nextBtn" class="btn btn-primary">הבא →</button>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    
-    <!-- App Script -->
+    <!-- מסך בחירת שעות -->
+    <div id="timesScreen" class="screen">
+        <div class="container">
+            <button id="backBtn" class="btn-back">← חזור</button>
+            
+            <h2 id="dateTitle" class="date-title"></h2>
+            <p id="dateSubtitle" class="date-subtitle"></p>
+            
+            <div id="hoursContainer" class="hours-container"></div>
+            
+            <div class="selection-info">
+                <p>שעות שנבחרו: <span id="selectedCount">0</span></p>
+            </div>
+
+            <button id="confirmBtn" class="btn btn-primary">✓ אישור הזמנה</button>
+        </div>
+    </div>
+
+    <!-- מסך מנהל -->
+    <div id="adminScreen" class="screen">
+        <div class="container">
+            <button id="backAdminBtn" class="btn-back">← חזור</button>
+            
+            <h1>⚙️ פנל מנהל</h1>
+            
+            <div id="adminLoginForm" class="admin-login">
+                <div class="form-group">
+                    <label for="adminPassword">סיסמה:</label>
+                    <input type="password" id="adminPassword" placeholder="הכנס סיסמה">
+                </div>
+                <button id="adminLoginBtn" class="btn btn-primary">כניסה</button>
+                <div id="adminError" class="error-message"></div>
+            </div>
+
+            <div id="adminPanel" class="admin-panel" style="display: none;">
+                <h2>ניהול מערכת</h2>
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="scheduleTab">📅 הגדרת מערכת שבועית</button>
+                    <button class="tab-btn" data-tab="bookingsTab">📋 ניהול הזמנות</button>
+                    <button class="tab-btn" data-tab="hoursTab">⏰ ניהול שעות</button>
+                </div>
+
+                <!-- טאב הגדרת מערכת -->
+                <div id="scheduleTab" class="tab-content active">
+                    <h3>בחר אילו שעות פנויות להזמנה בכל יום</h3>
+                    <div id="weekSchedule" class="week-schedule"></div>
+                    <button id="saveScheduleBtn" class="btn btn-primary">💾 שמור מערכת</button>
+                </div>
+
+                <!-- טאב ניהול הזמנות -->
+                <div id="bookingsTab" class="tab-content">
+                    <h3>הזמנות קיימות</h3>
+                    <div id="bookingsList" class="bookings-list"></div>
+                </div>
+
+                <!-- טאב ניהול שעות -->
+                <div id="hoursTab" class="tab-content">
+                    <h3>ניהול שעות ספציפיות</h3>
+                    <div class="form-group">
+                        <label for="dateToEdit">בחר תאריך:</label>
+                        <input type="date" id="dateToEdit">
+                    </div>
+                    <div id="dayHoursList" class="day-hours-list"></div>
+                </div>
+
+                <button id="logoutBtn" class="btn btn-danger">🚪 התנתקות</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- פוטר -->
+ 
+
     <script src="script.js"></script>
 </body>
 </html>

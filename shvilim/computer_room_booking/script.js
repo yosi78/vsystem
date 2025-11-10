@@ -1,537 +1,624 @@
-// ===== הגדרות Firebase =====
-// יש להחליף בנתונים שלך מ-Firebase Console
+// ============= הגדרת Firebase =============
+// ⚠️ תחליף את הערכים האלה עם ה-config שלך מ-Firebase Console
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 const firebaseConfig = {
-    apiKey: "AIzaSyDSM34F-l_Zt-MQmAbGWi-AHg-rInIJzhs",
-    authDomain: "computer-room-booking.firebaseapp.com",
-    databaseURL: "https://computer-room-booking-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "computer-room-booking",
-    storageBucket: "computer-room-booking.firebasestorage.app",
-    messagingSenderId: "1033131890195",
-    appId: "1:1033131890195:web:9a497ab2da156d07c491e6"
+  apiKey: "AIzaSyDSM34F-l_Zt-MQmAbGWi-AHg-rInIJzhs",
+  authDomain: "computer-room-booking.firebaseapp.com",
+  databaseURL: "https://computer-room-booking-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "computer-room-booking",
+  storageBucket: "computer-room-booking.firebasestorage.app",
+  messagingSenderId: "1033131890195",
+  appId: "1:1033131890195:web:9a497ab2da156d07c491e6",
+  measurementId: "G-C24BG9R15L"
 };
 
 
-// ===== משתנים גלובליים =====
-const ADMIN_PASSWORD = "n0987";
-const HOURS = ["8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
-const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+// Initialize Firebase
 
-let db;
-let currentTeacher = "";
-let selectedDate = "";
-let selectedHour = "";
-let weeklySchedule = {};
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+let db = null;
+let isConnectedToFirebase = false;
 
-// ===== אתחול Firebase =====
-function initializeFirebase() {
-    // בדיקה שהאלמנטים קיימים
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('connectionText');
-    
-    if (!statusDot || !statusText) {
-        console.error('לא נמצאו אלמנטי סטטוס בדף');
-        return;
-    }
-    
-    try {
+// ניסיון חיבור ל-Firebase
+try {
+    if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("YOUR_")) {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
-        
-        // מעקב אחר סטטוס החיבור
-        const connectedRef = db.ref('.info/connected');
-        connectedRef.on('value', (snapshot) => {
-            if (snapshot.val() === true) {
-                statusDot.className = 'status-dot connected';
-                statusText.textContent = 'מחובר לענן ✓';
-            } else {
-                statusDot.className = 'status-dot error';
-                statusText.textContent = 'לא מחובר לענן';
-            }
-        });
-        
-        // טעינת מערכת שבועית
-        loadWeeklySchedule();
-        
-    } catch (error) {
-        console.error('שגיאה באתחול Firebase:', error);
-        statusDot.className = 'status-dot error';
-        statusText.textContent = 'שגיאת חיבור - בדוק הגדרות Firebase';
+        isConnectedToFirebase = true;
+    }
+} catch (error) {
+    console.log("Firebase לא מחובר:", error.message);
+    isConnectedToFirebase = false;
+}
+
+// עדכון סטטוס החיבור
+function updateConnectionStatus() {
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    
+    if (isConnectedToFirebase) {
+        statusDot.style.background = '#4CAF50';
+        statusText.textContent = '✓ מחובר ל-Firebase';
+    } else {
+        statusDot.style.background = '#ff9800';
+        statusText.textContent = '⚠️ Local Storage (ללא Firebase)';
     }
 }
 
-// ===== הגדרת מאזיני אירועים =====
-function setupEventListeners() {
-    // בדיקה שכל הכפתורים קיימים
-    const elements = {
-        btnNext1: document.getElementById('btnNext1'),
-        btnBack1: document.getElementById('btnBack1'),
-        btnNext2: document.getElementById('btnNext2'),
-        btnBack2: document.getElementById('btnBack2'),
-        btnConfirm: document.getElementById('btnConfirm'),
-        btnNewBooking: document.getElementById('btnNewBooking'),
-        btnAdmin: document.getElementById('btnAdmin'),
-        btnBackAdmin: document.getElementById('btnBackAdmin'),
-        btnAdminLogin: document.getElementById('btnAdminLogin'),
-        btnLogout: document.getElementById('btnLogout'),
-        btnSaveSchedule: document.getElementById('btnSaveSchedule'),
-        adminDatePicker: document.getElementById('adminDatePicker'),
-        dateInput: document.getElementById('dateInput'),
-        teacherName: document.getElementById('teacherName'),
-        adminPassword: document.getElementById('adminPassword')
-    };
-    
-    // בדיקה שכל האלמנטים קיימים
-    for (const [key, element] of Object.entries(elements)) {
-        if (!element) {
-            console.error(`אלמנט ${key} לא נמצא`);
-            return;
+// ============= מערכת אחסון נתונים =============
+class DataManager {
+    constructor() {
+        this.bookingsKey = 'computerRoom_bookings';
+        this.scheduleKey = 'computerRoom_schedule';
+        this.initializeData();
+    }
+
+    initializeData() {
+        if (!localStorage.getItem(this.scheduleKey)) {
+            const defaultSchedule = {
+                0: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                1: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                2: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                3: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                4: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                5: { 8: true, 9: true, 10: true, 11: true, 12: false, 13: true, 14: true, 15: true, 16: true, 17: true },
+                6: { 8: false, 9: false, 10: false, 11: false, 12: false, 13: false, 14: false, 15: false, 16: false, 17: false }
+            };
+            localStorage.setItem(this.scheduleKey, JSON.stringify(defaultSchedule));
+        }
+
+        if (!localStorage.getItem(this.bookingsKey)) {
+            localStorage.setItem(this.bookingsKey, JSON.stringify({}));
         }
     }
-    
-    // זרימה ראשית
-    elements.btnNext1.addEventListener('click', goToDateScreen);
-    elements.btnBack1.addEventListener('click', goToLoginScreen);
-    elements.btnNext2.addEventListener('click', goToHoursScreen);
-    elements.btnBack2.addEventListener('click', goToDateScreen);
-    elements.btnConfirm.addEventListener('click', confirmBooking);
-    elements.btnNewBooking.addEventListener('click', goToLoginScreen);
-    
-    // זרימת מנהל
-    elements.btnAdmin.addEventListener('click', goToAdminLoginScreen);
-    elements.btnBackAdmin.addEventListener('click', goToLoginScreen);
-    elements.btnAdminLogin.addEventListener('click', adminLogin);
-    elements.btnLogout.addEventListener('click', goToLoginScreen);
-    
-    // טאבים במסך מנהל
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            switchTab(this.dataset.tab);
-        });
-    });
-    
-    // פעולות מנהל
-    elements.btnSaveSchedule.addEventListener('click', saveWeeklySchedule);
-    elements.adminDatePicker.addEventListener('change', loadBookingsForDate);
-    
-    // שינוי תאריך
-    elements.dateInput.addEventListener('change', handleDateChange);
-    
-    // Enter במקלדת
-    elements.teacherName.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') goToDateScreen();
-    });
-    
-    elements.adminPassword.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') adminLogin();
-    });
-}
 
-// ===== הגדרת שדות תאריך =====
-function setupDateInputs() {
-    const dateInput = document.getElementById('dateInput');
-    const adminDatePicker = document.getElementById('adminDatePicker');
-    
-    if (!dateInput || !adminDatePicker) {
-        console.error('שדות תאריך לא נמצאו');
-        return;
+    getSchedule() {
+        return JSON.parse(localStorage.getItem(this.scheduleKey)) || {};
     }
-    
-    const today = new Date();
-    const dateStr = formatDateForInput(today);
-    
-    dateInput.min = dateStr;
-    dateInput.value = dateStr;
-    adminDatePicker.min = dateStr;
-    adminDatePicker.value = dateStr;
+
+    setSchedule(schedule) {
+        localStorage.setItem(this.scheduleKey, JSON.stringify(schedule));
+        this.notifyListeners();
+    }
+
+    getBookings() {
+        return JSON.parse(localStorage.getItem(this.bookingsKey)) || {};
+    }
+
+    addBooking(date, hours, teacher) {
+        const bookings = this.getBookings();
+        if (!bookings[date]) {
+            bookings[date] = {};
+        }
+        
+        hours.forEach(hour => {
+            const bookingId = `${date}-${hour}-${Date.now()}`;
+            bookings[date][bookingId] = {
+                teacher: teacher,
+                hour: hour,
+                date: date,
+                timestamp: Date.now()
+            };
+        });
+
+        localStorage.setItem(this.bookingsKey, JSON.stringify(bookings));
+        this.notifyListeners();
+    }
+
+    deleteBooking(date, bookingId) {
+        const bookings = this.getBookings();
+        if (bookings[date]) {
+            delete bookings[date][bookingId];
+            if (Object.keys(bookings[date]).length === 0) {
+                delete bookings[date];
+            }
+            localStorage.setItem(this.bookingsKey, JSON.stringify(bookings));
+            this.notifyListeners();
+        }
+    }
+
+    getBookingsForDate(date) {
+        const bookings = this.getBookings();
+        return bookings[date] || {};
+    }
+
+    isHourAvailable(date, hour) {
+        const bookings = this.getBookingsForDate(date);
+        const dayBookings = Object.values(bookings).map(b => b.hour);
+        return !dayBookings.includes(hour);
+    }
+
+    isHourInSchedule(dayOfWeek, hour) {
+        const schedule = this.getSchedule();
+        return schedule[dayOfWeek] && schedule[dayOfWeek][hour] === true;
+    }
+
+    notifyListeners() {
+        window.dispatchEvent(new Event('dataChanged'));
+    }
 }
 
-// ===== פונקציות עזר לתאריכים =====
-function formatDateForInput(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
+const dataManager = new DataManager();
 
-function formatDateForDisplay(dateStr) {
-    const [year, month, day] = dateStr.split('-');
-    const date = new Date(dateStr + 'T00:00:00');
-    const dayName = DAYS[date.getDay()];
-    return `${dayName}, ${day}/${month}/${year}`;
-}
+// ============= متغيرات عامة =============
+let currentTeacherName = '';
+let selectedDate = null;
+let selectedHours = [];
+const ADMIN_PASSWORD = 'n0987';
 
-function getDayOfWeek(dateStr) {
-    const date = new Date(dateStr + 'T00:00:00');
-    return date.getDay();
-}
-
-// ===== ניווט בין מסכים =====
+// ============= وظائف واجهة المستخدم الأساسية =============
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-    }
+    document.getElementById(screenId).classList.add('active');
+    window.scrollTo(0, 0);
 }
 
-function goToLoginScreen() {
-    currentTeacher = "";
-    selectedDate = "";
-    selectedHour = "";
-    document.getElementById('teacherName').value = "";
-    document.getElementById('adminPassword').value = "";
-    showScreen('loginScreen');
-}
+// ============= مسح الشاشة الرئيسية =============
+function initHomeScreen() {
+    const datePicker = document.getElementById('datePicker');
+    const today = new Date();
+    datePicker.min = today.toISOString().split('T')[0];
+    datePicker.max = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-function goToDateScreen() {
-    const name = document.getElementById('teacherName').value.trim();
-    
-    if (!name) {
-        alert('נא להזין שם מורה');
-        return;
-    }
-    
-    currentTeacher = name;
-    document.getElementById('teacherNameDisplay').textContent = name;
-    showScreen('dateScreen');
-}
-
-function handleDateChange() {
-    selectedDate = document.getElementById('dateInput').value;
-}
-
-async function goToHoursScreen() {
-    selectedDate = document.getElementById('dateInput').value;
-    
-    if (!selectedDate) {
-        alert('נא לבחור תאריך');
-        return;
-    }
-    
-    const dayOfWeek = getDayOfWeek(selectedDate);
-    const availableHours = weeklySchedule[dayOfWeek] || [];
-    
-    if (availableHours.length === 0) {
-        alert('החדר לא זמין בתאריך זה');
-        return;
-    }
-    
-    document.getElementById('selectedDateDisplay').textContent = formatDateForDisplay(selectedDate);
-    showScreen('hoursScreen');
-    
-    await renderHoursGrid();
-}
-
-// ===== רינדור רשת השעות =====
-async function renderHoursGrid() {
-    const container = document.getElementById('hoursContainer');
-    container.innerHTML = '';
-    
-    const dayOfWeek = getDayOfWeek(selectedDate);
-    const availableHours = weeklySchedule[dayOfWeek] || [];
-    const bookings = await getBookingsForDate(selectedDate);
-    
-    HOURS.forEach(hour => {
-        const slot = document.createElement('div');
-        slot.className = 'hour-slot';
-        
-        const isAvailable = availableHours.includes(hour);
-        const booking = bookings[hour];
-        
-        if (booking) {
-            // שעה תפוסה
-            slot.classList.add('booked');
-            slot.innerHTML = `
-                <div>${hour}</div>
-                <div class="teacher-name">${booking.teacher}</div>
-            `;
-        } else if (isAvailable) {
-            // שעה זמינה
-            slot.classList.add('available');
-            slot.textContent = hour;
-            slot.addEventListener('click', function() {
-                selectHour(hour, this);
-            });
-        } else {
-            // שעה לא זמינה
-            slot.classList.add('unavailable');
-            slot.textContent = hour;
-        }
-        
-        container.appendChild(slot);
+    datePicker.addEventListener('change', (e) => {
+        selectedDate = new Date(e.target.value);
+        loadCalendar();
     });
-}
 
-// ===== בחירת שעה =====
-function selectHour(hour, element) {
-    // הסרת בחירה קודמת
-    document.querySelectorAll('.hour-slot.selected').forEach(slot => {
-        slot.classList.remove('selected');
-    });
-    
-    // בחירה חדשה
-    element.classList.add('selected');
-    selectedHour = hour;
-    
-    // הפעלת כפתור אישור
-    document.getElementById('btnConfirm').disabled = false;
-}
-
-// ===== אישור הזמנה =====
-async function confirmBooking() {
-    if (!selectedHour) {
-        alert('נא לבחור שעה');
-        return;
-    }
-    
-    try {
-        // שמירה ב-Firebase
-        await db.ref(`bookings/${selectedDate}/${selectedHour}`).set({
-            teacher: currentTeacher,
-            timestamp: Date.now()
-        });
-        
-        // הצגת מסך אישור
-        const summary = document.getElementById('bookingSummary');
-        summary.innerHTML = `
-            <div class="summary-row">
-                <span class="label">מורה:</span>
-                <span class="value">${currentTeacher}</span>
-            </div>
-            <div class="summary-row">
-                <span class="label">תאריך:</span>
-                <span class="value">${formatDateForDisplay(selectedDate)}</span>
-            </div>
-            <div class="summary-row">
-                <span class="label">שעה:</span>
-                <span class="value">${selectedHour}</span>
-            </div>
-        `;
-        
-        showScreen('confirmScreen');
-        
-    } catch (error) {
-        console.error('שגיאה בשמירת הזמנה:', error);
-        alert('שגיאה בשמירת ההזמנה. נסי שוב.');
-    }
-}
-
-// ===== כניסת מנהל =====
-function goToAdminLoginScreen() {
-    showScreen('adminLoginScreen');
-}
-
-function adminLogin() {
-    const password = document.getElementById('adminPassword').value;
-    
-    if (password === ADMIN_PASSWORD) {
-        showScreen('adminScreen');
-        renderScheduleForm();
-        loadBookingsForDate();
-    } else {
-        alert('סיסמה שגויה');
-        document.getElementById('adminPassword').value = "";
-    }
-}
-
-// ===== החלפת טאבים במנהל =====
-function switchTab(tabName) {
-    // עדכון כפתורי טאב
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-    
-    // עדכון תוכן טאב
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    if (tabName === 'schedule') {
-        document.getElementById('scheduleTab').classList.add('active');
-    } else {
-        document.getElementById('bookingsTab').classList.add('active');
-    }
-}
-
-// ===== טעינת מערכת שבועית =====
-async function loadWeeklySchedule() {
-    try {
-        const snapshot = await db.ref('weeklySchedule').once('value');
-        weeklySchedule = snapshot.val() || {};
-        
-        // אם אין מערכת, צור מערכת ברירת מחדל
-        if (Object.keys(weeklySchedule).length === 0) {
-            // ימי א'-ה' עם כל השעות
-            for (let i = 0; i <= 4; i++) {
-                weeklySchedule[i] = [...HOURS];
-            }
-            // שישי ושבת ריקים
-            weeklySchedule[5] = [];
-            weeklySchedule[6] = [];
-        }
-        
-    } catch (error) {
-        console.error('שגיאה בטעינת מערכת:', error);
-    }
-}
-
-// ===== רינדור טופס מערכת שבועית =====
-function renderScheduleForm() {
-    const container = document.getElementById('scheduleContainer');
-    container.innerHTML = '';
-    
-    DAYS.forEach((dayName, dayIndex) => {
-        const dayRow = document.createElement('div');
-        dayRow.className = 'day-row';
-        
-        const header = document.createElement('div');
-        header.className = 'day-header';
-        header.textContent = `יום ${dayName}`;
-        dayRow.appendChild(header);
-        
-        const hoursGrid = document.createElement('div');
-        hoursGrid.className = 'hours-grid';
-        
-        HOURS.forEach(hour => {
-            const hourCheck = document.createElement('div');
-            hourCheck.className = 'hour-check';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `day${dayIndex}-${hour}`;
-            checkbox.value = hour;
-            
-            // סימון אם השעה זמינה במערכת
-            if (weeklySchedule[dayIndex] && weeklySchedule[dayIndex].includes(hour)) {
-                checkbox.checked = true;
-            }
-            
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = hour;
-            
-            hourCheck.appendChild(checkbox);
-            hourCheck.appendChild(label);
-            hoursGrid.appendChild(hourCheck);
-        });
-        
-        dayRow.appendChild(hoursGrid);
-        container.appendChild(dayRow);
-    });
-}
-
-// ===== שמירת מערכת שבועית =====
-async function saveWeeklySchedule() {
-    const newSchedule = {};
-    
-    DAYS.forEach((_, dayIndex) => {
-        const hours = [];
-        
-        HOURS.forEach(hour => {
-            const checkbox = document.getElementById(`day${dayIndex}-${hour}`);
-            if (checkbox && checkbox.checked) {
-                hours.push(hour);
-            }
-        });
-        
-        newSchedule[dayIndex] = hours;
-    });
-    
-    try {
-        await db.ref('weeklySchedule').set(newSchedule);
-        weeklySchedule = newSchedule;
-        alert('המערכת השבועית נשמרה בהצלחה! ✓');
-    } catch (error) {
-        console.error('שגיאה בשמירת מערכת:', error);
-        alert('שגיאה בשמירת המערכת. נסה שוב.');
-    }
-}
-
-// ===== טעינת הזמנות לתאריך =====
-async function loadBookingsForDate() {
-    const date = document.getElementById('adminDatePicker').value;
-    const container = document.getElementById('bookingsList');
-    
-    if (!date) {
-        container.innerHTML = '<div class="empty-state">בחר תאריך לצפייה בהזמנות</div>';
-        return;
-    }
-    
-    try {
-        const bookings = await getBookingsForDate(date);
-        
-        if (Object.keys(bookings).length === 0) {
-            container.innerHTML = '<div class="empty-state">אין הזמנות לתאריך זה</div>';
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        const teacherName = document.getElementById('teacherName').value.trim();
+        if (!teacherName) {
+            alert('אנא הכנס את שמך');
             return;
         }
+        if (!selectedDate) {
+            alert('אנא בחר תאריך');
+            return;
+        }
+        currentTeacherName = teacherName;
+        loadTimesScreen();
+    });
+
+    document.getElementById('adminBtn').addEventListener('click', () => {
+        document.getElementById('adminLoginForm').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminError').textContent = '';
+        showScreen('adminScreen');
+    });
+}
+
+function loadCalendar() {
+    const container = document.getElementById('calendarContainer');
+    container.innerHTML = '';
+    
+    if (!selectedDate) return;
+
+    const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const lastDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    const prevLastDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 0);
+    
+    const startDay = firstDay.getDay();
+    
+    // ימים מהחודש הקודם
+    for (let i = startDay - 1; i >= 0; i--) {
+        const day = prevLastDay.getDate() - i;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = day;
+        container.appendChild(dayEl);
+    }
+
+    // ימים מהחודש הנוכחי
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+        const dateStr = date.toISOString().split('T')[0];
         
-        container.innerHTML = '';
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.textContent = day;
         
-        // מיון לפי שעה
-        const sortedBookings = Object.entries(bookings).sort((a, b) => {
-            return a[0].localeCompare(b[0]);
+        // בדיקה אם היום תפוס לחלוטין
+        const bookings = dataManager.getBookingsForDate(dateStr);
+        const dayOfWeek = date.getDay();
+        const schedule = dataManager.getSchedule();
+        const availableHours = schedule[dayOfWeek] || {};
+        const availableCount = Object.values(availableHours).filter(v => v === true).length;
+        const bookedCount = Object.keys(bookings).length;
+        
+        if (bookedCount >= availableCount && availableCount > 0) {
+            dayEl.classList.add('fully-booked');
+        }
+
+        dayEl.addEventListener('click', () => {
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+            dayEl.classList.add('selected');
+            selectedDate = date;
+            document.getElementById('datePicker').value = dateStr;
         });
-        
-        sortedBookings.forEach(([hour, booking]) => {
-            const item = document.createElement('div');
-            item.className = 'booking-item';
-            
-            item.innerHTML = `
-                <div class="booking-info">
-                    <div class="time">${hour}</div>
-                    <div class="teacher">${booking.teacher}</div>
-                </div>
-                <button class="btn-delete" onclick="deleteBooking('${date}', '${hour}')">
-                    מחק
-                </button>
-            `;
-            
-            container.appendChild(item);
-        });
-        
-    } catch (error) {
-        console.error('שגיאה בטעינת הזמנות:', error);
-        container.innerHTML = '<div class="empty-state">שגיאה בטעינת הזמנות</div>';
+
+        if (dateStr === selectedDate.toISOString().split('T')[0]) {
+            dayEl.classList.add('selected');
+        }
+
+        container.appendChild(dayEl);
+    }
+
+    // ימים מהחודש הבא
+    const nextDays = 42 - (startDay + lastDay.getDate());
+    for (let day = 1; day <= nextDays; day++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = day;
+        container.appendChild(dayEl);
     }
 }
 
-// ===== מחיקת הזמנה =====
-async function deleteBooking(date, hour) {
-    if (!confirm(`האם למחוק את ההזמנה לשעה ${hour}?`)) {
+// ============= مسح اختيار الساعات =============
+function loadTimesScreen() {
+    showScreen('timesScreen');
+    
+    const dateTitle = document.getElementById('dateTitle');
+    const dateSubtitle = document.getElementById('dateSubtitle');
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    
+    dateTitle.textContent = formatDateHebrew(selectedDate);
+    dateSubtitle.textContent = `בחר שעות פנויות להזמנה`;
+    
+    const hoursContainer = document.getElementById('hoursContainer');
+    hoursContainer.innerHTML = '';
+    selectedHours = [];
+    updateSelectedCount();
+
+    const bookings = dataManager.getBookingsForDate(dateStr);
+    const dayOfWeek = selectedDate.getDay();
+    const schedule = dataManager.getSchedule();
+    const daySchedule = schedule[dayOfWeek] || {};
+
+    for (let hour = 8; hour < 18; hour++) {
+        const hourStr = String(hour).padStart(2, '0') + ':00';
+        const hourBox = document.createElement('div');
+        hourBox.className = 'hour-box';
+        
+        // בדיקה אם השעה בחדוה
+        const bookingForHour = Object.values(bookings).find(b => b.hour === hour);
+        
+        if (bookingForHour) {
+            // שעה תפוסה
+            hourBox.classList.add('booked');
+            hourBox.innerHTML = `<div>${hourStr}</div><div class="booked-teacher">${bookingForHour.teacher}</div>`;
+        } else if (!daySchedule[hour]) {
+            // שעה לא זמינה להזמנה
+            hourBox.classList.add('unavailable');
+            hourBox.textContent = hourStr;
+        } else {
+            // שעה פנויה
+            hourBox.classList.add('available');
+            hourBox.textContent = hourStr;
+            
+            hourBox.addEventListener('click', () => {
+                hourBox.classList.toggle('selected');
+                if (selectedHours.includes(hour)) {
+                    selectedHours = selectedHours.filter(h => h !== hour);
+                } else {
+                    selectedHours.push(hour);
+                }
+                updateSelectedCount();
+            });
+        }
+        
+        hoursContainer.appendChild(hourBox);
+    }
+}
+
+function formatDateHebrew(date) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+    return date.toLocaleDateString('he-IL', options);
+}
+
+function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = selectedHours.length;
+}
+
+// ============= تأكيد الحجز =============
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('confirmBtn')?.addEventListener('click', () => {
+        if (selectedHours.length === 0) {
+            alert('אנא בחר לפחות שעה אחת');
+            return;
+        }
+
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        dataManager.addBooking(dateStr, selectedHours, currentTeacherName);
+        
+        alert('✓ ההזמנה אושרה בהצלחה!');
+        showScreen('homeScreen');
+        document.getElementById('teacherName').value = '';
+        document.getElementById('datePicker').value = '';
+        document.getElementById('calendarContainer').innerHTML = '';
+        selectedDate = null;
+        selectedHours = [];
+    });
+
+    document.getElementById('backBtn')?.addEventListener('click', () => {
+        showScreen('homeScreen');
+    });
+});
+
+// ============= لوحة المسؤول =============
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('adminLoginBtn')?.addEventListener('click', () => {
+        const password = document.getElementById('adminPassword').value;
+        if (password === ADMIN_PASSWORD) {
+            document.getElementById('adminLoginForm').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            loadAdminPanel();
+        } else {
+            document.getElementById('adminError').textContent = '❌ סיסמה שגויה';
+        }
+    });
+
+    document.getElementById('backAdminBtn')?.addEventListener('click', () => {
+        showScreen('homeScreen');
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        document.getElementById('adminLoginForm').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminError').textContent = '';
+    });
+
+    // טאבים
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'hoursTab') {
+                loadHoursTab();
+            }
+        });
+    });
+});
+
+function loadAdminPanel() {
+    loadScheduleTab();
+    loadBookingsTab();
+}
+
+// ============= تبويب الجدول الأسبوعي =============
+function loadScheduleTab() {
+    const weekSchedule = document.getElementById('weekSchedule');
+    weekSchedule.innerHTML = '';
+
+    const schedule = dataManager.getSchedule();
+    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+        const daySchedule = document.createElement('div');
+        daySchedule.className = 'day-schedule';
+        
+        const dayTitle = document.createElement('h4');
+        dayTitle.textContent = dayNames[dayOfWeek];
+        daySchedule.appendChild(dayTitle);
+
+        const hoursRow = document.createElement('div');
+        hoursRow.className = 'hours-row';
+
+        for (let hour = 8; hour < 18; hour++) {
+            const hourToggle = document.createElement('button');
+            hourToggle.className = 'hour-toggle';
+            hourToggle.textContent = String(hour).padStart(2, '0');
+
+            if (schedule[dayOfWeek] && schedule[dayOfWeek][hour]) {
+                hourToggle.classList.add('active');
+            }
+
+            hourToggle.addEventListener('click', () => {
+                hourToggle.classList.toggle('active');
+            });
+
+            hoursRow.appendChild(hourToggle);
+        }
+
+        daySchedule.appendChild(hoursRow);
+        weekSchedule.appendChild(daySchedule);
+    }
+
+    document.getElementById('saveScheduleBtn').addEventListener('click', saveSchedule, { once: true });
+}
+
+function saveSchedule() {
+    const newSchedule = {};
+    const daySchedules = document.querySelectorAll('.day-schedule');
+
+    daySchedules.forEach((dayEl, dayOfWeek) => {
+        newSchedule[dayOfWeek] = {};
+        const hourToggles = dayEl.querySelectorAll('.hour-toggle');
+        hourToggles.forEach((toggle, hourIndex) => {
+            const hour = 8 + hourIndex;
+            newSchedule[dayOfWeek][hour] = toggle.classList.contains('active');
+        });
+    });
+
+    dataManager.setSchedule(newSchedule);
+    alert('✓ המערכת נשמרה בהצלחה!');
+    loadScheduleTab();
+}
+
+// ============= تبويب إدارة الحجوزات =============
+function loadBookingsTab() {
+    const bookingsList = document.getElementById('bookingsList');
+    bookingsList.innerHTML = '';
+
+    const bookings = dataManager.getBookings();
+    const allBookings = [];
+
+    Object.keys(bookings).forEach(dateStr => {
+        Object.keys(bookings[dateStr]).forEach(bookingId => {
+            const booking = bookings[dateStr][bookingId];
+            allBookings.push({
+                id: bookingId,
+                date: dateStr,
+                ...booking
+            });
+        });
+    });
+
+    allBookings.sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.hour - b.hour;
+    });
+
+    if (allBookings.length === 0) {
+        bookingsList.innerHTML = '<p style="text-align: center; color: #999;">אין הזמנות</p>';
         return;
     }
-    
-    try {
-        await db.ref(`bookings/${date}/${hour}`).remove();
-        await loadBookingsForDate();
-        alert('ההזמנה נמחקה בהצלחה ✓');
-    } catch (error) {
-        console.error('שגיאה במחיקת הזמנה:', error);
-        alert('שגיאה במחיקת ההזמנה. נסה שוב.');
+
+    allBookings.forEach(booking => {
+        const bookingItem = document.createElement('div');
+        bookingItem.className = 'booking-item';
+
+        const bookingInfo = document.createElement('div');
+        bookingInfo.className = 'booking-info';
+        bookingInfo.innerHTML = `
+            <p><strong>👤 מורה:</strong> ${booking.teacher}</p>
+            <p><strong>📅 תאריך:</strong> ${formatDateHebrew(new Date(booking.date))}</p>
+            <p><strong>⏰ שעה:</strong> ${String(booking.hour).padStart(2, '0')}:00</p>
+        `;
+
+        const bookingActions = document.createElement('div');
+        bookingActions.className = 'booking-actions';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-delete';
+        deleteBtn.textContent = '🗑️ מחק';
+        deleteBtn.addEventListener('click', () => {
+            if (confirm('האם בטוח שברצונך למחוק הזמנה זו?')) {
+                dataManager.deleteBooking(booking.date, booking.id);
+                alert('ההזמנה נמחקה');
+                loadBookingsTab();
+            }
+        });
+
+        bookingActions.appendChild(deleteBtn);
+        bookingItem.appendChild(bookingInfo);
+        bookingItem.appendChild(bookingActions);
+        bookingsList.appendChild(bookingItem);
+    });
+}
+
+// ============= تبويب إدارة الساعات =============
+function loadHoursTab() {
+    const dateToEdit = document.getElementById('dateToEdit');
+    const today = new Date();
+    dateToEdit.min = today.toISOString().split('T')[0];
+    dateToEdit.max = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    dateToEdit.addEventListener('change', loadDayHours);
+}
+
+function loadDayHours() {
+    const dateToEdit = document.getElementById('dateToEdit').value;
+    if (!dateToEdit) return;
+
+    const dayHoursList = document.getElementById('dayHoursList');
+    dayHoursList.innerHTML = '';
+
+    const date = new Date(dateToEdit);
+    const dayOfWeek = date.getDay();
+    const bookings = dataManager.getBookingsForDate(dateToEdit);
+    const schedule = dataManager.getSchedule();
+    const daySchedule = schedule[dayOfWeek] || {};
+
+    for (let hour = 8; hour < 18; hour++) {
+        const hourItem = document.createElement('div');
+        hourItem.className = 'day-hour-item';
+
+        const bookingForHour = Object.values(bookings).find(b => b.hour === hour);
+        const isInSchedule = daySchedule[hour] === true;
+
+        let status = 'unavailable';
+        let statusText = '❌ לא זמין';
+        let statusClass = 'unavailable-status';
+
+        if (bookingForHour) {
+            status = 'booked';
+            statusText = `🔴 תפוס - ${bookingForHour.teacher}`;
+            statusClass = 'booked-status';
+        } else if (isInSchedule) {
+            status = 'available';
+            statusText = '🟢 זמין';
+            statusClass = 'available-status';
+        }
+
+        const statusEl = document.createElement('span');
+        statusEl.className = `hour-status ${statusClass}`;
+        statusEl.textContent = `${String(hour).padStart(2, '0')}:00 - ${statusText}`;
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn-toggle-status';
+        
+        if (status === 'booked') {
+            toggleBtn.textContent = '🗑️ בטל הזמנה';
+            toggleBtn.addEventListener('click', () => {
+                const bookingId = Object.keys(bookings).find(id => bookings[id].hour === hour);
+                if (confirm('בטל הזמנה זו?')) {
+                    dataManager.deleteBooking(dateToEdit, bookingId);
+                    loadDayHours();
+                }
+            });
+        } else if (status === 'available') {
+            toggleBtn.textContent = '🔒 הגדר כלא זמין';
+            toggleBtn.addEventListener('click', () => {
+                const newSchedule = dataManager.getSchedule();
+                newSchedule[dayOfWeek][hour] = false;
+                dataManager.setSchedule(newSchedule);
+                loadDayHours();
+            });
+        } else {
+            toggleBtn.textContent = '🔓 הגדר כזמין';
+            toggleBtn.addEventListener('click', () => {
+                const newSchedule = dataManager.getSchedule();
+                newSchedule[dayOfWeek][hour] = true;
+                dataManager.setSchedule(newSchedule);
+                loadDayHours();
+            });
+        }
+
+        hourItem.appendChild(statusEl);
+        hourItem.appendChild(toggleBtn);
+        dayHoursList.appendChild(hourItem);
     }
 }
 
-// ===== קבלת הזמנות לתאריך =====
-async function getBookingsForDate(date) {
-    try {
-        const snapshot = await db.ref(`bookings/${date}`).once('value');
-        return snapshot.val() || {};
-    } catch (error) {
-        console.error('שגיאה בקבלת הזמנות:', error);
-        return {};
-    }
-}
+// ============= תחזוקה =============
+document.addEventListener('DOMContentLoaded', () => {
+    updateConnectionStatus();
+    initHomeScreen();
+    showScreen('homeScreen');
 
-// הפיכת הפונקציה לגלובלית לשימוש ב-HTML
-window.deleteBooking = deleteBooking;
-
-// ===== אתחול האפליקציה - חייב להיות בסוף! =====
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM נטען - מאתחל אפליקציה...');
-    initializeFirebase();
-    setupEventListeners();
-    setupDateInputs();
+    window.addEventListener('dataChanged', () => {
+        if (document.querySelector('.screen.active').id === 'timesScreen') {
+            loadTimesScreen();
+        } else if (document.querySelector('.screen.active').id === 'homeScreen') {
+            loadCalendar();
+        }
+    });
 });
