@@ -1,0 +1,732 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    direction: rtl;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+#app-wrapper {
+    width: 100%;
+    max-width: 450px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* App Header */
+.app-header {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.app-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Main Content */
+.screen {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    width: 100%;
+    padding: 0;
+    background-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Footer */
+.footer {
+    width: 100%;
+    background-color: #333;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.footer p {
+    margin: 2px 0;
+    line-height: 1.3;
+}
+
+/* Connection Status */
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 30px;
+    font-size: 14px;
+    color: #666;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #4CAF50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 12px;
+    background-color: #e0e0e0;
+    color: #333;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #d0d0d0;
+}
+
+.btn-nav {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-nav:hover {
+    background-color: #5568d3;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.button-group button {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Titles */
+.container h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Month Navigation */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.month-display {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    text-align: center;
+}
+
+.selected-date-display {
+    text-align: center;
+    font-size: 16px;
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin: 30px 0;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid transparent;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.calendar-day.available {
+    background-color: #fff;
+    border: 2px solid #ddd;
+    color: #333;
+}
+
+.calendar-day.available:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.calendar-day.booked {
+    background-color: #ffcdd2;
+    color: #c62828;
+    border-color: #ef5350;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.day-number {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.day-teacher {
+    font-size: 9px;
+    text-align: center;
+    margin-top: 2px;
+    word-break: break-word;
+    line-height: 1;
+}
+
+.calendar-day.blocked {
+    background-color: #e0e0e0;
+    color: #999;
+    border-color: #bdbdbd;
+    cursor: not-allowed;
+}
+
+.calendar-day.selected {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.calendar-day.other-month {
+    color: #bdbdbd;
+    cursor: not-allowed;
+}
+
+/* Hours Grid */
+.hours-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 8px;
+    margin: 30px 0;
+}
+
+.hour-box {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid transparent;
+    font-size: 12px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.hour-box.available {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+    border: 2px solid #66bb6a;
+}
+
+.hour-box.available:hover {
+    background-color: #a5d6a7;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.hour-box.booked {
+    background-color: #ffcdd2;
+    color: #c62828;
+    border: 2px solid #ef5350;
+    cursor: not-allowed;
+}
+
+.hour-box.blocked {
+    background-color: #e0e0e0;
+    color: #999;
+    border: 2px solid #bdbdbd;
+    cursor: not-allowed;
+}
+
+.hour-box.selected {
+    background-color: #667eea;
+    color: white;
+    border: 2px solid #5568d3;
+}
+
+.hour-box .teacher-name {
+    font-size: 10px;
+    margin-top: 2px;
+    word-break: break-word;
+    text-align: center;
+}
+
+/* Confirmation */
+.confirmation-details {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-right: 4px solid #667eea;
+}
+
+.confirmation-details p {
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.confirmation-details strong {
+    color: #667eea;
+}
+
+.confirmation-message {
+    text-align: center;
+    padding: 20px;
+    background-color: #c8e6c9;
+    border-radius: 8px;
+    color: #2e7d32;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 20px 0;
+}
+
+/* Admin Menu */
+.admin-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 30px 0;
+}
+
+.btn-menu {
+    width: 100%;
+    padding: 16px;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-menu:hover {
+    background-color: #5568d3;
+}
+
+/* Bookings List */
+.bookings-list {
+    margin: 20px 0;
+}
+
+.booking-item {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-right: 4px solid #667eea;
+}
+
+.booking-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.booking-item-header strong {
+    color: #333;
+}
+
+.booking-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.booking-teacher {
+    font-size: 14px;
+    color: #666;
+    margin: 5px 0;
+}
+
+.booking-hours {
+    font-size: 14px;
+    color: #667eea;
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+.btn-delete {
+    background-color: #ffcdd2;
+    color: #c62828;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn-delete:hover {
+    background-color: #ef5350;
+    color: white;
+}
+
+/* Edit Hours List */
+.edit-hours-list {
+    margin: 20px 0;
+}
+
+.hour-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.hour-time {
+    font-weight: 600;
+    color: #333;
+    min-width: 50px;
+}
+
+.hour-status {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+}
+
+.hour-status.available {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+.hour-status.booked {
+    background-color: #ffcdd2;
+    color: #c62828;
+}
+
+.hour-status.blocked {
+    background-color: #e0e0e0;
+    color: #999;
+}
+
+.hour-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-status-btn {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.btn-status-btn:hover {
+    background-color: #5568d3;
+}
+
+/* Info Text */
+.info-text {
+    background-color: #f5f5f5;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 20px;
+    border-right: 3px solid #667eea;
+}
+
+/* Weekly Schedule */
+.week-schedule {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.week-day {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.week-day:last-child {
+    border-bottom: none;
+}
+
+.week-day label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.week-day input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.day-hours {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.hour-tag {
+    background-color: #667eea;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Weekly Hours Grid */
+.weekly-hours-grid {
+    margin: 20px 0;
+}
+
+.day-section {
+    margin-bottom: 25px;
+}
+
+.day-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #667eea;
+}
+
+.day-hours-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+}
+
+.time-slot {
+    padding: 12px 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: white;
+}
+
+.time-slot:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.time-slot.available {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+    border-color: #66bb6a;
+}
+
+.time-slot.booked {
+    background-color: #ffcdd2;
+    color: #c62828;
+    border-color: #ef5350;
+}
+
+.time-slot.blocked {
+    background-color: #e0e0e0;
+    color: #999;
+    border-color: #bdbdbd;
+}
+
+.time-slot.selected {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    .app-header h1 {
+        font-size: 22px;
+    }
+
+    .calendar-grid {
+        gap: 6px;
+    }
+
+    .calendar-day {
+        font-size: 14px;
+    }
+
+    .hours-grid {
+        gap: 6px;
+        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+    }
+
+    .hour-box {
+        font-size: 11px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 400px) {
+    .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+    }
+
+    .calendar-day {
+        font-size: 12px;
+        padding: 4px;
+    }
+}

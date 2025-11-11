@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הזמנת חדר מחשבים</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
+</head>
+<body>
+    <div id="app-wrapper">
+    <!-- Header Global -->
+    <header class="app-header">
+        <h1>הזמנת חדר מחשבים</h1>
+    </header>
+
+    <!-- מסך כניסה -->
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                מחובר לענן
+            </div>
+
+            <div class="form-group">
+                <label>שם המורה:</label>
+                <input type="text" id="teacherName" placeholder="הקלידו את שמכם" autofocus>
+            </div>
+
+            <button class="btn-primary" onclick="goToMonthSelection()">הבא</button>
+            <button class="btn-secondary" onclick="goToAdminLogin()">כניסת מנהל</button>
+        </div>
+    </div>
+
+    <!-- מסך בחירת חודש -->
+    <div id="monthScreen" class="screen">
+        <div class="container">
+            <h2>בחירת תאריך</h2>
+
+            <div class="month-navigation">
+                <button class="btn-nav" onclick="previousMonth()">←</button>
+                <span id="currentMonthDisplay" class="month-display">ספטמבר 2025</span>
+                <button class="btn-nav" onclick="nextMonth()">→</button>
+            </div>
+
+            <div id="monthCalendar" class="calendar-grid"></div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="backToLogin()">חזור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך בחירת שעות -->
+    <div id="hoursScreen" class="screen">
+        <div class="container">
+            <h2>בחירת שעות</h2>
+            <p id="selectedDateHeader" class="selected-date-display">בחרו תאריך</p>
+
+            <div id="hoursGrid" class="hours-grid"></div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="backToMonth()">חזור</button>
+                <button class="btn-primary" onclick="confirmBooking()">הבא - אישור ההזמנה</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך אישור -->
+    <div id="confirmScreen" class="screen">
+        <div class="container">
+            <h2>אישור ההזמנה</h2>
+
+            <div class="confirmation-details">
+                <p><strong>שם המורה:</strong> <span id="confirmTeacher"></span></p>
+                <p><strong>התאריך:</strong> <span id="confirmDate"></span></p>
+                <p><strong>השעות:</strong> <span id="confirmHours"></span></p>
+            </div>
+
+            <div class="confirmation-message">
+                ההזמנה אושרה בהצלחה! ✓
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="backToLogin()">חזור לתחילה</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך כניסת מנהל -->
+    <div id="adminLoginScreen" class="screen">
+        <div class="container">
+            <h2>כניסת מנהל</h2>
+
+            <div class="form-group">
+                <label>סיסמה:</label>
+                <input type="password" id="adminPassword" placeholder="הקלידו סיסמה">
+            </div>
+
+            <button class="btn-primary" onclick="checkAdminPassword()">כניסה</button>
+            <button class="btn-secondary" onclick="backToLogin()">חזור</button>
+        </div>
+    </div>
+
+    <!-- מסך מנהל -->
+    <div id="adminScreen" class="screen">
+        <div class="container">
+            <h2>פנל מנהל</h2>
+
+            <div class="admin-menu">
+                <button class="btn-menu" onclick="goToManageBookings()">ניהול הזמנות</button>
+                <button class="btn-menu" onclick="goToEditHours()">עריכת שעות בודדות</button>
+            </div>
+
+            <button class="btn-secondary" onclick="backToLogin()">התנתקות</button>
+        </div>
+    </div>
+
+    <!-- מסך ניהול הזמנות -->
+    <div id="manageBookingsScreen" class="screen">
+        <div class="container">
+            <h2>ניהול הזמנות</h2>
+
+            <div class="form-group">
+                <label>בחרו חודש:</label>
+                <select id="adminMonthSelect" onchange="loadAdminBookings()">
+                    <option value="">-- בחרו חודש --</option>
+                </select>
+            </div>
+
+            <div id="bookingsList" class="bookings-list"></div>
+
+            <button class="btn-secondary" onclick="goToAdminMenu()">חזור</button>
+        </div>
+    </div>
+
+    <!-- מסך עריכת שעות בודדות -->
+    <div id="editHoursScreen" class="screen">
+        <div class="container">
+            <h2>עריכת לוח זמנים</h2>
+
+            <div class="weekly-hours-grid" id="weeklyHoursGrid"></div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="saveEditedWeeklyHours()">שמור שינויים</button>
+                <button class="btn-secondary" onclick="goToAdminMenu()">חזור</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>ByteLogics</p>
+        <p>© כל הזכויות שמורות 2025</p>
+    </footer>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
