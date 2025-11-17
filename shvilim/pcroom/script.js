@@ -23,7 +23,8 @@ function initFirebase() {
         return;
     }
     
-  const firebaseConfig = {
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyDSM34F-l_Zt-MQmAbGWi-AHg-rInIJzhs",
   authDomain: "computer-room-booking.firebaseapp.com",
   databaseURL: "https://computer-room-booking-default-rtdb.europe-west1.firebasedatabase.app",
