@@ -657,20 +657,21 @@ function loadWeeklyHoursGrid() {
     });
     
     // Load blocked hours from storage
-    let blockedHours = {};
     if (useLocalStorage) {
-        blockedHours = JSON.parse(localStorage.getItem('blockedHours') || '{}');
+        const blockedHours = JSON.parse(localStorage.getItem('blockedHours') || '{}');
+        renderWeeklyHoursGrid(blockedHours);
     } else if (db) {
         db.ref('blockedHours').once('value').then(snapshot => {
-            blockedHours = snapshot.val() || {};
+            const blockedHours = snapshot.val() || {};
+            console.log('✅ Loaded blockedHours from Firebase:', blockedHours);
             renderWeeklyHoursGrid(blockedHours);
-        }).catch(() => {
-            renderWeeklyHoursGrid(blockedHours);
+        }).catch(error => {
+            console.error('Error loading blockedHours:', error);
+            renderWeeklyHoursGrid({});
         });
-        return;
+    } else {
+        renderWeeklyHoursGrid({});
     }
-    
-    renderWeeklyHoursGrid(blockedHours);
 }
 
 function renderWeeklyHoursGrid(blockedHours) {
