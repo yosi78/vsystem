@@ -53,19 +53,16 @@ const firebaseConfig = {
 }
 
 // Update Connection Status
+// Update Connection Status
 function updateConnectionStatus() {
     const statusElement = document.getElementById('connectionStatus');
     if (!statusElement) return;
-    
-    const dot = statusElement.querySelector('.status-dot');
     
     console.log('📊 Connection status check:', {useLocalStorage, db: db ? 'exists' : 'null'});
     
     if (useLocalStorage || !db) {
         console.log('❌ Firebase not available - disconnected');
-        if (dot) dot.style.backgroundColor = '#f44336';
-        statusElement.textContent = '';
-        statusElement.innerHTML = '<span class="status-dot"></span>מנותק';
+        statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
         return;
     }
     
@@ -73,24 +70,17 @@ function updateConnectionStatus() {
         console.log('🔍 Checking Firebase connection...');
         const connectedRef = db.ref('.info/connected');
         connectedRef.on('value', function(snap) {
-            const dot = statusElement.querySelector('.status-dot');
             if (snap.val() === true) {
                 console.log('✅ Firebase connected!');
-                if (dot) dot.style.backgroundColor = '#4CAF50';
-                statusElement.textContent = '';
-                statusElement.innerHTML = '<span class="status-dot"></span>מחובר לענן';
+                statusElement.innerHTML = '<span class="status-dot" style="background-color: #4CAF50;"></span>מחובר לענן';
             } else {
                 console.log('⚠️ Firebase disconnected');
-                if (dot) dot.style.backgroundColor = '#f44336';
-                statusElement.textContent = '';
-                statusElement.innerHTML = '<span class="status-dot"></span>מנותק';
+                statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
             }
         });
     } catch (error) {
         console.log("❌ Connection status error:", error);
-        if (dot) dot.style.backgroundColor = '#f44336';
-        statusElement.textContent = '';
-        statusElement.innerHTML = '<span class="status-dot"></span>מנותק';
+        statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
     }
 }
 
