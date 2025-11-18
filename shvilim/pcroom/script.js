@@ -53,40 +53,34 @@ const firebaseConfig = {
 }
 
 // Update Connection Status
+// Update Connection Status
 function updateConnectionStatus() {
     const statusElement = document.getElementById('connectionStatus');
     if (!statusElement) return;
     
-    const dot = document.querySelector('.status-dot');
+    console.log('📊 Connection status check:', {useLocalStorage, db: db ? 'exists' : 'null'});
     
-    if (useLocalStorage) {
-        if (dot) dot.style.backgroundColor = '#ff9800';
-        statusElement.innerHTML = '<span class="status-dot"></span>מוד לוקאלי';
-        return;
-    }
-    
-    if (!db) {
-        if (dot) dot.style.backgroundColor = '#ff9800';
-        statusElement.innerHTML = '<span class="status-dot"></span>בחיבור...';
+    if (useLocalStorage || !db) {
+        console.log('❌ Firebase not available - disconnected');
+        statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
         return;
     }
     
     try {
+        console.log('🔍 Checking Firebase connection...');
         const connectedRef = db.ref('.info/connected');
         connectedRef.on('value', function(snap) {
-            const dot = document.querySelector('.status-dot');
             if (snap.val() === true) {
-                if (dot) dot.style.backgroundColor = '#4CAF50';
-                if (statusElement) statusElement.innerHTML = '<span class="status-dot"></span>מחובר לענן';
+                console.log('✅ Firebase connected!');
+                statusElement.innerHTML = '<span class="status-dot" style="background-color: #4CAF50;"></span>מחובר לענן';
             } else {
-                if (dot) dot.style.backgroundColor = '#ff9800';
-                if (statusElement) statusElement.innerHTML = '<span class="status-dot"></span>מנתק מהענן';
+                console.log('⚠️ Firebase disconnected');
+                statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
             }
         });
     } catch (error) {
-        console.log("Connection status error:", error);
-        if (dot) dot.style.backgroundColor = '#ff9800';
-        statusElement.innerHTML = '<span class="status-dot"></span>מוד לוקאלי';
+        console.log("❌ Connection status error:", error);
+        statusElement.innerHTML = '<span class="status-dot" style="background-color: #f44336;"></span>מנותק';
     }
 }
 
@@ -94,6 +88,10 @@ function updateConnectionStatus() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Page loaded");
     initFirebase();
+    // Update status after a short delay to ensure Firebase is initialized
+    setTimeout(() => {
+        updateConnectionStatus();
+    }, 500);
 });
 
 // Screen Navigation
@@ -207,6 +205,7 @@ function loadMonthView() {
 function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
     blockedHours = blockedHours || {};
     const calendar = document.getElementById('monthCalendar');
+    calendar.innerHTML = '';
     
     // שורת כותרת עם שמות ימים - בסדר עברי (ראשון מימין)
     const daysOfWeek = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -246,6 +245,7 @@ function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
             
             // בדיקה אם יש לפחות שעה אחת פנויה (לא תפוסה, לא חסומה)
             let hasAvailableHour = false;
+            let isFull = true; // כל השעות תפוסות או חסומות?
             let bookingTeachers = [];
             
             TIMES.forEach(timeStr => {
@@ -256,8 +256,15 @@ function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
                 // שעה זמינה אם: לא חסומה AND לא תפוסה
                 if (!isBlocked && hourStatus === 'available') {
                     hasAvailableHour = true;
+                    isFull = false;
                 }
                 
+                // אם כל שעה היא או חסומה או תפוסה
+                if (!isBlocked && hourStatus !== 'booked') {
+                    isFull = false;
+                }
+                
+                // איסוף שמות המורים
                 if (hourStatus === 'booked' && dayBookings[hour]?.teacher) {
                     if (!bookingTeachers.includes(dayBookings[hour].teacher)) {
                         bookingTeachers.push(dayBookings[hour].teacher);
@@ -265,15 +272,28 @@ function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
                 }
             });
             
-            if (hasAvailableHour) {
+            // הצבעה לפי מצב היום
+            if (isFull) {
+                // כל השעות תפוסות - צבע אדום
+                day.classList.add('full');
+                day.innerHTML = `<div class="day-number">${currentDate.getDate()}</div>`;
+                if (bookingTeachers.length > 0) {
+                    day.innerHTML += `<div class="day-teachers">${bookingTeachers.join(', ')}</div>`;
+                }
+            } else if (hasAvailableHour) {
+                // יש שעות פנויות - צבע ירוק
                 day.classList.add('available');
                 day.textContent = currentDate.getDate();
-                day.onclick = () => selectDate(dateStr, currentDate);
             } else {
-                day.classList.add('available');
-                day.textContent = currentDate.getDate();
-                day.onclick = () => selectDate(dateStr, currentDate);
+                // יש כמה שעות פנויות - צבע צהוב/כתום
+                day.classList.add('partial');
+                day.innerHTML = `<div class="day-number">${currentDate.getDate()}</div>`;
+                if (bookingTeachers.length > 0) {
+                    day.innerHTML += `<div class="day-teachers">${bookingTeachers.join(', ')}</div>`;
+                }
             }
+            
+            day.onclick = () => selectDate(dateStr, currentDate);
         }
         
         daysGrid.appendChild(day);
@@ -297,10 +317,6 @@ function isDateFullyBooked(dateStr, bookings) {
 
 function selectDate(dateStr, dateObj) {
     selectedDate = dateStr;
-    document.querySelectorAll('.calendar-day').forEach(day => {
-        day.classList.remove('selected');
-    });
-    event.target.closest('.calendar-day').classList.add('selected');
     showScreen('hoursScreen');
     loadHoursForDate();
 }
@@ -337,6 +353,8 @@ function loadHoursForDate() {
 function renderHours(bookings, blockedHours) {
     blockedHours = blockedHours || {};
     const hoursGrid = document.getElementById('hoursGrid');
+    hoursGrid.innerHTML = ''; 
+    
     const dayBookings = bookings[selectedDate] || {};
     const dateObj = new Date(selectedDate);
     const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
@@ -538,55 +556,55 @@ function renderAdminBookings(bookings) {
     const bookingsList = document.getElementById('bookingsList');
     bookingsList.innerHTML = '';
     
-    let futureBookings = [];
+    let allBookings = [];
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    // נסיור על כל התאריכים
     Object.keys(bookings).forEach(dateStr => {
         const bookingDate = new Date(dateStr);
         if (bookingDate >= today) {
             const dayBookings = bookings[dateStr];
-            const bookedHours = [];
-            let teacher = '';
             
+            // נסיור על כל השעות באותו יום
             Object.keys(dayBookings).forEach(hour => {
                 if (dayBookings[hour] && dayBookings[hour].status === 'booked') {
-                    bookedHours.push(parseInt(hour));
-                    teacher = dayBookings[hour].teacher;
+                    allBookings.push({
+                        dateStr: dateStr,
+                        hour: parseInt(hour),
+                        teacher: dayBookings[hour].teacher,
+                        timeStr: `${hour}:00`
+                    });
                 }
             });
-            
-            if (bookedHours.length > 0) {
-                futureBookings.push({
-                    dateStr: dateStr,
-                    bookedHours: bookedHours,
-                    teacher: teacher
-                });
-            }
         }
     });
     
-    futureBookings.sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
+    // מיון לפי תאריך, ואחר כך לפי שעה
+    allBookings.sort((a, b) => {
+        const dateCompare = new Date(a.dateStr) - new Date(b.dateStr);
+        if (dateCompare !== 0) return dateCompare;
+        return a.hour - b.hour;
+    });
     
-    if (futureBookings.length === 0) {
+    if (allBookings.length === 0) {
         bookingsList.innerHTML = '<p style="text-align: center; color: #999;">אין הזמנות עתידיות</p>';
         return;
     }
     
-    futureBookings.forEach(booking => {
+    // הצגה של כל הזמנה בנפרד
+    allBookings.forEach(booking => {
         const item = document.createElement('div');
         item.className = 'booking-item';
-        
-        const hoursStr = booking.bookedHours.map(h => `${h}:00`).join(', ');
         
         item.innerHTML = `
             <div class="booking-item-header">
                 <strong>${formatHebrewDate(new Date(booking.dateStr))}</strong>
-                <button class="btn-delete" onclick="deleteBooking('${booking.dateStr}')">מחק</button>
+                <button class="btn-delete" onclick="deleteSingleBooking('${booking.dateStr}', ${booking.hour})">מחק</button>
             </div>
             <div class="booking-teacher"><strong>המורה:</strong> ${booking.teacher}</div>
-            <div class="booking-hours"><strong>השעות:</strong> ${hoursStr}</div>
+            <div class="booking-hours"><strong>השעה:</strong> ${booking.timeStr}</div>
         `;
         
         bookingsList.appendChild(item);
@@ -632,7 +650,30 @@ function deleteBooking(dateStr) {
         });
     }
 }
-
+// מחיקת הזמנה בודדת (שעה אחת ספציפית)
+function deleteSingleBooking(dateStr, hour) {
+    if (!confirm(`האם אתם בטוחים שברצונכם למחוק את ההזמנה בשעה ${hour}:00?`)) {
+        return;
+    }
+    
+    if (useLocalStorage) {
+        if (localBookings[dateStr] && localBookings[dateStr][hour]) {
+            localBookings[dateStr][hour] = { status: 'available' };
+            localStorage.setItem('bookings', JSON.stringify(localBookings));
+            alert('ההזמנה הוסרה בהצלחה');
+            loadAdminBookings();
+        }
+    } else if (db) {
+        db.ref(`bookings/${dateStr}/${hour}`).set({ status: 'available' }).then(() => {
+            console.log('✅ Single booking deleted successfully');
+            alert('ההזמנה הוסרה בהצלחה');
+            loadAdminBookings();
+        }).catch(error => {
+            alert('שגיאה בהסרת ההזמנה: ' + error.message);
+            console.error('Delete error:', error);
+        });
+    }
+}
 // ADMIN - EDIT HOURS
 const TIMES = ['08:00', '09:00', '09:50', '11:00', '12:00', '12:45', '13:45', '14:30'];
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
