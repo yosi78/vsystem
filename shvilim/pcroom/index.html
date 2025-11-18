@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>הזמנת חדר מחשבים</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Firebase - Global build (works in plain HTML) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+
 </head>
 <body>
     <div id="app-wrapper">
     <header class="app-header">
         <h1>הזמנת חדר מחשבים</h1>
-		<p>version 0.2</p>
+		<p>version 0.3</p>
     </header>
 
     <div id="loginScreen" class="screen active">
@@ -37,9 +39,9 @@
             <h2>בחירת תאריך</h2>
 
             <div class="month-navigation">
-                <button class="btn-nav" onclick="previousMonth()">←</button>
+                <button class="btn-nav" onclick="previousMonth()">→</button>
                 <span id="currentMonthDisplay" class="month-display">ספטמבר 2025</span>
-                <button class="btn-nav" onclick="nextMonth()">→</button>
+                <button class="btn-nav" onclick="nextMonth()">←</button>
             </div>
 
             <div id="monthCalendar" class="calendar-grid"></div>
