@@ -2,6 +2,7 @@
 let currentTeacher = "";
 let selectedDate = null;
 let selectedHours = [];
+let selectedTimeStrings = []; // שמירת השעות המלאות (09:50, 09:00 וכו')
 let currentViewYear = 2025;
 let currentViewMonth = 10; // נובמבר - החודש הנוכחי
 
@@ -130,6 +131,7 @@ function backToLogin() {
     showScreen('loginScreen');
     selectedDate = null;
     selectedHours = [];
+    selectedTimeStrings = [];
 }
 
 // MONTH SELECTION SCREEN - ניווט בין חודשים
@@ -251,7 +253,8 @@ function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
             TIMES.forEach(timeStr => {
                 const hour = parseInt(timeStr.split(':')[0]);
                 const isBlocked = dayBlocked[timeStr];
-                const hourStatus = dayBookings[hour]?.status || 'available';
+                // חפש בשעה המלאה (09:50) ובשעה הישנה (9) לתאימות לאחור
+                const hourStatus = dayBookings[timeStr]?.status || dayBookings[hour]?.status || 'available';
                 
                 // שעה זמינה אם: לא חסומה AND לא תפוסה
                 if (!isBlocked && hourStatus === 'available') {
@@ -265,9 +268,10 @@ function renderMonthCalendar(startDate, year, month, bookings, blockedHours) {
                 }
                 
                 // איסוף שמות המורים
-                if (hourStatus === 'booked' && dayBookings[hour]?.teacher) {
-                    if (!bookingTeachers.includes(dayBookings[hour].teacher)) {
-                        bookingTeachers.push(dayBookings[hour].teacher);
+                if (hourStatus === 'booked' && (dayBookings[timeStr]?.teacher || dayBookings[hour]?.teacher)) {
+                    const teacher = dayBookings[timeStr]?.teacher || dayBookings[hour]?.teacher;
+                    if (!bookingTeachers.includes(teacher)) {
+                        bookingTeachers.push(teacher);
                     }
                 }
             });
@@ -365,7 +369,8 @@ function renderHours(bookings, blockedHours) {
         
         // Extract hour as integer
         const hour = parseInt(timeStr.split(':')[0]);
-        const hourData = dayBookings[hour] || { status: 'available' };
+        // חפש בשעה המלאה (09:50) וגם בשעה הישנה (9) לתאימות לאחור
+        const hourData = dayBookings[timeStr] || dayBookings[hour] || { status: 'available' };
         
         // Check if hour is blocked by admin
         const isBlocked = blockedHours[dayOfWeek] && blockedHours[dayOfWeek][timeStr];
@@ -399,12 +404,21 @@ function toggleHourSelection(element, hour, timeStr) {
     if (element.classList.contains('selected')) {
         if (!selectedHours.includes(hour)) {
             selectedHours.push(hour);
+            selectedTimeStrings.push(timeStr);
         }
     } else {
-        selectedHours = selectedHours.filter(h => h !== hour);
+        const idx = selectedHours.indexOf(hour);
+        if (idx !== -1) {
+            selectedHours.splice(idx, 1);
+            selectedTimeStrings.splice(idx, 1);
+        }
     }
     
-    selectedHours.sort((a, b) => a - b);
+    // Sort both arrays by hour value for consistency
+    const combined = selectedHours.map((h, i) => ({hour: h, timeStr: selectedTimeStrings[i]}))
+        .sort((a, b) => a.hour - b.hour);
+    selectedHours = combined.map(item => item.hour);
+    selectedTimeStrings = combined.map(item => item.timeStr);
 }
 
 function confirmBooking() {
@@ -428,8 +442,8 @@ function confirmBooking() {
             const blockedHours = snapshot.val() || {};
             const dayBlocked = blockedHours[dayOfWeek] || {};
             
-            // Check for blocked hours
-            const hasBlockedHour = selectedHours.some(hour => dayBlocked[`${hour}:00`]);
+            // Check for blocked hours - בדוק עם timeStr
+            const hasBlockedHour = selectedTimeStrings.some(timeStr => dayBlocked[timeStr]);
             if (hasBlockedHour) {
                 alert('לא ניתן להזמין שעות חסומות');
                 return;
@@ -441,7 +455,7 @@ function confirmBooking() {
         const blockedHours = JSON.parse(localStorage.getItem('blockedHours') || '{}');
         const dayBlocked = blockedHours[dayOfWeek] || {};
         
-        const hasBlockedHour = selectedHours.some(hour => dayBlocked[`${hour}:00`]);
+        const hasBlockedHour = selectedTimeStrings.some(timeStr => dayBlocked[timeStr]);
         if (hasBlockedHour) {
             alert('לא ניתן להזמין שעות חסומות');
             return;
@@ -453,10 +467,14 @@ function confirmBooking() {
 
 function proceedWithBooking() {
     const updates = {};
-    selectedHours.forEach(hour => {
-        updates[`${selectedDate}/${hour}`] = {
+    selectedTimeStrings.forEach((timeStr, idx) => {
+        const hour = selectedHours[idx];
+        // שמור עם timeStr מלא כמפתח (09:50 ולא 9)
+        updates[`${selectedDate}/${timeStr}`] = {
             status: 'booked',
-            teacher: currentTeacher
+            teacher: currentTeacher,
+            hour: hour,
+            timeStr: timeStr
         };
     });
     
@@ -465,8 +483,8 @@ function proceedWithBooking() {
             localBookings[selectedDate] = {};
         }
         Object.keys(updates).forEach(key => {
-            const [date, hour] = key.split('/');
-            localBookings[date][hour] = updates[key];
+            const [date, timeStr] = key.split('/');
+            localBookings[date][timeStr] = updates[key];
         });
         localStorage.setItem('bookings', JSON.stringify(localBookings));
         showConfirmation();
@@ -490,7 +508,7 @@ function proceedWithBooking() {
 
 function showConfirmation() {
     const dateObj = new Date(selectedDate);
-    const hoursStr = selectedHours.map(h => `${h}:00`).join(', ');
+    const hoursStr = selectedTimeStrings.join(', ');
     
     document.getElementById('confirmTeacher').textContent = currentTeacher;
     document.getElementById('confirmDate').textContent = formatHebrewDate(dateObj);
@@ -499,12 +517,14 @@ function showConfirmation() {
     showScreen('confirmScreen');
     selectedDate = null;
     selectedHours = [];
+    selectedTimeStrings = [];
 }
 
 function backToMonth() {
     showScreen('monthScreen');
     selectedDate = null;
     selectedHours = [];
+    selectedTimeStrings = [];
 }
 
 // ADMIN LOGIN
@@ -568,13 +588,18 @@ function renderAdminBookings(bookings) {
             const dayBookings = bookings[dateStr];
             
             // נסיור על כל השעות באותו יום
-            Object.keys(dayBookings).forEach(hour => {
-                if (dayBookings[hour] && dayBookings[hour].status === 'booked') {
+            Object.keys(dayBookings).forEach(timeKey => {
+                if (dayBookings[timeKey] && dayBookings[timeKey].status === 'booked') {
+                    // timeKey יכול להיות "09:50" או "9"
+                    const timeStr = dayBookings[timeKey].timeStr || timeKey;
+                    const hour = dayBookings[timeKey].hour !== undefined ? dayBookings[timeKey].hour : parseInt(timeKey);
+                    
                     allBookings.push({
                         dateStr: dateStr,
-                        hour: parseInt(hour),
-                        teacher: dayBookings[hour].teacher,
-                        timeStr: `${hour}:00`
+                        hour: hour,
+                        teacher: dayBookings[timeKey].teacher,
+                        timeStr: timeStr,
+                        timeKey: timeKey
                     });
                 }
             });
@@ -601,7 +626,7 @@ function renderAdminBookings(bookings) {
         item.innerHTML = `
             <div class="booking-item-header">
                 <strong>${formatHebrewDate(new Date(booking.dateStr))}</strong>
-                <button class="btn-delete" onclick="deleteSingleBooking('${booking.dateStr}', ${booking.hour})">מחק</button>
+                <button class="btn-delete" onclick="deleteSingleBooking('${booking.dateStr}', '${booking.timeKey}')">מחק</button>
             </div>
             <div class="booking-teacher"><strong>המורה:</strong> ${booking.teacher}</div>
             <div class="booking-hours"><strong>השעה:</strong> ${booking.timeStr}</div>
@@ -651,20 +676,20 @@ function deleteBooking(dateStr) {
     }
 }
 // מחיקת הזמנה בודדת (שעה אחת ספציפית)
-function deleteSingleBooking(dateStr, hour) {
-    if (!confirm(`האם אתם בטוחים שברצונכם למחוק את ההזמנה בשעה ${hour}:00?`)) {
+function deleteSingleBooking(dateStr, timeKey) {
+    if (!confirm(`האם אתם בטוחים שברצונכם למחוק את ההזמנה?`)) {
         return;
     }
     
     if (useLocalStorage) {
-        if (localBookings[dateStr] && localBookings[dateStr][hour]) {
-            localBookings[dateStr][hour] = { status: 'available' };
+        if (localBookings[dateStr] && localBookings[dateStr][timeKey]) {
+            localBookings[dateStr][timeKey] = { status: 'available' };
             localStorage.setItem('bookings', JSON.stringify(localBookings));
             alert('ההזמנה הוסרה בהצלחה');
             loadAdminBookings();
         }
     } else if (db) {
-        db.ref(`bookings/${dateStr}/${hour}`).set({ status: 'available' }).then(() => {
+        db.ref(`bookings/${dateStr}/${timeKey}`).set({ status: 'available' }).then(() => {
             console.log('✅ Single booking deleted successfully');
             alert('ההזמנה הוסרה בהצלחה');
             loadAdminBookings();
