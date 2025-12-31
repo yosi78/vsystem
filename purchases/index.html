@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הזמנת ציוד</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- מסך התחברות -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <h1> מערכת הזמנת ציוד</h1>
+                <p class="subtitle">version 0.1</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginName">שם משתמש (שם מלא):</label>
+                        <input type="text" id="loginName" placeholder="שם המורה" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginRole">תפקיד:</label>
+                        <select id="loginRole" required>
+                            <option value="">בחר תפקיד</option>
+                            <option value="teacher">מורה</option>
+                            <option value="admin">אחראי ציוד</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">כניסה</button>
+                </form>
+                
+                <div id="authMessage" class="message"></div>
+            </div>
+        </div>
+
+        <!-- מסך ראשי למורה -->
+        <div id="teacherScreen" class="screen">
+            <div class="navbar">
+                <div class="navbar-title">
+                    <h2>👋 שלום, <span id="teacherName"></span></h2>
+                </div>
+                <button class="btn btn-danger" onclick="logout()">התנתקות</button>
+            </div>
+
+            <div class="container">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('orders')">הזמנות שלי</button>
+                    <button class="tab-btn" onclick="switchTab('newOrder')">הזמנה חדשה</button>
+                </div>
+
+                <!-- טאב הזמנות -->
+                <div id="ordersTab" class="tab-content active">
+                    <h3>רשימת הזמנות שלך</h3>
+                    <div id="teacherOrdersList" class="orders-list">
+                        <p class="placeholder">אין הזמנות עדיין</p>
+                    </div>
+                </div>
+
+                <!-- טאב הזמנה חדשה -->
+                <div id="newOrderTab" class="tab-content">
+                    <h3>הזמנה חדשה</h3>
+                    <form id="newOrderForm">
+                        <div class="form-group">
+                            <label for="orderClass">כיתה / שכבה:</label>
+                            <input type="text" id="orderClass" placeholder="לדוגמה: כיתה ד׳" required>
+                        </div>
+
+                        <h4 style="margin-top: 30px; margin-bottom: 15px;">בחר ציוד:</h4>
+                        <div id="itemsChecklist" class="items-checklist"></div>
+
+                        <div class="form-group" style="margin-top: 30px;">
+                            <label for="otherItem">אחר (ציוד שלא בהרשימה):</label>
+                            <input type="text" id="otherItem" placeholder="כתוב שם הציוד">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="otherQuantity">כמות:</label>
+                            <input type="number" id="otherQuantity" min="1" value="1">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" onclick="submitOrder(event)">📤 שלח הזמנה</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- מסך ראשי לאחראי ציוד -->
+        <div id="adminScreen" class="screen">
+            <div class="navbar">
+                <div class="navbar-title">
+                    <h2>⚙️ לוח בקרה - ניהול הזמנות</h2>
+                </div>
+                <button class="btn btn-danger" onclick="logout()">התנתקות</button>
+            </div>
+
+            <div class="container">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchAdminTab('allOrders')">כל ההזמנות</button>
+                    <button class="tab-btn" onclick="switchAdminTab('export')">ייצוא למסמך</button>
+                    <button class="tab-btn" onclick="switchAdminTab('receiving')">קליטת ציוד</button>
+                    <button class="tab-btn" onclick="switchAdminTab('itemsManagement')">⚙️ ניהול ציוד</button>
+                </div>
+
+                <!-- טאב כל ההזמנות -->
+                <div id="allOrdersTab" class="tab-content active">
+                    <h3>כל ההזמנות</h3>
+                    <div class="filter-group">
+                        <select id="statusFilter" onchange="filterOrdersByStatus()">
+                            <option value="">הכל</option>
+                            <option value="pending">ממתין לאישור</option>
+                            <option value="approved">אושר</option>
+                            <option value="ordered">הוזמן</option>
+                            <option value="received">התקבל</option>
+                            <option value="distributed">חולק</option>
+                        </select>
+                    </div>
+                    <div id="adminOrdersList" class="orders-list">
+                        <p class="placeholder">אין הזמנות</p>
+                    </div>
+                </div>
+
+                <!-- טאב ייצוא -->
+                <div id="exportTab" class="tab-content">
+                    <h3>ייצוא הזמנה מרוכזת לספק</h3>
+                    <p class="info-text">סכום כל הפריטים המאושרים:</p>
+                    <div id="exportSummary" class="export-summary">
+                        <p class="placeholder">אין פריטים מאושרים</p>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="exportToExcel()">📊 ייצוא ל-Excel</button>
+                    <button class="btn btn-secondary btn-block" onclick="exportToPDF()">📄 ייצוא ל-PDF</button>
+                </div>
+
+                <!-- טאב קליטת ציוד -->
+                <div id="receivingTab" class="tab-content">
+                    <h3>מסמך קליטת ציוד</h3>
+                    <p class="info-text">לאחר קבלת הציוד מהספק, סמן את הפריטים שהגיעו:</p>
+                    <div id="receivingList" class="receiving-list">
+                        <p class="placeholder">אין פריטים להצגה</p>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="exportReceivingReport()">📋 ייצוא דוח קליטה</button>
+                </div>
+
+                <!-- טאב ניהול ציוד -->
+                <div id="itemsManagementTab" class="tab-content">
+                    <h3>⚙️ ניהול רשימת הציוד</h3>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h4>הוסף פריט חדש:</h4>
+                        <div class="form-group">
+                            <label for="newItemName">שם הפריט:</label>
+                            <input type="text" id="newItemName" placeholder="לדוגמה: עטים כתומים">
+                        </div>
+                        <div class="form-group">
+                            <label for="newItemCategory">קטגוריה:</label>
+                            <select id="newItemCategory">
+                                <option value="משרדי">משרדי</option>
+                                <option value="יצירה">יצירה</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="addNewItem()">➕ הוסף פריט</button>
+                    </div>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 2px solid var(--medium-gray);">
+
+                    <h4>רשימת הציוד הנוכחית:</h4>
+                    <div id="itemsList" class="items-management-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Main App -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
