@@ -1,13 +1,16 @@
 // ⚠️ **חשוב: החלף את הערכים הבאים בפרטי Firebase שלך**
 // לך ל- Firebase Console → Project Settings → Config
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCUc2QW8CEtJXfJJzh75J2KKZ7--Rb1Sls",
+  authDomain: "purchases-a4b7f.firebaseapp.com",
+  databaseURL: "https://purchases-a4b7f-default-rtdb.firebaseio.com",
+  projectId: "purchases-a4b7f",
+  storageBucket: "purchases-a4b7f.firebasestorage.app",
+  messagingSenderId: "31923674034",
+  appId: "1:31923674034:web:b7a3e21abd805d4140e2ab",
+  measurementId: "G-DFPTCQBGQH"
 };
 
 // Initialize Firebase
