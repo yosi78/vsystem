@@ -21,9 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeApp() {
     try {
-        db = firebase.firestore();
+        db = firebase.database();
+        firebaseConnected = true;
+        console.log('✓ Realtime Database initialized successfully');
+        updateConnectionStatus();
     } catch (error) {
         console.error('Firebase error:', error);
+        firebaseConnected = false;
+        updateConnectionStatus();
     }
 
     // טען את רשימת הציוד מ-localStorage
@@ -44,6 +49,8 @@ function initializeApp() {
             document.getElementById('teacherName').textContent = currentUserName;
             loadTeacherOrders(userSessionId);
             populateItemSelect();
+            // שנה לטאב ההזמנה החדשה עבור מורות - לא צריך כעת
+            // switchTab('newOrder');
         }
     } else {
         displayScreen('loginScreen');
@@ -62,15 +69,25 @@ function initializeApp() {
 
 async function loadTeacherOrders(userId) {
     try {
-        const snapshot = await db.collection('orders')
-            .where('userId', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .get();
-
-        currentUserOrders = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const database = firebase.database();
+        const snapshot = await database.ref('orders').once('value');
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            currentUserOrders = Object.keys(data)
+                .filter(id => data[id] && data[id].userId === userId)
+                .map(id => ({
+                    id,
+                    ...data[id]
+                }))
+                .sort((a, b) => {
+                    const dateA = new Date(a.createdAt);
+                    const dateB = new Date(b.createdAt);
+                    return dateB - dateA;
+                });
+        } else {
+            currentUserOrders = [];
+        }
 
         displayTeacherOrders();
     } catch (error) {
@@ -80,14 +97,24 @@ async function loadTeacherOrders(userId) {
 
 async function loadAllOrders() {
     try {
-        const snapshot = await db.collection('orders')
-            .orderBy('createdAt', 'desc')
-            .get();
+        const database = firebase.database();
+        const snapshot = await database.ref('orders').once('value');
 
-        currentOrders = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            currentOrders = Object.keys(data)
+                .map(id => ({
+                    id,
+                    ...data[id]
+                }))
+                .sort((a, b) => {
+                    const dateA = new Date(a.createdAt);
+                    const dateB = new Date(b.createdAt);
+                    return dateB - dateA;
+                });
+        } else {
+            currentOrders = [];
+        }
 
         displayAdminOrders();
         updateExportSummary();
@@ -99,24 +126,37 @@ async function loadAllOrders() {
 
 async function saveOrder(orderData) {
     try {
-        const docRef = await db.collection('orders').add({
+        const database = firebase.database();
+        const orderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        await database.ref('orders/' + orderId).set({
             ...orderData,
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             status: 'pending'
         });
 
-        return docRef.id;
+        console.log('✓ Order saved to Realtime Database:', orderId);
+        return orderId;
     } catch (error) {
         throw new Error('שגיאה בשמירת ההזמנה: ' + error.message);
     }
 }
 
-async function updateOrderStatus(orderId, newStatus) {
+async function updateOrderStatus(orderId, newStatus, rejectionReason = null) {
     try {
-        await db.collection('orders').doc(orderId).update({
+        const database = firebase.database();
+        const updateData = {
             status: newStatus,
-            updatedAt: new Date()
-        });
+            updatedAt: new Date().toISOString()
+        };
+
+        // אם זה דחייה, הוסף סיבה
+        if (newStatus === 'rejected' && rejectionReason) {
+            updateData.rejectionReason = rejectionReason;
+        }
+
+        await database.ref('orders/' + orderId).update(updateData);
         loadAllOrders();
     } catch (error) {
         console.error('שגיאה בעדכון סטטוס:', error);
@@ -156,7 +196,8 @@ function handleLogin(e) {
     }
 
     // שמור בסשן
-    userSessionId = 'user_' + Date.now();
+    // שתמש בשם המורה כ-ID (כדי שיהיה consistent)
+    userSessionId = 'teacher_' + name.replace(/\s+/g, '_').toLowerCase();
     localStorage.setItem('currentSession', JSON.stringify({
         id: userSessionId,
         name: name,
@@ -201,7 +242,7 @@ function displayScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
-function switchTab(tabName) {
+function switchTab(tabName, button) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -210,10 +251,23 @@ function switchTab(tabName) {
     });
 
     document.getElementById(tabName + 'Tab').classList.add('active');
-    event.target.classList.add('active');
+    
+    // אם יש button, סמן אותו כactive
+    if (button) {
+        button.classList.add('active');
+    } else {
+        // אם אין button (קריאה מקוד), סמן ידנית
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            if ((btn.textContent.includes('הזמנות') && tabName === 'orders') ||
+                (btn.textContent.includes('חדשה') && tabName === 'newOrder')) {
+                btn.classList.add('active');
+            }
+        });
+    }
 }
 
-function switchAdminTab(tabName) {
+function switchAdminTab(tabName, button) {
     document.querySelectorAll('#allOrdersTab, #exportTab, #receivingTab, #itemsManagementTab').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -222,7 +276,32 @@ function switchAdminTab(tabName) {
     });
 
     document.getElementById(tabName + 'Tab').classList.add('active');
-    event.target.classList.add('active');
+    
+    // אם יש button, סמן אותו כactive
+    if (button) {
+        button.classList.add('active');
+    } else {
+        // אם אין button, סמן ידנית
+        const tabNames = {
+            'allOrders': 'כל ההזמנות',
+            'export': 'ייצוא',
+            'receiving': 'קליטה',
+            'itemsManagement': 'ניהול'
+        };
+        
+        const buttons = document.querySelectorAll('.navbar + .container .tab-btn');
+        buttons.forEach(btn => {
+            if (btn.textContent.includes('כל ההזמנות') && tabName === 'allOrders') {
+                btn.classList.add('active');
+            } else if (btn.textContent.includes('ייצוא') && tabName === 'export') {
+                btn.classList.add('active');
+            } else if (btn.textContent.includes('קליטה') && tabName === 'receiving') {
+                btn.classList.add('active');
+            } else if (btn.textContent.includes('ניהול') && tabName === 'itemsManagement') {
+                btn.classList.add('active');
+            }
+        });
+    }
 
     // אם זה טאב ניהול ציוד, טען את הרשימה
     if (tabName === 'itemsManagement') {
@@ -411,32 +490,131 @@ function displayTeacherOrders() {
         return;
     }
 
-    container.innerHTML = currentUserOrders.map(order => `
-        <div class="order-card ${order.status}">
-            <div class="order-header">
-                <div>
-                    <div class="order-title">הזמנה - כיתה ${order.class}</div>
-                    <div class="order-details">
-                        <p>תאריך: ${formatDate(order.createdAt)}</p>
+    // חלק הזמנות לשתי קבוצות
+    const activeOrders = currentUserOrders.filter(o => o.status !== 'rejected');
+    const rejectedOrders = currentUserOrders.filter(o => o.status === 'rejected');
+
+    let html = '';
+
+    // הזמנות פעילות
+    if (activeOrders.length > 0) {
+        html += '<div class="orders-section"><h3 style="color: var(--primary); margin-bottom: 15px;">הזמנות פעילות</h3>';
+        html += activeOrders.map(order => `
+            <div class="order-card ${order.status}">
+                <div class="order-header">
+                    <div>
+                        <div class="order-title">הזמנה - כיתה ${order.class}</div>
+                        <div class="order-details">
+                            <p>תאריך: ${formatDate(order.createdAt)}</p>
+                        </div>
                     </div>
+                    <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
                 </div>
-                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="order-item">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-quantity">כמות: ${item.quantity}</span>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-            <div class="order-items">
-                ${order.items.map(item => `
-                    <div class="order-item">
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-quantity">כמות: ${item.quantity}</span>
+        `).join('');
+        html += '</div>';
+    }
+
+    // הזמנות שנדחו
+    if (rejectedOrders.length > 0) {
+        html += '<div class="orders-section"><h3 style="color: var(--danger); margin-bottom: 15px;">הזמנות שנדחו</h3>';
+        html += rejectedOrders.map(order => `
+            <div class="order-card ${order.status}" style="border-right: 4px solid var(--danger);">
+                <div class="order-header">
+                    <div>
+                        <div class="order-title">הזמנה - כיתה ${order.class}</div>
+                        <div class="order-details">
+                            <p>תאריך: ${formatDate(order.createdAt)}</p>
+                            ${order.rejectionReason ? `<p style="color: var(--danger); font-weight: 600;">סיבה: ${order.rejectionReason}</p>` : ''}
+                        </div>
                     </div>
-                `).join('')}
+                    <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
+                </div>
+                <div class="order-items">
+                    ${order.items.map(item => `
+                        <div class="order-item">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-quantity">כמות: ${item.quantity}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">🗑️ מחוק</button>
+                    <button class="btn btn-primary" onclick="resendOrder('${order.id}')">📤 שליחה מחדש</button>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
 }
 
 // ===============================================
 // ADMIN FUNCTIONS
 // ===============================================
+
+async function deleteOrder(orderId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק הזמנה זו?')) {
+        try {
+            const database = firebase.database();
+            await database.ref('orders/' + orderId).remove();
+            console.log('✓ Order deleted:', orderId);
+            loadTeacherOrders(userSessionId);
+            showMessage('ההזמנה נמחקה בהצלחה', 'success');
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            showMessage('שגיאה במחיקת ההזמנה', 'error');
+        }
+    }
+}
+
+async function resendOrder(orderId) {
+    try {
+        // מצא את ההזמנה המקורית
+        const order = currentUserOrders.find(o => o.id === orderId);
+        if (!order) {
+            alert('לא מצאנו את ההזמנה');
+            return;
+        }
+
+        // שמור הזמנה חדשה (עם אותו תוכן אבל status חדש)
+        const newOrderData = {
+            userId: order.userId,
+            teacherName: order.teacherName,
+            class: order.class,
+            items: order.items,
+            status: 'pending'
+        };
+
+        const database = firebase.database();
+        const newOrderId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        await database.ref('orders/' + newOrderId).set({
+            ...newOrderData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+
+        // מחוק את ההזמנה הישנה
+        await database.ref('orders/' + orderId).remove();
+
+        console.log('✓ Order resent:', newOrderId);
+        loadTeacherOrders(userSessionId);
+        showMessage('ההזמנה נשלחה מחדש בהצלחה!', 'success');
+    } catch (error) {
+        console.error('Error resending order:', error);
+        showMessage('שגיאה בשליחה מחדש', 'error');
+    }
+}
 
 function displayAdminOrders() {
     const container = document.getElementById('adminOrdersList');
@@ -491,8 +669,8 @@ function approveOrder(orderId) {
 
 function rejectOrder(orderId) {
     const reason = prompt('סיבת דחייה:');
-    if (reason) {
-        updateOrderStatus(orderId, 'rejected');
+    if (reason !== null) {
+        updateOrderStatus(orderId, 'rejected', reason);
     }
 }
 
@@ -652,7 +830,8 @@ function exportToExcel() {
         });
     });
 
-    let csv = 'שם פריט,כמות להזמנה\n';
+    // הוסף BOM לעברית בExcel
+    let csv = '\uFEFFשם פריט,כמות להזמנה\n';
     Object.entries(itemSummary).forEach(([name, quantity]) => {
         csv += `"${name}",${quantity}\n`;
     });
@@ -715,10 +894,14 @@ function exportReceivingReport() {
     html += '<table border="1" cellpadding="10" style="width:100%; border-collapse:collapse;">';
     html += '<tr><th>פריט</th><th>כמות כוללת</th><th>פירוט לפי מורות</th></tr>';
     
+    // יוצר CSV גם:
+    let csv = '\uFEFFפריט,כמות כוללת,פירוט לפי מורות\n';
+    
     Object.entries(itemsMap).forEach(([itemName, details]) => {
         const total = details.reduce((sum, d) => sum + d.quantity, 0);
         const breakdown = details.map(d => `${d.teacher} - ${d.quantity}`).join(', ');
         html += `<tr><td>${itemName}</td><td>${total}</td><td>${breakdown}</td></tr>`;
+        csv += `"${itemName}",${total},"${breakdown}"\n`;
     });
     
     html += '</table>';
@@ -859,4 +1042,53 @@ function getStatusText(status) {
 
 function clearForms() {
     document.getElementById('loginForm').reset();
+}
+
+// ===============================================
+// HELPER FUNCTIONS
+// ===============================================
+
+function showMessage(message, type = 'info') {
+    // חפש מסג בכל המסכנים
+    let messageEl = document.querySelector('#authMessage, #newOrderForm + .message');
+    
+    if (!messageEl) {
+        // אם לא קיים, צור אלמנט בדף הנוכחי
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab) {
+            messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            activeTab.insertBefore(messageEl, activeTab.firstChild);
+        } else {
+            messageEl = document.getElementById('authMessage');
+        }
+    }
+
+    if (messageEl) {
+        messageEl.className = 'message ' + type;
+        messageEl.textContent = message;
+        messageEl.style.display = 'block';
+        
+        // הסתר את ההודעה אחרי 4 שניות
+        if (type === 'success') {
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+    }
+}
+
+function updateConnectionStatus() {
+    const statusEl = document.getElementById('firebaseStatus');
+    if (statusEl) {
+        if (firebaseConnected) {
+            statusEl.textContent = '☁️ מחובר לענן';
+            statusEl.style.color = 'white';
+            statusEl.style.opacity = '1';
+        } else {
+            statusEl.textContent = '☁️ לא מחובר';
+            statusEl.style.color = '#ffcccc';
+            statusEl.style.opacity = '0.7';
+        }
+    }
 }

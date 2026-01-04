@@ -25,6 +25,12 @@ body {
     line-height: 1.6;
     direction: rtl;
     text-align: right;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+#app {
+    width: 100%;
 }
 
 /* ==================== SCREENS & TABS ==================== */
@@ -32,6 +38,7 @@ body {
 .screen {
     display: none;
     min-height: 100vh;
+    padding-top: 50px;
 }
 
 .screen.active {
@@ -70,14 +77,14 @@ body {
 /* ==================== CONTAINERS ==================== */
 
 .container {
-    max-width: 1200px;
+    max-width: 480px;
     margin: 0 auto;
     padding: 20px;
 }
 
 .login-container {
     max-width: 400px;
-    margin: 50px auto;
+    margin: 20px auto;
     background: white;
     padding: 40px;
     border-radius: var(--border-radius);
@@ -715,4 +722,45 @@ body {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
+}
+
+/* ==================== FIREBASE STATUS LOGIN ==================== */
+
+.firebase-status-login {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    white-space: nowrap;
+    color: green;
+    z-index: 1000;
+}
+
+/* ==================== MAIN HEADER ==================== */
+
+.main-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    max-width: 480px;
+    z-index: 1001;
+}
+
+.firebase-status {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    font-weight: 600;
 }
