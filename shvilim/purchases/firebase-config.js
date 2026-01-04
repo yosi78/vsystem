@@ -1,7 +1,7 @@
-// ⚠️ **חשוב: החלף את הערכים הבאים בפרטי Firebase שלך**
-// לך ל- Firebase Console → Project Settings → Config
+// 🔧 Firebase Configuration
+// ⚠️ עדכן את הערכים הבאים בפרטי Firebase שלך
+// לך ל- Firebase Console → Project Settings → Your apps → Config
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCUc2QW8CEtJXfJJzh75J2KKZ7--Rb1Sls",
   authDomain: "purchases-a4b7f.firebaseapp.com",
@@ -13,7 +13,10 @@ const firebaseConfig = {
   measurementId: "G-DFPTCQBGQH"
 };
 
-// Initialize Firebase
+// ============================================
+// Firebase Initialization
+// ============================================
+
 try {
     firebase.initializeApp(firebaseConfig);
     console.log('✓ Firebase initialized successfully');
@@ -21,6 +24,16 @@ try {
     // Initialize Realtime Database
     const database = firebase.database();
     console.log('✓ Realtime Database ready');
+    
+    // בדוק חיבור ל-Database
+    firebase.database().ref('.info/connected').on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+            console.log('✓ Connected to Realtime Database');
+        } else {
+            console.log('⚠️ Disconnected from Realtime Database');
+        }
+    });
+    
 } catch (error) {
     console.error('❌ Firebase initialization error:', error);
 }
@@ -132,3 +145,9 @@ const APP_CONFIG = {
 { id: 99, name: 'סכין יפני צר', category: 'משרדי' }
     ]
 };
+
+// ============================================
+// ודא שה-APP_CONFIG טוען בהצלחה
+// ============================================
+
+console.log('✓ APP_CONFIG loaded with', APP_CONFIG.items.length, 'items');
