@@ -10,6 +10,7 @@ let tempOrderItems = [];
 let userSessionId = null;
 let db = null;
 let firebaseConnected = false;
+let orderJustSubmitted = false; // משתנה לזכור שהזמנה בדיוק נשלחה
 
 // ===============================================
 // INITIALIZATION
@@ -50,8 +51,8 @@ function initializeApp() {
             document.getElementById('teacherName').textContent = currentUserName;
             loadTeacherOrders(userSessionId);
             populateItemSelect();
-            // שנה לטאב ההזמנה החדשה עבור מורות - לא צריך כעת
-            // switchTab('newOrder');
+            // שנה לטאב ההזמנה החדשה עבור מורות
+            switchTab('newOrder');
         }
     } else {
         displayScreen('loginScreen');
@@ -219,6 +220,8 @@ function handleLogin(e) {
         document.getElementById('teacherName').textContent = name;
         loadTeacherOrders(userSessionId);
         populateItemSelect();
+        // החזרה לטאב הזמנה חדשה
+        switchTab('newOrder');
     }
 }
 
@@ -244,6 +247,15 @@ function displayScreen(screenId) {
 }
 
 function switchTab(tabName, button) {
+    // אם עוברים לטאב אחר (לא הזמנות), הסתר את ההודעה ואפס את הדגל
+    if (tabName !== 'orders') {
+        const messageEl = document.getElementById('ordersMessage');
+        if (messageEl) {
+            messageEl.style.display = 'none';
+        }
+        orderJustSubmitted = false;
+    }
+    
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -463,7 +475,22 @@ async function submitOrder(e) {
 
         const orderId = await saveOrder(orderData);
         
-        alert('✓ ההזמנה נשלחה בהצלחה!');
+        // הגדר שהזמנה בדיוק נשלחה
+        orderJustSubmitted = true;
+        
+        // הצג הודעת הצלחה ברורה
+        const messageEl = document.getElementById('newOrderMessage');
+        if (messageEl) {
+            messageEl.className = 'message success';
+            messageEl.innerHTML = `
+                <div style="font-size: 1.1rem; padding: 15px;">
+                    <div style="margin-bottom: 10px;">✓ ההזמנה נשלחה בהצלחה!</div>
+                    <div style="font-size: 0.95rem;">מספר הזמנה: <strong>${orderId.substring(0, 20)}...</strong></div>
+                    <div style="font-size: 0.95rem; margin-top: 8px;">ההזמנה מחכה לאישור מאחראי הציוד</div>
+                </div>
+            `;
+            messageEl.style.display = 'block';
+        }
         
         // אפס את הטופס
         document.getElementById('orderClass').value = '';
@@ -482,14 +509,47 @@ async function submitOrder(e) {
         });
         
         loadTeacherOrders(userSessionId);
-        switchTab('orders');
+        
+        // חזור לטאב "הזמנות שלי" אחרי 2 שניות
+        setTimeout(() => {
+            switchTab('orders');
+            // גלול למעלה כדי לראות את ההודעה
+            const ordersTab = document.getElementById('ordersTab');
+            if (ordersTab) {
+                ordersTab.scrollTop = 0;
+            }
+        }, 2000);
     } catch (error) {
-        alert('שגיאה: ' + error.message);
+        showMessage('❌ שגיאה: ' + error.message, 'error');
     }
 }
 
 function displayTeacherOrders() {
     const container = document.getElementById('teacherOrdersList');
+    
+    // אם הזמנה בדיוק נשלחה, הצג הודעה
+    if (orderJustSubmitted) {
+        const messageEl = document.getElementById('ordersMessage');
+        if (messageEl) {
+            messageEl.className = 'message success';
+            messageEl.innerHTML = `
+                <div style="font-size: 1rem;">
+                    <div style="margin-bottom: 8px;">✅ ההזמנה שלך נשלחה לאישור!</div>
+                    <div style="font-size: 0.9rem;">אתה יכול לראות אותה בטבלה למטה</div>
+                </div>
+            `;
+            messageEl.style.display = 'block';
+        }
+        
+        // גלול למעלה כדי לראות את ההודעה
+        const ordersTab = document.getElementById('ordersTab');
+        if (ordersTab) {
+            ordersTab.scrollTop = 0;
+        }
+        
+        // אל תאפס את הדגל עד שמעברים לטאב אחר
+        // orderJustSubmitted = false;
+    }
 
     if (currentUserOrders.length === 0) {
         container.innerHTML = '<p class="placeholder">אין הזמנות עדיין</p>';
@@ -1056,7 +1116,7 @@ function clearForms() {
 
 function showMessage(message, type = 'info') {
     // חפש מסג בכל המסכנים
-    let messageEl = document.querySelector('#authMessage, #newOrderForm + .message');
+    let messageEl = document.querySelector('#authMessage, #newOrderMessage');
     
     if (!messageEl) {
         // אם לא קיים, צור אלמנט בדף הנוכחי
@@ -1075,7 +1135,7 @@ function showMessage(message, type = 'info') {
         messageEl.textContent = message;
         messageEl.style.display = 'block';
         
-        // הסתר את ההודעה אחרי 4 שניות
+        // הסתר את ההודעה אחרי 4 שניות (או 3 בהצלחה)
         if (type === 'success') {
             setTimeout(() => {
                 messageEl.style.display = 'none';

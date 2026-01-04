@@ -25,12 +25,17 @@ body {
     line-height: 1.6;
     direction: rtl;
     text-align: right;
+    width: 100%;
     max-width: 480px;
     margin: 0 auto;
+    padding: 0;
+    height: 100vh;
 }
 
 #app {
     width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 /* ==================== SCREENS & TABS ==================== */
@@ -47,6 +52,8 @@ body {
 
 .tab-content {
     display: none;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .tab-content.active {
@@ -249,6 +256,10 @@ body {
     background-color: #E8F5E9;
     color: #2E7D32;
     border-left: 4px solid var(--success);
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
 }
 
 .info-text {
@@ -751,6 +762,8 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: fixed;
     top: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
     max-width: 480px;
     z-index: 1001;

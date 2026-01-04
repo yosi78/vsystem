@@ -17,7 +17,7 @@
         <div id="loginScreen" class="screen active">
             <div class="login-container">
                 <h1> מערכת הזמנת ציוד</h1>
-                <p class="subtitle">version 0.2</p>
+                <p class="subtitle">version 0.3</p>
                 
                 <form id="loginForm">
                     <div class="form-group">
@@ -59,6 +59,7 @@
                 <!-- טאב הזמנות -->
                 <div id="ordersTab" class="tab-content active">
                     <h3>רשימת הזמנות שלך</h3>
+                    <div id="ordersMessage" class="message" style="display: none;"></div>
                     <div id="teacherOrdersList" class="orders-list">
                         <p class="placeholder">אין הזמנות עדיין</p>
                     </div>
@@ -67,7 +68,8 @@
                 <!-- טאב הזמנה חדשה -->
                 <div id="newOrderTab" class="tab-content">
                     <h3>הזמנה חדשה</h3>
-                    <form id="newOrderForm">
+                    <div id="newOrderMessage" class="message" style="display: none; margin-top: 15px;"></div>
+                    <form id="newOrderForm" style="display: block;">
                         <div class="form-group">
                             <label for="orderClass">כיתה / שכבה:</label>
                             <input type="text" id="orderClass" placeholder="לדוגמה: כיתה ד׳" required>
