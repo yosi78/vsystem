@@ -9,6 +9,7 @@ let currentUserOrders = [];
 let tempOrderItems = [];
 let userSessionId = null;
 let db = null;
+let firebaseConnected = false;
 
 // ===============================================
 // INITIALIZATION
@@ -468,11 +469,16 @@ async function submitOrder(e) {
         document.getElementById('orderClass').value = '';
         document.getElementById('otherItem').value = '';
         document.getElementById('otherQuantity').value = '1';
+        
+        // אפס את כל הקונטיינרים
         document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
-            cb.parentElement.classList.remove('checked');
-            const qtyInput = cb.parentElement.querySelector('input[type="number"]');
-            if (qtyInput) qtyInput.disabled = true;
+            const itemContainer = cb.closest('.checklist-item');
+            if (itemContainer) {
+                itemContainer.classList.remove('checked');
+                const qtyInput = itemContainer.querySelector('input[type="number"]');
+                if (qtyInput) qtyInput.disabled = true;
+            }
         });
         
         loadTeacherOrders(userSessionId);
