@@ -38,8 +38,6 @@
             text-align: center;
             color: white;
         }
-		
-
         .hero-header::before {
             content: '';
             position: absolute;
@@ -47,23 +45,48 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(15, 163, 177, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 107, 53, 0.05) 0%, transparent 50%);
+            *background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+		
+   /* ===== img HERO ===== */
+        .hero-img {
+            position: relative;
+            height: 480px;
+			border-radius: 20px;
+            padding: 1rem 1rem;
+           /* background: linear-gradient(135deg, #2d3e50 0%, #1a2332 100%);*/
+			background: url('img/04.jpg'); /* נתיב לתמונה שלך */
+			background-size: cover;                /* גורם לתמונה להיפרס על כל שטח הכותרת */
+			background-repeat: no-repeat;          /* מונע מהתמונה להשתכפל */
+			background-position: center;           /* ממקם את התמונה במרכז */
+			overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+			margin-bottom: 2.5rem;
+        }
+		
+        .hero-img::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 100px;
+            /*background: rgba(0, 0, 0, 0.5);*/
             z-index: 0;
         }
 
         .hero-content {
-        /*    position: relative;
-            z-index: 1;
-            padding: 2rem;
-            animation: slideDown 0.8s ease-out; */
-		
 		width: 100%;
-		background-color: rgba(255, 255, 255, 0.2); /* לבן שקוף */
+		background-color: rgba(255, 255, 255, 0.1);
 		padding: 20px 0;
 		text-align: center;
-
+		position: relative;
+		z-index: 1;
 	   }
 
         @keyframes slideDown {
@@ -82,9 +105,8 @@
             margin-bottom: 0rem;
 			margin-top: 0rem;
             font-weight: 700;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6), 0px 0px 20px rgba(0, 0, 0, 0.7);
             letter-spacing: 1px;
-			text-shadow: 1px 1px black;
         }
 		
 		 .hero-header h2 {
@@ -92,9 +114,8 @@
             margin-bottom: 0rem;
 			margin-top: -1rem;
             font-weight: 600;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6), 0px 0px 20px rgba(0, 0, 0, 0.7);
             letter-spacing: 1px;
-			text-shadow: 1px 1px black;
         }
 
         .hero-header p {
@@ -337,11 +358,13 @@
             color: var(--text-dark);
             line-height: 1.8;
             margin-bottom: 1.5rem;
+			align-items: center;
+            text-align: center;
         }
 
         .about-text strong {
             color: var(--primary);
-            font-weight: 600;
+            font-weight: 800;
         }
 
         /* ===== DETAILS INFO SECTION ===== */
@@ -582,16 +605,32 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
+            .hero-img {
+                height: 200px;
+            }
+
             .hero-header {
-                height: 300px;
+                height: 280px;
             }
 
             .hero-header h1 {
-                font-size: 2rem;
+                font-size: 2.2rem;
+                margin-bottom: 0.5rem;
+                font-weight: 700;
+            }
+
+            .hero-header h2 {
+                font-size: 1.3rem;
+                margin-top: -0.5rem;
+                font-weight: 600;
             }
 
             .hero-header p {
                 font-size: 1rem;
+            }
+            
+            .hero-content {
+                padding: 15px 10px;
             }
 
             .dual-cards {
@@ -656,8 +695,24 @@
         }
 
         @media (max-width: 480px) {
+            .hero-header {
+                height: 240px;
+            }
+
             .hero-header h1 {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
+                margin-bottom: 0.3rem;
+                font-weight: 700;
+            }
+
+            .hero-header h2 {
+                font-size: 1.1rem;
+                margin-top: -0.3rem;
+                font-weight: 600;
+            }
+
+            .hero-content {
+                padding: 12px 8px;
             }
 
             .card h3 {
