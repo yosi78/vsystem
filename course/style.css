@@ -714,6 +714,7 @@
 
             .hero-content {
                 padding: 12px 8px;
+				background-color: rgba(255, 255, 255, 0.3);
             }
 
             .card h3 {
