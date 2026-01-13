@@ -872,7 +872,11 @@
             .price-amount {
                 font-size: 2rem;
             }
-
+			
+            .price-note {
+                font-size: 1.5rem;
+            }
+			
             .contact-button {
                 padding: 0.8rem 1.5rem;
                 font-size: 0.95rem;
@@ -893,11 +897,11 @@
             }
 
             .price-amount {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
             }
 
             .price-note {
-                font-size: 0.9rem;
+                font-size: 1.5rem;
             }
 
             .contact-button {
