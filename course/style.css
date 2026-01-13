@@ -47,7 +47,7 @@
         
         .hero-image-wrapper {
             position: relative;
-            height: 450px;
+            height: 430px;
             background: url('img/04.jpg');
             background-size: cover;
             background-repeat: no-repeat;
@@ -75,7 +75,7 @@
         .hero-content {
 		width: 100%;
 		background-color: rgba(45, 62, 80, 0.95);
-		padding: 40px 20px;
+		padding: 16px 10px;
 		text-align: center;
 		position: relative;
 		z-index: 2;
@@ -428,6 +428,12 @@
         }
 
         @media (max-width: 768px) {
+			
+			 .hero-image-wrapper {
+            position: relative;
+            height: 250px;
+			 }
+			 
             .details-info-section {
                 padding: 2rem 1.5rem;
             }
@@ -457,6 +463,12 @@
         }
 
         @media (max-width: 480px) {
+			
+			.hero-image-wrapper {
+            position: relative;
+            height: 250px;
+			 }
+			 
             .details-info-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
