@@ -47,7 +47,7 @@
         
         .hero-image-wrapper {
             position: relative;
-            height: 350px;
+            height: 450px;
             background: url('img/04.jpg');
             background-size: cover;
             background-repeat: no-repeat;
@@ -621,7 +621,7 @@
             }
             
             .hero-content {
-                padding: 15px 10px;
+                padding: 8px 5px;
 				background-color: rgba(255, 255, 255, 0.3);
             }
 
@@ -704,7 +704,7 @@
             }
 
             .hero-content {
-                padding: 12px 8px;
+                padding: 8px 5px;
 				background-color: rgba(255, 255, 255, 0.3);
             }
 
