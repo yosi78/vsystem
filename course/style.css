@@ -6,7 +6,7 @@
         }
 
         :root {
-            --primary: #8b5cf6 /*#0fa3b1*/;
+            --primary: #1376a1 /*#0fa3b1*/;
             --primary-dark: #086278;
             --accent: #ff6b35;
             --dark: #2d3e50;
@@ -25,16 +25,11 @@
         /* ===== HEADER HERO ===== */
         .hero-header {
             position: relative;
-            height: 350px;
             background: linear-gradient(135deg, #2d3e50 0%, #1a2332 100%);
-			background: url('img/03.jpg'); /* נתיב לתמונה שלך */
-			background-size: cover;                /* גורם לתמונה להיפרס על כל שטח הכותרת */
-			background-repeat: no-repeat;          /* מונע מהתמונה להשתכפל */
-			background-position: center;           /* ממקם את התמונה במרכז */
 			overflow: hidden;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            align-items: stretch;
             text-align: center;
             color: white;
         }
@@ -47,46 +42,43 @@
             bottom: 0;
             *background: rgba(0, 0, 0, 0.5);
             z-index: 0;
+            display: none;
         }
-		
-   /* ===== img HERO ===== */
-        .hero-img {
+        
+        .hero-image-wrapper {
             position: relative;
-            height: 480px;
-			border-radius: 20px;
-            padding: 1rem 1rem;
-           /* background: linear-gradient(135deg, #2d3e50 0%, #1a2332 100%);*/
-			background: url('img/04.jpg'); /* נתיב לתמונה שלך */
-			background-size: cover;                /* גורם לתמונה להיפרס על כל שטח הכותרת */
-			background-repeat: no-repeat;          /* מונע מהתמונה להשתכפל */
-			background-position: center;           /* ממקם את התמונה במרכז */
-			overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-			margin-bottom: 2.5rem;
+            height: 350px;
+            background: url('img/04.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            overflow: hidden;
+            z-index: 1;
         }
-		
-        .hero-img::before {
+        
+        .hero-image-wrapper::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 100px;
-            /*background: rgba(0, 0, 0, 0.5);*/
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
             z-index: 0;
+        }
+		
+   /* ===== img HERO ===== (DEPRECATED - Image now in header) */
+        .hero-img {
+            display: none;
         }
 
         .hero-content {
 		width: 100%;
-		background-color: rgba(255, 255, 255, 0.3);
-		padding: 20px 0;
+		background-color: rgba(45, 62, 80, 0.95);
+		padding: 40px 20px;
 		text-align: center;
 		position: relative;
-		z-index: 1;
+		z-index: 2;
 	   }
 
         @keyframes slideDown {
@@ -217,7 +209,7 @@
         }
 
         .card-primary {
-            background: #7c3aed;
+            background: #1376a1;
         }
 
 		.d-card-primary {
@@ -225,7 +217,7 @@
         }
 
         .card-secondary {
-            background: #7c3aed;
+            background: #1376a1;
         }
 
 		.d-card-secondary {
@@ -294,7 +286,7 @@
             transform: translateX(-50%);
             width: 80px;
             height: 4px;
-            background: #7c3aed;
+            background: #1376a1;
             border-radius: 2px;
         }
 
@@ -771,7 +763,7 @@
 
         /* ===== REGISTRATION SECTION ===== */
         .registration-section {
-            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, #1376a1 100%);
             padding: 3rem 2rem;
             border-radius: 20px;
             color: white;
@@ -805,6 +797,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             backdrop-filter: blur(10px);
+			font-size: 1.5rem;
         }
 
         .price-amount {
@@ -814,7 +807,7 @@
         }
 
         .price-note {
-            font-size: 1rem;
+            font-size: 1.5rem;
             opacity: 0.9;
             margin: 0;
         }
