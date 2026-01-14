@@ -4,6 +4,10 @@
             padding: 0;
             box-sizing: border-box;
         }
+		
+		html {
+			-webkit-text-size-adjust: 100%;
+		}
 
         :root {
             --primary: #1376a1 /*#0fa3b1*/;
