@@ -25,10 +25,9 @@
         /* ===== HEADER HERO ===== */
         .hero-header {
             position: relative;
-            background: linear-gradient(135deg, #2d3e50 0%, #1a2332 100%);
+            background: white;
 			overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: block;
             align-items: stretch;
             text-align: center;
             color: #1376a1;
@@ -47,13 +46,14 @@
         
         .hero-image-wrapper {
             position: relative;
-            height: 430px;
+            height: 540px;
             background: url('img/04.jpg');
             background-size: cover;
             background-repeat: no-repeat;
-            background-position: center;
+            background-position: center 28%; /* שומר על החלק העליון */
             overflow: hidden;
             z-index: 1;
+			margin-bottom: 0px; 
         }
         
         .hero-image-wrapper::before {
@@ -75,10 +75,11 @@
         .hero-content {
 		width: 100%;
 		background-color: rgba(255, 255, 255);
-		padding: 16px 10px;
+		padding: 10px 10px 10px; 
 		text-align: center;
 		position: relative;
 		z-index: 2;
+		margin-top: 0; 
 	   }
 
         @keyframes slideDown {
@@ -427,71 +428,66 @@
             }
         }
 
-        @media (max-width: 768px) {
-			
-			 .hero-image-wrapper {
-            position: relative;
-            height: 250px;
-			 }
-			 
-            .details-info-section {
-                padding: 2rem 1.5rem;
-            }
+      /* התאמות למובייל - טאבלטים ומטה */
+	@media (max-width: 768px) {
+		
+		.hero-image-wrapper {
+			height: 250px; /* גובה מופחת למובייל */
+			background-position: center; /* מרכז את הנושא של התמונה */
+			margin-bottom: 0; /* מניעת הפס הצבעוני */
+		}
 
-            .details-info-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.2rem;
-            }
+		.hero-content {
+			padding: 30px 20px; /* מרווח פנימי שדוחף את הטקסט למטה */
+		}
 
-            .detail-info-item {
-                padding: 1rem;
-                gap: 1rem;
-            }
+		.hero-header h1 {
+			font-size: 2.2rem; /* הקטנת כותרת שתתאים לרוחב המסך */
+		}
 
-            .detail-info-icon {
-                font-size: 2rem;
-                min-width: 50px;
-            }
+		.details-info-grid {
+			grid-template-columns: repeat(2, 1fr);
+			gap: 1.2rem;
+		}
 
-            .detail-info-value {
-                font-size: 1rem;
-            }
+		/* תיקון לכרטיסים הכפולים - שיהיו אחד מתחת לשני */
+		.dual-cards, .dual-details-cards {
+			grid-template-columns: 1fr;
+			max-width: 100%;
+			padding: 0 10px;
+		}
+	}
 
-            .detail-info-label {
-                font-size: 0.8rem;
-            }
-        }
+	/* התאמות לטלפונים קטנים */
+	@media (max-width: 480px) {
+		
+		.hero-image-wrapper {
+			height: 200px; /* גובה קטן עוד יותר למסכים קטנים מאוד */
+		}
 
-        @media (max-width: 480px) {
-			
-			.hero-image-wrapper {
-            position: relative;
-            height: 250px;
-			 }
-			 
-            .details-info-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
+		.hero-header h1 {
+			font-size: 1.8rem;
+		}
 
-            .detail-info-item {
-                padding: 0.9rem;
-                border-left-width: 3px;
-            }
+		.hero-header h2 {
+			font-size: 1.3rem;
+		}
 
-            .detail-info-icon {
-                font-size: 1.8rem;
-                min-width: 45px;
-            }
+		.details-info-grid {
+			grid-template-columns: 1fr; /* עמודה אחת במידע */
+		}
 
-            .detail-info-value {
-                font-size: 0.95rem;
-            }
+		.detail-info-item {
+			padding: 0.9rem;
+		}
 
-            .detail-info-label {
-                font-size: 0.75rem;
-            }
-        }
+		/* התאמת הכרטיסים */
+		.card, .d-card {
+			min-height: auto; /* מאפשר לכרטיס להתכווץ לפי גובה הטקסט */
+			padding: 1.5rem;
+		}
+	}
+
 
         
         .cta-section {
@@ -613,29 +609,33 @@
                 height: 200px;
             }
 
-            .hero-header {
-                height: 280px;
-            }
+             .hero-header {
+				display: block !important; /* מבטל את ה-flex שגורם לחפיפה */
+				height: auto; /* מאפשר ל-header לגדול לפי הטקסט */
+				background: white;
+			}
 
             .hero-header h1 {
-                font-size: 1.0rem: 0.5rem;
-                font-weight: 700;
-            }
+				font-size: 2rem !important; /* גודל מתאים למובייל */
+				line-height: 1.2;
+				margin-bottom: 10px;
+    }
 
             .hero-header h2 {
-                font-size: 1rem;
-                margin-top: -0.5rem;
-                font-weight: 600;
-            }
+				font-size: 1.4rem !important;
+				margin-top: 0;
+    }
 
             .hero-header p {
                 font-size: 1rem;
             }
             
             .hero-content {
-                padding: 8px 5px;
-				background-color: rgba(255, 255, 255);
-            }
+				position: relative;
+				padding-top: 20px;
+				padding: 30px 15px 0px !important;
+				background: white;
+    }
 
             .dual-cards {
                 grid-template-columns: 1fr;
@@ -669,10 +669,12 @@
                 font-size: 1rem;
             }
 
-            .dual-details-cards {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
+            /* דחיפת הכרטיסים למטה כדי שלא יגעו בטקסט */
+			.dual-cards, .dual-details-cards {
+				margin-top: 30px !important; 
+				position: relative;
+				z-index: 5;
+    }
 
             .d-card {
                 min-height: auto;
@@ -699,25 +701,44 @@
         }
 
         @media (max-width: 480px) {
-            .hero-header {
-                height: 240px;
-            }
+			   /* 1. התאמת גובה התמונה למסך קטנטן */
+			.hero-image-wrapper {
+				height: 180px; /* גובה קטן יותר כדי לפנות מקום לטקסט */
+				background-position: center;
+			}
+	
+             /* 2. מניעת חפיפה - ה-Header חייב להיות גמיש */
+			.hero-header {
+				display: block !important;
+				height: auto !important; /* מאפשר ל-Header לגדול ככל שהטקסט נשבר לשורות */
+				min-height: min-content;
+			}
 
             .hero-header h1 {
-                font-size: 1.0rem: 0.5rem;
-                font-weight: 700;
+                font-size: 1.6rem !important; /* כותרת קטנה יותר שלא תתפוס חצי מסך */
+				padding: 0 10px;
+				margin-top: -10px;
             }
 
             .hero-header h2 {
-                font-size: 1.5rem;
-                margin-top: -0.3rem;
-                font-weight: 600;
+                font-size: 1.2rem !important;
+				margin-bottom: 10px;
             }
+			
+			.hero-header p {
+				font-size: 1rem;
+				margin-bottom: 1rem;
+			}
 
             .hero-content {
-                padding: 8px 5px;
-				background-color: rgba(255, 255, 255);
-            }
+				padding: 30px 15px 20px !important;
+			}
+			
+			.dual-cards, .dual-details-cards {
+				margin-top: -30px !important;
+				grid-template-columns: 1fr; /* עמודה אחת בלבד */
+				gap: 1.2rem;
+			}
 
             .card h3 {
                 font-size: 1.3rem;
@@ -756,9 +777,10 @@
                 font-size: 0.9rem;
             }
 
-            .d-card {
-                padding: 1rem;
-            }
+            .card, .d-card {
+				min-height: auto; /* ביטול גובה קבוע כדי שהכרטיס לא ייראה ריק */
+				padding: 1.2rem;
+			}
 
             .d-card h2.section-title {
                 font-size: 1.2rem;
