@@ -98,7 +98,12 @@
             margin-bottom: 0rem;
 			margin-top: 0rem;
             font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6), 0px 0px 20px rgba(0, 0, 0, 0.7);
+            /*text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6), 0px 0px 20px rgba(0, 0, 0, 0.7);*/
+			text-shadow: 
+			2px 2px 4px rgba(0, 0, 0, 0.3),   /* צל קרוב וברור */
+			0px 5px 15px rgba(0, 0, 0, 0.2),  /* הילה רכה שיוצרת עומק */
+			0px 0px 20px rgba(0, 0, 0, 0.1);  /* ריכוך סופי למניעת מראה מלוכלך */ 
+			letter-spacing: 1.5px; /* מרווח אותיות קטן משלים את המראה היוקרתי */
             letter-spacing: 1px;
         }
 		
@@ -107,7 +112,11 @@
             margin-bottom: 0rem;
 			margin-top: -1rem;
             font-weight: 600;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6), 0px 0px 20px rgba(0, 0, 0, 0.7);
+            text-shadow: 
+			2px 2px 4px rgba(0, 0, 0, 0.3),   /* צל קרוב וברור */
+			0px 5px 15px rgba(0, 0, 0, 0.2),  /* הילה רכה שיוצרת עומק */
+			0px 0px 20px rgba(0, 0, 0, 0.1);  /* ריכוך סופי למניעת מראה מלוכלך */
+			letter-spacing: 1.5px; /* מרווח אותיות קטן משלים את המראה היוקרתי */
             letter-spacing: 1px;
         }
 
@@ -473,12 +482,12 @@
 
 		.hero-header h1 {
 			font-size: 1.8rem;
-			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 		}
 
 		.hero-header h2 {
 			font-size: 1.3rem;
-			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 		}
 
 		.details-info-grid {
@@ -627,6 +636,7 @@
 				font-size: 2rem !important; /* גודל מתאים למובייל */
 				line-height: 1.2;
 				margin-bottom: 10px;
+				text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
 
             .hero-header h2 {
@@ -726,6 +736,7 @@
                 font-size: 1.6rem !important; /* כותרת קטנה יותר שלא תתפוס חצי מסך */
 				padding: 0 10px;
 				margin-top: -10px;
+				text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             }
 
             .hero-header h2 {
