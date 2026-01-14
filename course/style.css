@@ -443,8 +443,14 @@
 
 		.hero-header h1 {
 			font-size: 2.2rem; /* הקטנת כותרת שתתאים לרוחב המסך */
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); 
 		}
 
+		.hero-header h2 {
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); 
+		
+		}
+		
 		.details-info-grid {
 			grid-template-columns: repeat(2, 1fr);
 			gap: 1.2rem;
@@ -467,10 +473,12 @@
 
 		.hero-header h1 {
 			font-size: 1.8rem;
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
 		}
 
 		.hero-header h2 {
 			font-size: 1.3rem;
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
 		}
 
 		.details-info-grid {
