@@ -16,7 +16,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Arial Hebrew';
-			background: var(--light);
+			background: white;
             color: var(--text-dark);
             line-height: 1.6;
             overflow-x: hidden;
@@ -31,7 +31,7 @@
             flex-direction: column;
             align-items: stretch;
             text-align: center;
-            color: white;
+            color: #1376a1;
         }
         .hero-header::before {
             content: '';
@@ -40,7 +40,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            *background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 0;
             display: none;
         }
@@ -74,7 +74,7 @@
 
         .hero-content {
 		width: 100%;
-		background-color: rgba(45, 62, 80, 0.95);
+		background-color: rgba(255, 255, 255);
 		padding: 16px 10px;
 		text-align: center;
 		position: relative;
@@ -618,7 +618,7 @@
             }
 
             .hero-header h1 {
-                font-size: 1.2rem: 0.5rem;
+                font-size: 1.0rem: 0.5rem;
                 font-weight: 700;
             }
 
@@ -634,7 +634,7 @@
             
             .hero-content {
                 padding: 8px 5px;
-				background-color: rgba(255, 255, 255, 0.3);
+				background-color: rgba(255, 255, 255);
             }
 
             .dual-cards {
@@ -704,8 +704,7 @@
             }
 
             .hero-header h1 {
-                font-size: 2.5rem;
-                margin-bottom: 0.3rem;
+                font-size: 1.0rem: 0.5rem;
                 font-weight: 700;
             }
 
@@ -717,7 +716,7 @@
 
             .hero-content {
                 padding: 8px 5px;
-				background-color: rgba(255, 255, 255, 0.3);
+				background-color: rgba(255, 255, 255);
             }
 
             .card h3 {
