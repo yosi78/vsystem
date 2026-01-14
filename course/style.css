@@ -46,11 +46,11 @@
         
         .hero-image-wrapper {
             position: relative;
-            height: 540px;
+            height:700px;
             background: url('img/04.jpg');
             background-size: cover;
             background-repeat: no-repeat;
-            background-position: center 28%; /* שומר על החלק העליון */
+            background-position: center 50%; /* שומר על החלק העליון */
             overflow: hidden;
             z-index: 1;
 			margin-bottom: 0px; 
