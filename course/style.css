@@ -455,7 +455,9 @@
 		}
 
 		.hero-header h1 {
-			font-size: 2.2rem; /* הקטנת כותרת שתתאים לרוחב המסך */
+			font-size: 2.6rem !important; 
+			line-height: 1.2;
+			margin-bottom: 1rem;
 			text-shadow: 1px 1px 2px rgba(0,0,0,0.1); 
 		}
 
@@ -485,7 +487,9 @@
 		}
 
 		.hero-header h1 {
-			font-size: 1.8rem;
+			font-size: 2.6rem !important; 
+			line-height: 1.2;
+			margin-bottom: 1rem;
 			text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 		}
 
@@ -572,7 +576,7 @@
             background: var(--primary);
             color: white;
             padding: 1.2rem 3rem;
-            border-radius: 50px;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 700;
             font-size: 1.1rem;
@@ -609,6 +613,17 @@
             box-shadow: 0 8px 20px rgba(249, 115, 22, 0.2);
             animation: pulse 2s ease-in-out infinite;
         }
+
+		.limited-spots a {
+			color: white; /* משנה את הקישור לכחול ללבן */
+			text-decoration: underline; /* מוסיף קו תחתי כדי שיבינו שזה קישור */
+			font-weight: bold; /* אופציונלי: מדגיש את הקישור */
+		}
+
+		.limited-spots a:hover {
+			color: var(--light); /* משנה מעט את הצבע במעבר עכבר */
+			opacity: 0.8;
+		}
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
@@ -737,7 +752,9 @@
 			}
 
             .hero-header h1 {
-                font-size: 1.6rem !important; /* כותרת קטנה יותר שלא תתפוס חצי מסך */
+                font-size: 2.6rem !important; 
+				line-height: 1.2;
+				margin-bottom: 1rem;
 				padding: 0 10px;
 				margin-top: -10px;
 				text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
@@ -903,8 +920,8 @@
         }
 
         .registration-section .cta-button {
-            background: #ff6b35;
-            color: white;
+            background: white;
+            color: var(--primary);
             padding: 1rem 2rem;
             font-size: 1rem;
         }
@@ -912,6 +929,7 @@
         .registration-section .cta-button:hover {
             background: #e55a25;
             box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+			color: white;
         }
 
         /* ===== REGISTRATION RESPONSIVE ===== */
