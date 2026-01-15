@@ -486,13 +486,6 @@
 			height: 200px; /* גובה קטן עוד יותר למסכים קטנים מאוד */
 		}
 
-		.hero-header h1 {
-			font-size: 2.6rem !important; 
-			line-height: 1.2;
-			margin-bottom: 1rem;
-			text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-		}
-
 		.hero-header h2 {
 			font-size: 1.3rem;
 			text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
@@ -752,7 +745,7 @@
 			}
 
             .hero-header h1 {
-                font-size: 2.6rem !important; 
+                font-size: 2rem !important; 
 				line-height: 1.2;
 				margin-bottom: 1rem;
 				padding: 0 10px;
