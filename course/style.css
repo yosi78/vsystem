@@ -909,7 +909,17 @@
         }
 
         .phone-button:hover {
-            background: #007AFF;
+            background: #00AFFF;
+            color: white;
+        }
+
+        .facebook-link-button {
+            background: white;
+            color: var(--primary);
+        }
+
+        .facebook-link-button:hover {
+            background: #1877F2;
             color: white;
         }
 
