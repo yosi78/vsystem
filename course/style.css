@@ -997,7 +997,7 @@
             position: fixed;
             right: -300px;
             top: 0;
-            width: 280px;
+            width: 200px;
             height: 100vh;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
