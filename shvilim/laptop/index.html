@@ -833,7 +833,7 @@
         <div class="header">
             <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
 			<h1>🖥️ מערכת השאלת מחשבים</h1>
-            <p>version 0.4</p>
+            <p>version 0.5</p>
         </div>
         
         <div class="content">
@@ -3343,13 +3343,6 @@
 
             if (isRecurring) {
                 const dayName = getHebrewDayName(loanDate);
-                const conflictingRecurring = getConflictingRecurringLoans(loanDate, loanTime);
-                
-                if (conflictingRecurring.length > 0) {
-                    const conflictNames = conflictingRecurring.map(r => r.teacherName).join(', ');
-                    showError(`⚠️ כבר קיימת השאלה קבועה ביום ${dayName} בשעה ${loanTime} עבור: ${conflictNames}`);
-                    return;
-                }
                 
                 const confirm = window.confirm(`🔄 השאלה קבועה - אישור\n\nאת עומדת ליצור השאלה קבועה עבור ${currentLoan.teacherName}:\n📅 כל יום ${dayName}\n⏰ שעה ${loanTime}\n🖥️ ${computerCount} מחשבים\n\nהמחשבים יהיו תפוסים בכל שבוע!\n\nהאם להמשיך?`);
                 
