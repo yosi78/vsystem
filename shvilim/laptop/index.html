@@ -833,7 +833,7 @@
         <div class="header">
             <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
 			<h1>🖥️ מערכת השאלת מחשבים</h1>
-            <p>version 0.5</p>
+            <p>version 0.6</p>
         </div>
         
         <div class="content">
@@ -1535,7 +1535,12 @@
                         
                         if (isConnected) {
                             loadDataFromFirebase();
-                            setupFirebaseListeners();
+                            // ✅ תקן: הגדר listeners רק בפעם הראשונה
+                            if (!firebaseListenersInitialized) {
+                                setupFirebaseListeners();
+                                firebaseListenersInitialized = true;
+                                console.log('✅ Firebase listeners initialized');
+                            }
                         }
                     });
                     
@@ -1585,6 +1590,10 @@
                         } else {
                             systemData.carts = initializeCartData();
                         }
+                        
+                        // ✅ תקן: נקה את המערכים ודא טעינה נקייה
+                        systemData.loans = [];
+                        systemData.recurringLoans = [];
                         
                         // Load loans
                         if (data.loans) {
@@ -3059,15 +3068,19 @@
                 loan.loanDate <= currentDate && !loan.returned
             );
             
-            let loanedComputersCount = 0;
+            // ✅ תקן: השתמש ב-Set כדי למנוע כפילויות
+            const computerIdsSet = new Set();
             loanedToday.forEach(loan => {
                 if (loan.computers) {
-                    loanedComputersCount += loan.computers.length;
+                    loan.computers.forEach(comp => computerIdsSet.add(comp));
                 } else if (loan.cartSelections) {
-                    loanedComputersCount += Object.values(loan.cartSelections).reduce((sum, arr) => sum + arr.length, 0);
+                    Object.values(loan.cartSelections).forEach(computers => {
+                        computers.forEach(comp => computerIdsSet.add(comp));
+                    });
                 }
             });
             
+            const loanedComputersCount = computerIdsSet.size;
             const availableComputers = totalComputers - loanedComputersCount;
             
             document.getElementById('totalComputers').textContent = totalComputers;
@@ -3226,15 +3239,17 @@
             Object.keys(systemData.carts).forEach(cartId => {
                 const cart = systemData.carts[cartId];
                 
-                let loanedComputers = 0;
+                // ✅ תקן: השתמש ב-Set כדי למנוע כפילויות
+                const computerIdsSet = new Set();
                 systemData.loans.filter(loan => loan.loanDate <= currentDate && !loan.returned).forEach(loan => {
                     if (loan.cart === cartId) {
-                        loanedComputers += loan.computers ? loan.computers.length : 0;
+                        loan.computers?.forEach(comp => computerIdsSet.add(comp));
                     } else if (loan.cartSelections && loan.cartSelections[cartId]) {
-                        loanedComputers += loan.cartSelections[cartId].length;
+                        loan.cartSelections[cartId].forEach(comp => computerIdsSet.add(comp));
                     }
                 });
                 
+                const loanedComputers = computerIdsSet.size;
                 const availableComputers = cart.computers.length - loanedComputers;
                 const usagePercentage = Math.round((loanedComputers / cart.computers.length) * 100);
                 
