@@ -833,7 +833,7 @@
         <div class="header">
             <div class="connection-status" id="connectionStatus">🔄 מתחברת...</div>
 			<h1>🖥️ מערכת השאלת מחשבים</h1>
-            <p>version 0.6</p>
+            <p>version 0.9.1</p>
         </div>
         
         <div class="content">
@@ -1046,6 +1046,14 @@
                         <h3 style="color: #f57c00; margin-bottom: 10px;">🔄 השאלות פעילות כרגע</h3>
                         <div id="currentLoans">
                             <div style="text-align: center; color: #999; font-style: italic;">אין השאלות פעילות</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ✅ חדש: מחשבים בהשעיה -->
+                    <div style="background: #ffebee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #c62828; margin-bottom: 10px;">⏰ מחשבים בהשעיה (לא הוחזרו מעבר לזמן הצפוי)</h3>
+                        <div id="overdueLoans">
+                            <div style="text-align: center; color: #999; font-style: italic;">אין מחשבים בהשעיה 🎉</div>
                         </div>
                     </div>
                     
@@ -1361,6 +1369,78 @@
             appId: "1:332408448005:web:fb8d89d59ffd0f240b286c"
         };
 
+        // Messages System
+        let messages = {
+  "connection": { "connected": "🟢 מחובר לענן", "disconnected": "🔴 מנותק" },
+  "reports": { "noNotesInPeriod": "אין הערות להצגה בתקופה שנבחרה", "noLoansInPeriod": "אין השאלות להצגה בתקופה שנבחרה" },
+  "teachers": { "formTitleAdd": "הוספת מורה חדשה", "formTitleEdit": "עריכת מורה", "errorNoName": "אנא הכנס שם מורה", "errorAlreadyExists": "מורה זו כבר קיימת במערכת" },
+  "times": { "formTitleAdd": "הוספת שעה חדשה", "formTitleEdit": "עריכת שעה", "errorNoSelection": "אנא בחר שעה", "errorAlreadyExists": "שעה זו כבר קיימת במערכת" },
+  "carts": { "formTitleAdd": "הוספת עגלה חדשה", "formTitleEdit": "עריכת עגלה", "errorEmptyFields": "אנא מלא את כל השדות הנדרשים", "errorInvalidCount": "מספר המחשבים חייב להיות בין 1 ל-50", "errorNoSelection": "אנא בחר עגלה קודם" },
+  "computers": { "formTitleAdd": "הוספת מחשב חדש", "formTitleEdit": "עריכת מחשב", "errorNoName": "אנא הכנס שם מחשב", "errorNoCart": "אנא בחר עגלה", "errorAlreadyExists": "מחשב זה כבר קיים בעגלה", "errorNoCartSelected": "אנא בחר עגלה קודם", "displayWithTeacher": "{computer} ({teacher})", "displayOnly": "{computer}" },
+  "loans": { "errorNotEnoughComputers": "לא מספיק מחשבים זמינים בתאריך ושעה זו. זמינים: {available}, נדרשים: {required}", "errorNotFound": "❌ השאלה לא נמצאה!", "errorOnlyFuture": "❌ ניתן לבטל רק השאלות עתידיות!", "errorCancelling": "❌ שגיאה בביטול ההשאלה. נסה שוב.", "errorConflict": "המחשבים הבאים כבר תפוסים: {computers}", "successTitle": "השאלה אושרה!", "successSingle": "המחשבים הוקצו בהצלחה למורה.", "successMultiCart": "המחשבים הוקצו בהצלחה למורה מכמה עגלות.", "successRecurringTitle": "השאלה קבועה נוצרה!", "successRecurringSingle": "המחשבים הוקצו בהצלחה למורה.\n🔄 השאלה תחזור כל שבוע באותו יום ושעה.", "successRecurringMultiCart": "המחשבים הוקצו בהצלחה למורה מכמה עגלות.\n🔄 השאלה תחזור כל שבוע באותו יום ושעה.", "buttonSubmitReady": "שלח השאלה", "buttonSubmitPending": "בחר {count} מחשבים נוספים", "plannedReturnTime": "\nהחזרה מתוכננת: היום בשעה {time}" },
+  "recurringLoans": { "errorNotFound": "❌ השאלה קבועה לא נמצאה!", "errorCancelling": "❌ שגיאה בביטול ההשאלה הקבועה. נסה שוב." },
+  "returns": { "errorNotFound": "❌ השאלה לא נמצאה!", "errorReturning": "❌ שגיאה בהחזרת ההשאלה. נסה שוב.", "successTitle": "החזרה אושרה!", "successMessage": "המחשבים של {teacher} הוחזרו בהצלחה למערכת.", "errorNoSelection": "אנא בחר השאלה ומלא את כל השדות הנדרשים" },
+  "validation": { "errorNoTeacher": "אנא בחר מורה וכיתה", "errorNoFields": "אנא מלא את כל השדות", "errorSelectTeacher": "אנא בחר מורה", "errorNoCartAndCount": "אנא בחר עגלה ומספר המחשבים הנדרש", "errorMultiCartNoSelection": "אנא בחר את מספר המחשבים הנדרש מהעגלות השונות", "warningActiveLoans": "⚠️ למורה {teacher} יש {count} השאלות פעילות בסה\"כ {computers} מחשבים שטרם הוחזרו!\n\nאנא סמן החזרה קודם לפני הזמנה חדשה." },
+  "password": { "errorWrongPassword": "סיסמה שגויה! נסי שוב." },
+  "cartInfo": { "availableLabel": "{name} ({available} זמינים)" },
+  "loanInfo": { "headerFormat": "השאלה מתאריך {date} - {time}", "detailsFormat": "כיתה {class} • {count} מחשבים • {carts}" },
+  "alerts": { "loanCancelledSuccess": "✅ בוטלה בהצלחה!\n\nההשאלה של {teacher} בוטלה.\n{count} מחשבים שוחררו.", "recurringCancelledSuccess": "✅ השאלה קבועה בוטלה!\n\nההשאלה הקבועה של {teacher} בוטלה.\n{count} מחשבים שוחררו בכל יום {day}.", "returnMarkedSuccess": "✅ הושלם!\n\nההשאלה של {teacher} סומנה כהוחזרה.\n{count} מחשבים שוחררו.", "exportNotesSuccess": "✅ יוצא דוח הערות החזרה: {count} רשומות", "exportAllLoansSuccess": "✅ יוצא דוח כל ההשאלות: {count} רשומות", "confirmDeleteTeacher": "האם למחוק את {teacher}?", "confirmDeleteTime": "האם למחוק את השעה {time}?", "confirmDeleteCart": "האם למחוק את {cart}?\n\nזה ימחק גם את כל המחשבים שלה.", "confirmDeleteComputer": "האם למחוק את {computer}?", "confirmRegenerateComputers": "האם ליצור מחדש את רשימת המחשבים עבור {cart}?\n\nזה ימחק את כל המחשבים הנוכחיים ויצור {count} מחשבים חדשים." },
+  "overdue": { "sectionTitle": "⏰ מחשבים בהשעיה (לא הוחזרו מעבר לזמן הצפוי)", "noOverdueMessage": "אין מחשבים בהשעיה 🎉", "overdueStatus": "🔴 בהשעיה: {time}", "overdueDetails": "צפוי ב-{date} בשעה {time}, בהשעיה {overdue}", "warningMessage": "⚠️ עצור! למורה {teacher} יש מחשבים בהשעיה:\n{details}\n\nאנא סמן החזרה קודם לפני הזמנה חדשה!" },
+  "placeholders": { "selectTeacher": "בחרי מורה...", "selectQuantity": "בחרי כמות..." },
+  "display": { "inTime": "בזמן", "selectedComputers": "נבחרו: {selected} מתוך {required}" },
+  "exports": { "headerNotes": "שם המורה,כיתה,תאריך השאלה,שעת השאלה,תאריך החזרה,שעת החזרה,מספר מחשבים,עגלה,מספרי מחשבים,הערות", "headerAllLoans": "שם המורה,כיתה,תאריך השאלה,שעת השאלה,החזרה מתוכננת,תאריך החזרה,שעת החזרה,מספר מחשבים,עגלה,מספרי מחשבים,סטטוס,הערות החזרה,השאלה קבועה" },
+  "status": { "returned": "הוחזר", "active": "פעיל" },
+  "emptyStates": { "noReturnNotes": "אין הערות החזרה", "noActiveLoansForTeacher": "אין השאלות פעילות למורה זו", "noActiveLoans": "אין השאלות פעילות כרגע", "noRecurringLoans": "אין השאלות קבועות", "noPlannedLoans": "אין השאלות מתוכננות" },
+  "selectors": { "selectTeacherPlaceholder": "בחרי מורה...", "selectClassPlaceholder": "בחרי כיתה...", "selectTimePlaceholder": "בחרי שעה...", "selectCartPlaceholder": "בחרי עגלה...", "selectQuantityPlaceholder": "בחרי כמות..." },
+  "management": { "activeLoansLabel": "השאלות פעילות של {teacher}:" },
+  "logs": { "exportNotesConsole": "✅ יוצא דוח הערות החזרה: {count} רשומות", "exportAllLoansConsole": "✅ יוצא דוח כל ההשאלות: {count} רשומות", "loanCancelledConsole": "✅ בוטלה השאלה: {teacher} - {count} מחשבים", "recurringLoanCancelledConsole": "✅ בוטלה השאלה קבועה: {teacher} - {day}", "loanReturnedConsole": "✅ הוחזרה השאלה: {teacher} - {count} מחשבים", "refreshingDataAfterLoan": "🔄 מרענן נתונים מהענן אחרי השאלה...", "refreshingDataAfterMultiCartLoan": "🔄 מרענן נתונים מהענן אחרי השאלה רב-עגלות...", "refreshingDataAfterReturn": "🔄 מרענן נתונים מהענן אחרי החזרה..." },
+  "confirmDialogs": { "cancelLoan": "⚠️ האם לבטל את ההשאלה של {teacher}?\n\nפרטי ההשאלה:\n📅 תאריך: {date}\n⏰ שעה: {time}\n🖥️ מחשבים: {count}\n\nההשאלה תימחק לחלוטין מהמערכת.", "cancelRecurringLoan": "⚠️ האם לבטל את ההשאלה הקבועה של {teacher}?\n\n📋 פרטי ההשאלה:\n📅 כל יום {day}\n⏰ שעה: {time}\n🖥️ מחשבים: {count}\n\n⚠️ זה יבטל את ההשאלה הקבועה לכל השבועות הבאים!", "markAsReturned": "⚠️ האם לסמן את ההשאלה של {teacher} כהוחזרה?\n\n{count} מחשבים ישוחררו.", "createRecurringLoan": "🔄 השאלה קבועה - אישור\n\nאת עומדת ליצור השאלה קבועה עבור {teacher}:\n📅 כל יום {day}\n⏰ שעה {time}\n🖥️ {count} מחשבים\n\nהמחשבים יהיו תפוסים בכל שבוע!\n\nהאם להמשיך?" }
+};
+        
+        // Messages are now embedded, no need to load from external file
+        async function loadMessages() {
+            console.log('✅ ההודעות טומנו בתוך ה-HTML - אין צורך בfetch');
+            console.log('📊 מספר קטגוריות:', Object.keys(messages).length);
+            return true;
+        }
+        
+        // Get message with variable replacement
+        function getMsg(path, variables = {}) {
+            const keys = path.split('.');
+            let msg = messages;
+            
+            for (let key of keys) {
+                if (msg[key] === undefined) {
+                    console.warn(`⚠️ הודעה לא נמצאה: ${path}`);
+                    // Fallback values for common messages
+                    const fallbacks = {
+                        'selectors.selectTeacherPlaceholder': 'בחרי מורה...',
+                        'selectors.selectClassPlaceholder': 'בחרי כיתה...',
+                        'selectors.selectTimePlaceholder': 'בחרי שעה...',
+                        'selectors.selectQuantityPlaceholder': 'בחרי כמות...',
+                        'selectors.selectCartPlaceholder': 'בחרי עגלה...',
+                        'overdue.warningMessage': '⚠️ עצור! למורה {teacher} יש מחשבים בהשעיה:\n{details}\n\nאנא סמן החזרה קודם לפני הזמנה חדשה!',
+                        'emptyStates.noReturnNotes': 'אין הערות החזרה',
+                        'emptyStates.noActiveLoansForTeacher': 'אין השאלות פעילות למורה זו',
+                        'emptyStates.noActiveLoans': 'אין השאלות פעילות כרגע',
+                        'emptyStates.noRecurringLoans': 'אין השאלות קבועות',
+                        'emptyStates.noPlannedLoans': 'אין השאלות מתוכננות',
+                        'overdue.noOverdueMessage': 'אין מחשבים בהשעיה 🎉'
+                    };
+                    msg = fallbacks[path] || path;
+                    break;
+                }
+                msg = msg[key];
+            }
+            
+            // Replace variables in message
+            let result = msg;
+            for (let [key, value] of Object.entries(variables)) {
+                result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+            }
+            return result;
+        }
+
         // Global Variables
         let app, database;
         let isConnected = false;
@@ -1383,6 +1463,7 @@
         let selectedCarts = {};
         let editingItem = null;
         let activeManagementTab = 'overview';
+        let firebaseListenersInitialized = false;  // ✅ דיקלוג כדי למנוע שימוש חוזר של listeners
         
         // Default configuration (fallback)
         const defaultConfig = {
@@ -1560,10 +1641,10 @@
         function updateConnectionStatus(connected) {
             const statusElement = document.getElementById('connectionStatus');
             if (connected) {
-                statusElement.textContent = '🟢 מחוברת לענן';
+                statusElement.textContent = '🟢 מחובר לענן';
                 statusElement.className = 'connection-status connected';
             } else {
-                statusElement.textContent = '🔴 מנותקת';
+                statusElement.textContent = '🔴 מנותק';
                 statusElement.className = 'connection-status disconnected';
             }
         }
@@ -1778,7 +1859,7 @@
             teacherSelects.forEach(selectId => {
                 const select = document.getElementById(selectId);
                 if (select) {
-                    select.innerHTML = '<option value="">בחרי מורה...</option>';
+                    select.innerHTML = `<option value="">${getMsg('selectors.selectTeacherPlaceholder')}</option>`;
                     systemData.config.teachers.forEach(teacher => {
                         const option = document.createElement('option');
                         option.value = teacher;
@@ -1796,7 +1877,7 @@
                 const select = document.getElementById(selectId);
                 if (select) {
                     const currentValue = select.value;
-                    select.innerHTML = '<option value="">בחרי כיתה...</option>';
+                    select.innerHTML = `<option value="">${getMsg('selectors.selectClassPlaceholder')}</option>`;
                     systemData.config.classes.forEach(className => {
                         const option = document.createElement('option');
                         option.value = className;
@@ -1814,7 +1895,7 @@
             timeSelects.forEach(selectId => {
                 const select = document.getElementById(selectId);
                 if (select) {
-                    select.innerHTML = '<option value="">בחרי שעה...</option>';
+                    select.innerHTML = `<option value="">${getMsg('selectors.selectTimePlaceholder')}</option>`;
                     systemData.config.timeSlots.forEach(time => {
                         const option = document.createElement('option');
                         option.value = time;
@@ -1829,7 +1910,7 @@
         function populateComputerCountSelector() {
             const computerCountSelect = document.getElementById('computerCount');
             if (computerCountSelect) {
-                computerCountSelect.innerHTML = '<option value="">בחרי כמות...</option>';
+                computerCountSelect.innerHTML = `<option value="">${getMsg('selectors.selectQuantityPlaceholder')}</option>`;
                 systemData.config.computerCountOptions.forEach(option => {
                     const optionElement = document.createElement('option');
                     optionElement.value = option.value;
@@ -1846,7 +1927,7 @@
                 const select = document.getElementById(selectId);
                 if (select) {
                     const currentValue = select.value;
-                    select.innerHTML = '<option value="">בחרי עגלה...</option>';
+                    select.innerHTML = `<option value="">${getMsg('selectors.selectCartPlaceholder')}</option>`;
                     Object.keys(systemData.carts).forEach(cartId => {
                         const option = document.createElement('option');
                         option.value = cartId;
@@ -1935,7 +2016,7 @@
                 .slice(0, 10); // 10 האחרונות
             
             if (returnsWithNotes.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">אין הערות החזרה</div>';
+                container.innerHTML = `<div style="text-align: center; color: #999; font-style: italic;">${getMsg('emptyStates.noReturnNotes')}</div>`;
                 return;
             }
             
@@ -2171,7 +2252,7 @@
 
         function deleteTeacher(index) {
             const teacher = systemData.config.teachers[index];
-            if (confirm(`האם למחוק את ${teacher}?`)) {
+            if (confirm(getMsg('alerts.confirmDeleteTeacher', { teacher: teacher }))) {
                 systemData.config.teachers.splice(index, 1);
                 saveToFirebase();
                 updateTeachersList();
@@ -2252,7 +2333,7 @@
 
         function deleteTime(index) {
             const time = systemData.config.timeSlots[index];
-            if (confirm(`האם למחוק את השעה ${time}?`)) {
+            if (confirm(getMsg('alerts.confirmDeleteTime', { time: time }))) {
                 systemData.config.timeSlots.splice(index, 1);
                 saveToFirebase();
                 updateTimesList();
@@ -2360,7 +2441,7 @@
 
         function deleteCart(cartId) {
             const cart = systemData.carts[cartId];
-            if (confirm(`האם למחוק את ${cart.name}?\n\nזה ימחק גם את כל המחשבים שלה.`)) {
+            if (confirm(getMsg('alerts.confirmDeleteCart', { cart: cart.name }))) {
                 delete systemData.carts[cartId];
                 saveToFirebase();
                 updateCartsList();
@@ -2470,7 +2551,7 @@
 
         function deleteComputer(cartId, index) {
             const computer = systemData.carts[cartId].computers[index];
-            if (confirm(`האם למחוק את ${computer}?`)) {
+            if (confirm(getMsg('alerts.confirmDeleteComputer', { computer: computer }))) {
                 systemData.carts[cartId].computers.splice(index, 1);
                 saveToFirebase();
                 updateComputersList();
@@ -2485,7 +2566,7 @@
             }
             
             const cart = systemData.carts[cartId];
-            if (confirm(`האם ליצור מחדש את רשימת המחשבים עבור ${cart.name}?\n\nזה ימחק את כל המחשבים הנוכחיים ויצור ${cart.computerCount} מחשבים חדשים.`)) {
+            if (confirm(getMsg('alerts.confirmRegenerateComputers', { cart: cart.name, count: cart.computerCount }))) {
                 cart.computers = generateComputerList(cart.computerPrefix, cart.computerCount);
                 saveToFirebase();
                 updateComputersList();
@@ -2498,6 +2579,89 @@
         }
 
         // ==================== פונקציות השאלה ====================
+        
+        // ✅ תקן: פונקציה חדשה - קבל שם מורה עבור מחשב מסוים
+        function getTeacherForComputer(cartId, computer) {
+            const loan = systemData.loans.find(loan => 
+                !loan.returned && (
+                    (loan.cart === cartId && loan.computers && loan.computers.includes(computer)) ||
+                    (loan.cartSelections && loan.cartSelections[cartId] && loan.cartSelections[cartId].includes(computer))
+                )
+            );
+            return loan ? loan.teacherName : null;
+        }
+
+        // 🆕 פונקציה חדשה: קבל את כל פרטי ההשאלה של מחשב
+        function getComputerLoanStatus(cartId, computer) {
+            const loan = systemData.loans.find(loan => 
+                !loan.returned && (
+                    (loan.cart === cartId && loan.computers && loan.computers.includes(computer)) ||
+                    (loan.cartSelections && loan.cartSelections[cartId] && loan.cartSelections[cartId].includes(computer))
+                )
+            );
+            
+            if (!loan) return null;
+            
+            // חשב אם בהשעיה
+            const overdueHours = getOverdueHours(loan.expectedReturnTime, loan.loanDate);
+            const isOverdue = overdueHours > 0;
+            
+            return {
+                teacherName: loan.teacherName,
+                loanDate: loan.loanDate,
+                expectedReturnTime: loan.expectedReturnTime,
+                isOverdue: isOverdue,
+                overdueTimeString: isOverdue ? getOverdueTimeString(loan.expectedReturnTime, loan.loanDate) : null
+            };
+        }
+
+        // ✅ תקן: קבל זמן בהשעיה בשעות (לוקח בחשבון תאריך וזמן)
+        function getOverdueHours(expectedReturnTime, loanDate) {
+            if (!expectedReturnTime || !loanDate) return 0;
+            
+            // ✅ חדש: שנה את התאריך והזמן ביחד
+            const expectedDate = new Date(`${loanDate}T${expectedReturnTime}`);
+            const now = new Date();
+            const diff = now - expectedDate;
+            
+            if (diff <= 0) return 0; // עדיין לא עברה
+            
+            return Math.floor(diff / (1000 * 60 * 60)); // שעות
+        }
+
+        // ✅ חדש: קבל string עם ימים ושעות (לוקח בחשבון תאריך)
+        function getOverdueTimeString(expectedReturnTime, loanDate) {
+            const totalHours = getOverdueHours(expectedReturnTime, loanDate);  // ✅ העבר את loanDate
+            
+            if (totalHours === 0) return 'בזמן';
+            
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            
+            let result = '';
+            
+            if (days > 0) {
+                result += `${days} ${days === 1 ? 'יום' : 'ימים'}`;
+            }
+            
+            if (hours > 0) {
+                if (result) result += ' ';
+                result += `${hours} ${hours === 1 ? 'שעה' : 'שעות'}`;
+            }
+            
+            return result;
+        }
+
+        // ✅ חדש: בדוק אם יש מחשבים בהשעיה (לוקח בחשבון תאריך)
+        function getOverdueLoans(teacherName) {
+            return systemData.loans.filter(loan => 
+                loan.teacherName === teacherName && 
+                !loan.returned && 
+                loan.expectedReturnTime &&
+                loan.loanDate &&
+                getOverdueHours(loan.expectedReturnTime, loan.loanDate) > 0  // ✅ העבר את loanDate
+            );
+        }
 
         // Show Error Message
         function showError(message) {
@@ -2522,8 +2686,87 @@
             }, 4000);
         }
 
+        // ✅ חדש: Modal יפה להודעות קבועות
+        function showPersistentWarning(message) {
+            const existingModal = document.getElementById('persistentWarningModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            if (!message || message.trim() === '') return;
+            
+            // יצור backdrop שקוף
+            const backdrop = document.createElement('div');
+            backdrop.id = 'persistentWarningBackdrop';
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            // יצור modal
+            const modal = document.createElement('div');
+            modal.id = 'persistentWarningModal';
+            modal.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                padding: 40px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                direction: rtl;
+                text-align: right;
+                position: relative;
+            `;
+            
+            modal.innerHTML = message;
+            
+            // כפתור סגור - בימין עליון של ההודעה
+            const closeBtn = document.createElement('button');
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #f5f5f5;
+                border: none;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                font-size: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.3s;
+                color: #666;
+            `;
+            closeBtn.textContent = 'X';
+            closeBtn.onmouseover = () => closeBtn.style.background = '#e0e0e0';
+            closeBtn.onmouseout = () => closeBtn.style.background = '#f5f5f5';
+            closeBtn.onclick = () => {
+                backdrop.remove();
+                modal.remove();
+            };
+            modal.appendChild(closeBtn);
+            
+            backdrop.appendChild(modal);
+            document.body.appendChild(backdrop);
+        }
+
         // Show Screen
         function showScreen(screenId) {
+            // ❌ הוסרנו את מחיקת ההודעות - הן צריכות להישאר כל הזמן!
+            
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
@@ -2553,26 +2796,13 @@
         }
 
         // Get Occupied Computers for Multi-Cart
-        function getOccupiedComputersMultiCart(cartId, date, requestedTime = null) {
+        function getOccupiedComputersMultiCart(cartId, date = null, requestedTime = null) {
             const allOccupied = [];
             
+            // ✅ כל מחשב בהשאלה פעילה (לא סומן כ"הוחזר") = לא זמין בכלל
             systemData.loans
-                .filter(loan => loan.loanDate === date && !loan.returned)
+                .filter(loan => !loan.returned) // רק השאלות שלא הוחזרו
                 .forEach(loan => {
-                    if (requestedTime && loan.expectedReturnTime) {
-                        const timeToMinutes = (timeStr) => {
-                            const [hours, minutes] = timeStr.split(':').map(Number);
-                            return hours * 60 + minutes;
-                        };
-                        
-                        const requestedMinutes = timeToMinutes(requestedTime);
-                        const loanEndMinutes = timeToMinutes(loan.expectedReturnTime);
-                        
-                        if (requestedMinutes >= loanEndMinutes) {
-                            return;
-                        }
-                    }
-                    
                     if (loan.cart === cartId) {
                         allOccupied.push(...(loan.computers || []));
                     } else if (loan.cartSelections && loan.cartSelections[cartId]) {
@@ -2580,7 +2810,8 @@
                     }
                 });
 
-            if (requestedTime) {
+            // בדוק גם השאלות קבועות שחופפות לתאריך/שעה המבוקשת
+            if (date && requestedTime) {
                 const conflictingRecurring = getConflictingRecurringLoans(date, requestedTime);
                 conflictingRecurring.forEach(recurring => {
                     if (recurring.cart === cartId) {
@@ -2591,7 +2822,7 @@
                 });
             }
             
-			return [...new Set(allOccupied)]; // הסרת כפילויות
+            return [...new Set(allOccupied)]; // הסרת כפילויות
         }
 
         // Get Available Computers Count for Date
@@ -2643,7 +2874,54 @@
                 setupMultiCartMode();
                 return true;
             } else if (totalAvailable < requiredCount) {
-                showError(`לא מספיק מחשבים זמינים בתאריך ושעה זו. זמינים: ${totalAvailable}, נדרשים: ${requiredCount}`);
+                const allOverdueByTeacher = {};
+                systemData.loans.forEach(loan => {
+                    if (!loan.returned) {
+                        const overdueHours = getOverdueHours(loan.expectedReturnTime, loan.loanDate);
+                        if (overdueHours > 0) {
+                            if (!allOverdueByTeacher[loan.teacherName]) {
+                                allOverdueByTeacher[loan.teacherName] = [];
+                            }
+                            const computers = loan.computers || [];
+                            const multiCartComputers = loan.cartSelections ? Object.values(loan.cartSelections).flat() : [];
+                            allOverdueByTeacher[loan.teacherName].push(...computers, ...multiCartComputers);
+                        }
+                    }
+                });
+                
+                const teachersList = Object.keys(allOverdueByTeacher).map(name => 
+                    `<li style="margin: 8px 0; font-size: 1em;">${name} <span style="color: #d32f2f; font-weight: bold;">(${allOverdueByTeacher[name].length} מחשבים בהשעיה)</span></li>`
+                ).join('');
+                
+                const messageWithTeachers = `
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #d32f2f; margin: 0; font-size: 1.5em;">❌ אין מספיק מחשבים זמינים!</h2>
+                    </div>
+                    
+                    <div style="background: #fff3e0; border-right: 4px solid #f57c00; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                        <p style="margin: 0; color: #e65100; font-weight: 500;">
+                            <strong>זמינים:</strong> ${totalAvailable} | <strong>נדרשים:</strong> ${requiredCount}
+                        </p>
+                        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.95em;">
+                            אין מספיק מחשבים בתאריך ושעה זו
+                        </p>
+                    </div>
+                    
+                    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h3 style="color: #333; margin: 0 0 15px 0; font-size: 1.1em;">🔴 מורים עם מחשבים בהשעיה:</h3>
+                        <ul style="margin: 0; padding-right: 20px; list-style-type: none;">
+                            ${teachersList}
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #e8f5e9; border-right: 4px solid #4caf50; padding: 15px; border-radius: 4px;">
+                        <p style="margin: 0; color: #2e7d32; font-weight: 500;">
+                            <strong>✅ פתרון:</strong> המורים צריכים לסמן את המחשבים כ"הוחזרו" בכרטיסיית "החזרות".
+                        </p>
+                    </div>
+                `;
+                
+                showPersistentWarning(messageWithTeachers);
                 return false;
             } else {
                 setupSingleCartMode();
@@ -2658,7 +2936,7 @@
             document.getElementById('multiCartSelection').style.display = 'none';
             
             const cartSelect = document.getElementById('cartSelect');
-            cartSelect.innerHTML = '<option value="">בחרי עגלה...</option>';
+            cartSelect.innerHTML = `<option value="">${getMsg('selectors.selectCartPlaceholder')}</option>`;
             
             const requiredCount = currentLoan.computerCount || 0;
             const date = currentLoan.loanDate;
@@ -2774,7 +3052,27 @@
                 const label = document.createElement('label');
                 label.htmlFor = `multi-${computer}`;
                 label.className = 'computer-label';
-                label.textContent = computer;
+                
+                if (isOccupied) {
+                    const loanStatus = getComputerLoanStatus(cartId, computer);
+                    
+                    if (loanStatus) {
+                        if (loanStatus.isOverdue) {
+                            // 🔴 בהשעיה
+                            label.textContent = `🔴 ${computer} (בהשעיה אצל ${loanStatus.teacherName})`;
+                            label.title = `צפוי בחזרה ב-${loanStatus.loanDate} בשעה ${loanStatus.expectedReturnTime}\nבהשעיה: ${loanStatus.overdueTimeString}`;
+                            label.style.color = '#d32f2f';
+                        } else {
+                            // ⏳ בהשאלה בזמן
+                            label.textContent = `⏳ ${computer} (בהשאלה אצל ${loanStatus.teacherName})`;
+                            label.title = `צפוי בחזרה ב-${loanStatus.loanDate} בשעה ${loanStatus.expectedReturnTime}`;
+                            label.style.color = '#f44336';
+                        }
+                        label.style.fontWeight = 'bold';
+                    }
+                } else {
+                    label.textContent = computer;
+                }
                 
                 grid.appendChild(checkbox);
                 grid.appendChild(label);
@@ -2806,7 +3104,7 @@
             
             const countInfo = document.getElementById('multiComputerCountInfo');
             if (countInfo) {
-                countInfo.innerHTML = `נבחרו: ${selectedCount} מתוך <span id="multiRequiredCount">${requiredCount}</span>`;
+                countInfo.innerHTML = `${getMsg('display.selectedComputers', { selected: selectedCount, required: `<span id="multiRequiredCount">${requiredCount}</span>` })}`;
             }
         }
         
@@ -2842,7 +3140,27 @@
                     const label = document.createElement('label');
                     label.htmlFor = computer;
                     label.className = 'computer-label';
-                    label.textContent = computer;
+                    
+                    if (isOccupied) {
+                        const loanStatus = getComputerLoanStatus(selectedCart, computer);
+                        
+                        if (loanStatus) {
+                            if (loanStatus.isOverdue) {
+                                // 🔴 בהשעיה
+                                label.textContent = `🔴 ${computer} (בהשעיה אצל ${loanStatus.teacherName})`;
+                                label.title = `צפוי בחזרה ב-${loanStatus.loanDate} בשעה ${loanStatus.expectedReturnTime}\nבהשעיה: ${loanStatus.overdueTimeString}`;
+                                label.style.color = '#d32f2f';
+                            } else {
+                                // ⏳ בהשאלה בזמן
+                                label.textContent = `⏳ ${computer} (בהשאלה אצל ${loanStatus.teacherName})`;
+                                label.title = `צפוי בחזרה ב-${loanStatus.loanDate} בשעה ${loanStatus.expectedReturnTime}`;
+                                label.style.color = '#f44336';
+                            }
+                            label.style.fontWeight = 'bold';
+                        }
+                    } else {
+                        label.textContent = computer;
+                    }
                     
                     computerGrid.appendChild(checkbox);
                     computerGrid.appendChild(label);
@@ -2869,7 +3187,7 @@
             
             const countInfo = document.getElementById('computerCountInfo');
             if (countInfo) {
-                countInfo.innerHTML = `נבחרו: ${selectedCount} מתוך <span id="requiredCount">${requiredCount}</span>`;
+                countInfo.innerHTML = `${getMsg('display.selectedComputers', { selected: selectedCount, required: `<span id="requiredCount">${requiredCount}</span>` })}`;
             }
         }
         
@@ -2898,7 +3216,7 @@
             const loansList = document.getElementById('activeLoansList');
             
             if (activeLoans.length === 0) {
-                loansList.innerHTML = '<div class="no-loans">אין השאלות פעילות למורה זו</div>';
+                loansList.innerHTML = `<div class="no-loans">${getMsg('emptyStates.noActiveLoansForTeacher')}</div>`;
                 return;
             }
             
@@ -2962,22 +3280,27 @@
             const loan = systemData.loans.find(loan => loan.id == loanId);
             
             if (!loan) {
-                alert('❌ השאלה לא נמצאה!');
+                alert(getMsg('loans.errorNotFound'));
                 return;
             }
             
             const currentDate = new Date().toISOString().split('T')[0];
             if (loan.loanDate <= currentDate) {
-                alert('❌ ניתן לבטל רק השאלות עתידיות!');
+                alert(getMsg('loans.errorOnlyFuture'));
                 return;
             }
             
             const computerCount = loan.computers ? loan.computers.length : 
                                (loan.cartSelections ? Object.values(loan.cartSelections).reduce((sum, arr) => sum + arr.length, 0) : 0);
             
-            const confirm = window.confirm(`⚠️ האם לבטל את ההשאלה של ${loan.teacherName}?\n\nפרטי ההשאלה:\n📅 תאריך: ${loan.loanDate}\n⏰ שעה: ${loan.loanTime}\n🖥️ מחשבים: ${computerCount}\n\nההשאלה תימחק לחלוטין מהמערכת.`);
+            const confirmCancel = window.confirm(getMsg('confirmDialogs.cancelLoan', { 
+              teacher: loan.teacherName, 
+              date: loan.loanDate, 
+              time: loan.loanTime, 
+              count: computerCount 
+            }));
             
-            if (!confirm) return;
+            if (!confirmCancel) return;
             
             try {
                 deleteLoanFromFirebase(loanId)
@@ -3010,9 +3333,14 @@
             
             const dayName = getHebrewDayName(recurringLoan.loanDate);
             
-            const confirm = window.confirm(`⚠️ האם לבטל את ההשאלה הקבועה של ${recurringLoan.teacherName}?\n\n📋 פרטי ההשאלה:\n📅 כל יום ${dayName}\n⏰ שעה: ${recurringLoan.loanTime}\n🖥️ מחשבים: ${computerCount}\n\n⚠️ זה יבטל את ההשאלה הקבועה לכל השבועות הבאים!`);
+            const confirmCancel = window.confirm(getMsg('confirmDialogs.cancelRecurringLoan', {
+              teacher: recurringLoan.teacherName,
+              day: dayName,
+              time: recurringLoan.loanTime,
+              count: computerCount
+            }));
             
-            if (!confirm) return;
+            if (!confirmCancel) return;
             
             try {
                 deleteRecurringLoanFromFirebase(recurringLoanId)
@@ -3042,7 +3370,7 @@
             if (password === 'n0987') {
                 showManagementScreen();
             } else {
-                showError('סיסמה שגויה! נסי שוב.');
+                showError(getMsg('password.errorWrongPassword'));
                 document.getElementById('adminPassword').value = '';
             }
         }
@@ -3055,6 +3383,7 @@
         function updateManagementData() {
             updateGeneralStats();
             updateCurrentLoans();
+            updateOverdueLoans();  // ✅ חדש: הוסף סעיף מחשבים בהשעיה
             updateRecurringLoans();
             updateFutureLoans();
             updateCartStatus();
@@ -3097,7 +3426,7 @@
             const container = document.getElementById('currentLoans');
             
             if (currentLoans.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">אין השאלות פעילות כרגע</div>';
+                container.innerHTML = `<div style="text-align: center; color: #999; font-style: italic;">${getMsg('emptyStates.noActiveLoans')}</div>`;
                 return;
             }
             
@@ -3138,11 +3467,71 @@
             container.innerHTML = html;
         }
 
+        // ✅ חדש: עדכן מחשבים בהשעיה
+        function updateOverdueLoans() {
+            const container = document.getElementById('overdueLoans');
+            if (!container) return;
+            
+            const overdueLoans = systemData.loans.filter(loan => 
+                !loan.returned && 
+                loan.expectedReturnTime &&
+                loan.loanDate &&
+                getOverdueHours(loan.expectedReturnTime, loan.loanDate) > 0  // ✅ העבר את loanDate
+            );
+            
+            if (overdueLoans.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #999; font-style: italic;">${getMsg('overdue.noOverdueMessage')}</div>`;
+                return;
+            }
+            
+            let html = '';
+            overdueLoans.sort((a, b) => getOverdueHours(b.expectedReturnTime, b.loanDate) - getOverdueHours(a.expectedReturnTime, a.loanDate))
+                .forEach(loan => {
+                    const overdueHours = getOverdueHours(loan.expectedReturnTime, loan.loanDate);  // ✅ העבר את loanDate
+                    const overdueTimeString = getOverdueTimeString(loan.expectedReturnTime, loan.loanDate);  // ✅ העבר את loanDate
+                    const computerCount = loan.computers ? loan.computers.length : 
+                                       (loan.cartSelections ? Object.values(loan.cartSelections).reduce((sum, arr) => sum + arr.length, 0) : 0);
+                    
+                    const cartInfo = loan.cart ? systemData.carts[loan.cart]?.name || loan.cart :
+                                   loan.cartSelections ? Object.keys(loan.cartSelections).map(cartId => systemData.carts[cartId]?.name || cartId).join(', ') : 'לא ידוע';
+                    
+                    // צבע לפי זמן בהשעיה
+                    let bgColor = '#fff3e0'; // כתום - עד 2 שעות
+                    let borderColor = '#ff9800';
+                    
+                    if (overdueHours >= 24) {
+                        bgColor = '#ffebee'; // אדום - יום או יותר
+                        borderColor = '#f44336';
+                    } else if (overdueHours >= 6) {
+                        bgColor = '#ffe0b2'; // כתום כהה - יותר מ-6 שעות
+                        borderColor = '#f57c00';
+                    }
+                    
+                    html += `
+                        <div style="background: ${bgColor}; padding: 12px; margin: 8px 0; border-radius: 5px; border-right: 4px solid ${borderColor};">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 8px;">⏰ ${loan.teacherName} - כיתה ${loan.teacherClass}</div>
+                            <div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">
+                                📅 ${loan.loanDate} • ⏱️ צפוי בשעה ${loan.expectedReturnTime}
+                            </div>
+                            <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                                <strong>🔴 בהשעיה: ${overdueTimeString}</strong><br>
+                                🖥️ ${computerCount} מחשבים • 🛒 ${cartInfo}
+                            </div>
+                            <button onclick="returnSpecificLoan('${loan.id}')" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                                ✅ סמן כהוחזר עכשיו
+                            </button>
+                        </div>
+                    `;
+                });
+            
+            container.innerHTML = html;
+        }
+
         function updateRecurringLoans() {
             const container = document.getElementById('recurringLoans');
             
             if (systemData.recurringLoans.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">אין השאלות קבועות</div>';
+                container.innerHTML = `<div style="text-align: center; color: #999; font-style: italic;">${getMsg('emptyStates.noRecurringLoans')}</div>`;
                 return;
             }
             
@@ -3197,7 +3586,7 @@
             const container = document.getElementById('futureLoans');
             
             if (futureLoans.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">אין השאלות מתוכננות</div>';
+                container.innerHTML = `<div style="text-align: center; color: #999; font-style: italic;">${getMsg('emptyStates.noPlannedLoans')}</div>`;
                 return;
             }
             
@@ -3293,7 +3682,7 @@
             const loanIndex = systemData.loans.findIndex(loan => loan.id == loanId);
             
             if (loanIndex === -1) {
-                alert('❌ השאלה לא נמצאה!');
+                alert(getMsg('returns.errorNotFound'));
                 return;
             }
             
@@ -3302,9 +3691,12 @@
             const computerCount = loan.computers ? loan.computers.length : 
                                (loan.cartSelections ? Object.values(loan.cartSelections).reduce((sum, arr) => sum + arr.length, 0) : 0);
             
-            const confirm = window.confirm(`⚠️ האם לסמן את ההשאלה של ${loan.teacherName} כהוחזרה?\n\n${computerCount} מחשבים ישוחררו.`);
+            const confirmReturn = window.confirm(getMsg('confirmDialogs.markAsReturned', {
+              teacher: loan.teacherName,
+              count: computerCount
+            }));
             
-            if (!confirm) return;
+            if (!confirmReturn) return;
             
             try {
                 const currentDate = new Date().toISOString().split('T')[0];
@@ -3334,7 +3726,89 @@
             const teacherClass = document.getElementById('teacherClass').value;
             
             if (!teacherName || !teacherClass) {
-                showError('אנא בחר מורה וכיתה');
+                showError(getMsg('validation.errorNoTeacher'));
+                return;
+            }
+            
+            // ✅ תקן: בדוק אם למורה יש השאלות פעילות שלא הוחזרו (חוץ מקבועות)
+            const activeLoans = systemData.loans.filter(loan => 
+                loan.teacherName === teacherName && 
+                !loan.returned && 
+                !loan.isRecurring  // לא סוגים קבועים
+            );
+            
+            if (activeLoans.length > 0) {
+                // ✅ חדש: בדוק אם יש מחשבים בהשעיה (עברה שעת החזרה)
+                const overdueLoans = getOverdueLoans(teacherName);
+                
+                if (overdueLoans.length > 0) {
+                    const overdueDetails = overdueLoans.map(loan => {
+                        const overdueTime = getOverdueTimeString(loan.expectedReturnTime, loan.loanDate);
+                        const computerCount = loan.computers ? loan.computers.length : 
+                                           (loan.cartSelections ? Object.values(loan.cartSelections).reduce((s, arr) => s + arr.length, 0) : 0);
+                        return `  • ${computerCount} מחשבים (צפוי ב-${loan.loanDate} בשעה ${loan.expectedReturnTime}, בהשעיה ${overdueTime})`;
+                    }).join('\n');
+                    
+                    // 🆕 בנה רשימת כל המורים שאצלם מחשבים בהשעיה בכלל המערכת
+                    const allOverdueByTeacher = {};
+                    systemData.loans.forEach(loan => {
+                        if (!loan.returned) {
+                            const overdueHours = getOverdueHours(loan.expectedReturnTime, loan.loanDate);
+                            if (overdueHours > 0) {
+                                if (!allOverdueByTeacher[loan.teacherName]) {
+                                    allOverdueByTeacher[loan.teacherName] = [];
+                                }
+                                const computers = loan.computers || [];
+                                const multiCartComputers = loan.cartSelections ? Object.values(loan.cartSelections).flat() : [];
+                                allOverdueByTeacher[loan.teacherName].push(...computers, ...multiCartComputers);
+                            }
+                        }
+                    });
+                    
+                    const teachersList = Object.keys(allOverdueByTeacher).map(name => 
+                        `<li style="margin: 8px 0; font-size: 1em;">${name} <span style="color: #d32f2f; font-weight: bold;">(${allOverdueByTeacher[name].length} מחשבים בהשעיה)</span></li>`
+                    ).join('');
+                    
+                    const messageWithTeachers = `
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h2 style="color: #d32f2f; margin: 0; font-size: 1.5em;">⛔ עצור - מחשבים בהשעיה!</h2>
+                        </div>
+                        
+                        <div style="background: #ffebee; border-right: 4px solid #d32f2f; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+                            <p style="margin: 0; color: #c62828; font-weight: 500;">
+                                למורה <strong>${teacherName}</strong> יש מחשבים שטרם הוחזרו בזמן:
+                            </p>
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcdd2;">
+                                ${overdueDetails}
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                            <h3 style="color: #333; margin: 0 0 15px 0; font-size: 1.1em;">🔴 מורים עם מחשבים בהשעיה בשיטה:</h3>
+                            <ul style="margin: 0; padding-right: 20px; list-style-type: none;">
+                                ${teachersList}
+                            </ul>
+                        </div>
+                        
+                        <div style="background: #e8f5e9; border-right: 4px solid #4caf50; padding: 15px; border-radius: 4px;">
+                            <p style="margin: 0; color: #2e7d32; font-weight: 500;">
+                                <strong>✅ פתרון:</strong> אנא סמני את המחשבים כ"הוחזרו" בכרטיסיית "החזרות" לפני שתתחילי הזמנה חדשה.
+                            </p>
+                        </div>
+                    `;
+                    
+                    // ⛔ חסום את ההזמנה - הודעה שנשארת
+                    showPersistentWarning(messageWithTeachers);
+                    return; // ⛔ עצור את הזמנה - אל תמשך הלאה!
+                }
+                
+                // אם אין בהשעיה, הצג את כל ההשאלות הפעילות (בהודעה קצרה שתעלם)
+                const computerCount = activeLoans.reduce((sum, loan) => {
+                    return sum + (loan.computers ? loan.computers.length : 0) + 
+                           (loan.cartSelections ? Object.values(loan.cartSelections).reduce((s, arr) => s + arr.length, 0) : 0);
+                }, 0);
+                
+                showError(`⚠️ למורה ${teacherName} יש ${activeLoans.length} השאלות פעילות בסה"כ ${computerCount} מחשבים שטרם הוחזרו!\n\nאנא סמן החזרה קודם לפני הזמנה חדשה.`);
                 return;
             }
             
@@ -3352,16 +3826,21 @@
             const isRecurring = document.getElementById('isRecurringLoan').checked;
             
             if (!loanDate || !loanTime || !computerCount || !expectedReturnTime) {
-                showError('אנא מלא את כל השדות');
+                showError(getMsg('validation.errorNoFields'));
                 return;
             }
 
             if (isRecurring) {
                 const dayName = getHebrewDayName(loanDate);
                 
-                const confirm = window.confirm(`🔄 השאלה קבועה - אישור\n\nאת עומדת ליצור השאלה קבועה עבור ${currentLoan.teacherName}:\n📅 כל יום ${dayName}\n⏰ שעה ${loanTime}\n🖥️ ${computerCount} מחשבים\n\nהמחשבים יהיו תפוסים בכל שבוע!\n\nהאם להמשיך?`);
+                const confirmRecurring = window.confirm(getMsg('confirmDialogs.createRecurringLoan', {
+                  teacher: currentLoan.teacherName,
+                  day: dayName,
+                  time: loanTime,
+                  count: computerCount
+                }));
                 
-                if (!confirm) {
+                if (!confirmRecurring) {
                     return;
                 }
             }
@@ -3438,16 +3917,16 @@ if (conflictingComputers.length > 0) {
                 systemData.recurringLoans.push(recurringLoan);
                 systemData.loans.push(baseLoan);
                 
-                document.getElementById('successTitle').textContent = 'השאלה קבועה נוצרה!';
-                document.getElementById('successMessage').textContent = `המחשבים הוקצו בהצלחה למורה.\n🔄 השאלה תחזור כל שבוע באותו יום ושעה.`;
+                document.getElementById('successTitle').textContent = getMsg('loans.successRecurringTitle');
+                document.getElementById('successMessage').textContent = getMsg('loans.successRecurringSingle');
             } else {
                 systemData.loans.push(baseLoan);
                 
                 const returnTimeMsg = currentLoan.expectedReturnTime ? 
-                    `\nהחזרה מתוכננת: היום בשעה ${currentLoan.expectedReturnTime}` : '';
+                    getMsg('loans.plannedReturnTime', { time: currentLoan.expectedReturnTime }) : '';
                 
-                document.getElementById('successTitle').textContent = 'השאלה אושרה!';
-                document.getElementById('successMessage').textContent = `המחשבים הוקצו בהצלחה למורה.${returnTimeMsg}`;
+                document.getElementById('successTitle').textContent = getMsg('loans.successTitle');
+                document.getElementById('successMessage').textContent = getMsg('loans.successSingle') + returnTimeMsg;
             }
             
             saveToFirebase();
@@ -3514,16 +3993,16 @@ if (hasConflicts) {
                 systemData.recurringLoans.push(recurringLoan);
                 systemData.loans.push(baseLoan);
                 
-                document.getElementById('successTitle').textContent = 'השאלה קבועה נוצרה!';
-                document.getElementById('successMessage').textContent = `המחשבים הוקצו בהצלחה למורה מכמה עגלות.\n🔄 השאלה תחזור כל שבוע באותו יום ושעה.`;
+                document.getElementById('successTitle').textContent = getMsg('loans.successRecurringTitle');
+                document.getElementById('successMessage').textContent = getMsg('loans.successRecurringMultiCart');
             } else {
                 systemData.loans.push(baseLoan);
                 
                 const returnTimeMsg = currentLoan.expectedReturnTime ? 
-                    `\nהחזרה מתוכננת: היום בשעה ${currentLoan.expectedReturnTime}` : '';
+                    getMsg('loans.plannedReturnTime', { time: currentLoan.expectedReturnTime }) : '';
                 
-                document.getElementById('successTitle').textContent = 'השאלה אושרה!';
-                document.getElementById('successMessage').textContent = `המחשבים הוקצו בהצלחה למורה מכמה עגלות.${returnTimeMsg}`;
+                document.getElementById('successTitle').textContent = getMsg('loans.successTitle');
+                document.getElementById('successMessage').textContent = getMsg('loans.successMultiCart') + returnTimeMsg;
             }
             
             saveToFirebase();
@@ -3560,8 +4039,8 @@ if (hasConflicts) {
             
             saveToFirebase();
             
-            document.getElementById('successTitle').textContent = 'החזרה אושרה!';
-            document.getElementById('successMessage').textContent = `המחשבים של ${selectedLoanForReturn.teacherName} הוחזרו בהצלחה למערכת.`;
+            document.getElementById('successTitle').textContent = getMsg('returns.successTitle');
+            document.getElementById('successMessage').textContent = getMsg('returns.successMessage', { teacher: selectedLoanForReturn.teacherName });
             showScreen('successScreen');
             
             // רענון נתונים מהענן אחרי החזרה
@@ -3676,8 +4155,11 @@ if (hasConflicts) {
         }
         
         // Initialize System
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('🔄 מאתחל מערכת משופרת...');
+            
+            // Load messages first
+            await loadMessages();
             
             // Initialize default configuration
             systemData.config = { ...defaultConfig };
