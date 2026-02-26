@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מיצוב כיתות</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#2d3748;direction:rtl;min-height:100vh}
+h1,h2,h3{font-weight:700}
+
+/* NAV */
+nav{background:linear-gradient(135deg,#2b6cb0,#2c7a7b);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+nav h1{font-size:1.3rem;flex:1}
+.steps{display:flex;gap:4px}
+.step-btn{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,.4);background:transparent;color:#fff;cursor:pointer;font-size:.85rem;font-family:inherit;transition:.2s}
+.step-btn.active{background:#fff;color:#2b6cb0;border-color:#fff}
+.step-btn.done{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.6)}
+.step-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* MAIN */
+main{padding:24px;max-width:1400px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+
+/* CARD */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.1);padding:24px;margin-bottom:20px}
+.card h2{font-size:1.1rem;margin-bottom:16px;color:#2b6cb0;border-bottom:2px solid #bee3f8;padding-bottom:8px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:3px dashed #90cdf4;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:.2s;background:#ebf8ff}
+.upload-zone:hover,.upload-zone.drag-over{border-color:#2b6cb0;background:#bee3f8}
+.upload-zone input{display:none}
+.upload-zone .icon{font-size:3rem;margin-bottom:12px}
+.upload-zone p{color:#4a5568;margin:6px 0}
+.upload-zone .hint{font-size:.85rem;color:#718096}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:600;transition:.2s}
+.btn-primary{background:#2b6cb0;color:#fff}.btn-primary:hover{background:#2c5282}
+.btn-success{background:#276749;color:#fff}.btn-success:hover{background:#22543d}
+.btn-warning{background:#d69e2e;color:#fff}.btn-warning:hover{background:#b7791f}
+.btn-danger{background:#c53030;color:#fff}.btn-danger:hover{background:#9b2c2c}
+.btn-outline{background:#fff;color:#2b6cb0;border:2px solid #2b6cb0}.btn-outline:hover{background:#ebf8ff}
+.btn-sm{padding:5px 10px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead{background:#2b6cb0;color:#fff}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+tr:hover td{background:#ebf8ff}
+td input,td select{width:100%;border:1px solid #cbd5e0;border-radius:4px;padding:3px 6px;font-family:inherit;font-size:.85rem;background:#fff}
+td input:focus,td select:focus{outline:2px solid #90cdf4;border-color:#2b6cb0}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:.75rem;font-weight:600;margin:1px}
+.badge-blue{background:#bee3f8;color:#2c5282}
+.badge-green{background:#c6f6d5;color:#276749}
+.badge-orange{background:#feebc8;color:#c05621}
+.badge-red{background:#fed7d7;color:#c53030}
+.badge-purple{background:#e9d8fd;color:#553c9a}
+.badge-gray{background:#e2e8f0;color:#4a5568}
+
+/* RESULTS LAYOUT */
+.results-wrap{display:grid;grid-template-columns:1fr 1fr 1fr 300px;gap:16px;align-items:start}
+.class-col{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.1);overflow:hidden}
+.class-header{padding:12px 16px;font-weight:700;font-size:1rem;display:flex;justify-content:space-between;align-items:center}
+.class-header span.count{font-size:.85rem;font-weight:400;background:rgba(255,255,255,.3);padding:2px 8px;border-radius:10px}
+.class-body{padding:8px;min-height:200px}
+.class-col[data-col="0"] .class-header{background:#3182ce;color:#fff}
+.class-col[data-col="1"] .class-header{background:#2f855a;color:#fff}
+.class-col[data-col="2"] .class-header{background:#c05621;color:#fff}
+.class-col[data-col="3"] .class-header{background:#553c9a;color:#fff}
+.class-col[data-col="4"] .class-header{background:#b7791f;color:#fff}
+
+/* STUDENT CARD */
+.student-card{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:grab;transition:.15s;display:flex;align-items:center;gap:8px;position:relative}
+.student-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.12);border-color:#90cdf4}
+.student-card.dragging{opacity:.4;cursor:grabbing}
+.student-card.drag-over{border-color:#2b6cb0;background:#ebf8ff}
+.student-card .s-name{font-weight:600;font-size:.9rem;flex:1}
+.student-card .s-icons{display:flex;gap:3px;flex-wrap:wrap}
+.student-card .s-icons .icon-badge{font-size:.7rem;padding:1px 5px;border-radius:8px}
+.friend-ok{color:#276749;font-size:.8rem;font-weight:700}
+.friend-miss{color:#c53030;font-size:.8rem;font-weight:700}
+.drop-zone-active{background:#ebf8ff!important;border:2px dashed #2b6cb0!important}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.stat-card{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.stat-card h3{font-size:.9rem;margin-bottom:10px;color:#2b6cb0}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.85rem}
+.stat-row:last-child{border-bottom:none}
+.stat-ok{color:#276749;font-weight:700}
+.stat-warn{color:#c05621;font-weight:700}
+.stat-err{color:#c53030;font-weight:700}
+.violation-list{font-size:.82rem;max-height:200px;overflow-y:auto}
+.violation-item{padding:4px 6px;margin:2px 0;border-radius:5px;background:#fff5f5;border-right:3px solid #c53030;color:#742a2a}
+.violation-item.warn{background:#fffbeb;border-color:#d69e2e;color:#744210}
+
+/* OVERALL STATUS */
+.overall-ok{background:#f0fff4;border:2px solid #68d391;border-radius:10px;padding:12px;text-align:center;color:#276749;font-weight:700}
+.overall-warn{background:#fffbeb;border:2px solid #f6e05e;border-radius:10px;padding:12px;text-align:center;color:#744210;font-weight:700}
+.overall-err{background:#fff5f5;border:2px solid #fc8181;border-radius:10px;padding:12px;text-align:center;color:#742a2a;font-weight:700}
+
+/* PROGRESS BAR */
+.prog-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;border-radius:4px;transition:.3s}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h2{margin-bottom:16px;color:#2b6cb0}
+
+/* SETTINGS ROW */
+.settings-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.settings-row label{font-weight:600;font-size:.9rem}
+.settings-row input[type=number],.settings-row input[type=text]{width:80px;padding:6px;border:1px solid #cbd5e0;border-radius:6px;font-family:inherit}
+.settings-row select{padding:6px;border:1px solid #cbd5e0;border-radius:6px;font-family:inherit}
+
+/* LEGEND */
+.legend{display:flex;gap:8px;flex-wrap:wrap;font-size:.8rem;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:4px}
+
+/* ALERTS */
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:.9rem}
+.alert-info{background:#ebf8ff;border:1px solid #90cdf4;color:#2c5282}
+.alert-warn{background:#fffbeb;border:1px solid #f6e05e;color:#744210}
+.alert-err{background:#fff5f5;border:1px solid #fc8181;color:#742a2a}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px;color:#a0aec0}
+.empty-state .icon{font-size:3rem;margin-bottom:8px}
+
+@media(max-width:900px){
+  .results-wrap{grid-template-columns:1fr;}.sidebar{flex-direction:row;flex-wrap:wrap}
+}
+
+/* REPORT */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.report-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px}
+.report-full{margin-bottom:20px}
+.chart-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.1);padding:20px}
+.chart-card h3{font-size:1rem;font-weight:700;color:#2d3748;margin-bottom:6px}
+.chart-subtitle{font-size:.8rem;color:#718096;margin-bottom:16px}
+
+/* Bar chart */
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:160px;padding:0 4px}
+.bar-group{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
+.bar-group-label{font-size:.78rem;color:#4a5568;font-weight:600;white-space:nowrap}
+.bars-row{display:flex;align-items:flex-end;gap:3px;height:130px;width:100%}
+.bar-item{flex:1;border-radius:4px 4px 0 0;transition:.4s;position:relative;min-height:4px;cursor:default;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.bar-item:hover{opacity:.85}
+.bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.72rem;font-weight:700;color:#2d3748;white-space:nowrap}
+
+/* Stacked bar */
+.stacked-row{display:flex;gap:16px;align-items:center;margin-bottom:10px}
+.stacked-label{font-size:.85rem;font-weight:600;min-width:60px;color:#2d3748}
+.stacked-bar{flex:1;height:28px;border-radius:6px;overflow:hidden;display:flex;background:#e2e8f0}
+.stacked-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;transition:.4s;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.stacked-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.stacked-legend-item{display:flex;align-items:center;gap:5px;font-size:.8rem}
+.stacked-legend-dot{width:12px;height:12px;border-radius:3px}
+
+/* Donut chart */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.donut-legend-row{display:flex;align-items:center;gap:8px;font-size:.85rem}
+.donut-legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-container{position:relative;display:inline-block}
+
+/* Metric cards row */
+.metric-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.metric-card{flex:1;min-width:120px;background:#fff;border-radius:10px;padding:16px 12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.metric-val{font-size:2rem;font-weight:800;line-height:1}
+.metric-label{font-size:.78rem;color:#718096;margin-top:4px}
+.metric-sub{font-size:.72rem;color:#a0aec0;margin-top:2px}
+
+/* Class comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.cmp-table th{padding:8px 12px;background:#f7fafc;font-weight:600;color:#4a5568;text-align:right;border-bottom:2px solid #e2e8f0}
+.cmp-table td{padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:6px}
+.inline-bar{display:inline-flex;align-items:center;gap:6px;width:100%}
+.inline-bar-track{flex:1;height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden}
+.inline-bar-fill{height:100%;border-radius:5px;transition:.4s;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+
+/* PRINT */
+@media print{
+  *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+  nav,.toolbar,.sidebar,button{display:none!important}
+  .results-wrap{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .report-grid{grid-template-columns:1fr 1fr}
+  .report-grid-3{grid-template-columns:1fr 1fr 1fr}
+  .student-card,.chart-card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>📚 מיצוב כיתות <span style="font-size:1rem;font-weight:400;opacity:.7;margin-right:6px">v0.1</span></h1>
+  <div class="steps">
+    <button class="step-btn active" onclick="goStep(0)">① העלאת נתונים</button>
+    <button class="step-btn" id="btn-step1" onclick="goStep(1)" disabled>② עריכת תלמידים</button>
+    <button class="step-btn" id="btn-step2" onclick="goStep(2)" disabled>③ תוצאות</button>
+    <button class="step-btn" id="btn-step3" onclick="goStep(3)" disabled>④ דוח גרפי</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- STEP 0: UPLOAD -->
+<div class="section active" id="sec-0">
+  <div class="card">
+    <h2>📤 העלאת קובץ תלמידים</h2>
+    <div class="alert alert-info">
+      העלה קובץ Excel או CSV עם רשימת התלמידים. הקובץ צריך לכלול עמודות עבור שם, מגדר, כיתת מוצא, ואפיונים נוספים.
+    </div>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+      <div class="icon">📂</div>
+      <p><strong>גרור קובץ לכאן</strong> או לחץ לבחירה</p>
+      <p class="hint">תומך ב: Excel (.xlsx, .xls) ו-CSV</p>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="downloadTemplate()">⬇ הורד תבנית Excel</button>
+      <button class="btn btn-outline" onclick="loadDemo()">🎲 טען נתוני דוגמה</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 מבנה הקובץ הנדרש</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>שם העמודה</th><th>ערכים מותרים</th><th>הסבר</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><strong>שם</strong></td><td>טקסט</td><td>שם מלא של התלמיד/ה</td></tr>
+          <tr><td><strong>מגדר</strong></td><td>זכר / נקבה</td><td>מגדר התלמיד/ה</td></tr>
+          <tr><td><strong>כיתה</strong></td><td>א / ב / ג (או 1/2/3)</td><td>כיתת המוצא</td></tr>
+          <tr><td><strong>שילוב</strong></td><td>כן / לא</td><td>האם תלמיד/ת שילוב</td></tr>
+          <tr><td><strong>עוצמה</strong></td><td>כן / לא</td><td>האם עוצמה גבוהה / סוערות</td></tr>
+          <tr><td><strong>סל</strong></td><td>כן / לא</td><td>האם יש סל אישי</td></tr>
+          <tr><td><strong>בקשה 1</strong></td><td>שם אחד</td><td>בקשת חברות ראשונה</td></tr>
+          <tr><td><strong>בקשה 2</strong></td><td>שם אחד</td><td>בקשת חברות שנייה</td></tr>
+          <tr><td><strong>בקשה 3</strong></td><td>שם אחד</td><td>בקשת חברות שלישית</td></tr>
+          <tr><td><strong>תאום</strong></td><td>שם / ריק</td><td>שם התאום/ת (יופרדו)</td></tr>
+          <tr><td><strong>קונפליקט</strong></td><td>שמות מופרדים בפסיק</td><td>ילדים שלא יהיו יחד</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1: STUDENTS TABLE -->
+<div class="section" id="sec-1">
+  <div class="card">
+    <h2>👥 רשימת תלמידים</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="addStudentRow()">+ הוסף תלמיד/ה</button>
+      <button class="btn btn-outline" onclick="goStep(0)">⬅ חזור להעלאה</button>
+      <span style="margin-right:auto;color:#718096;font-size:.9rem" id="student-count-label"></span>
+    </div>
+    <div class="table-wrap" id="students-table-wrap"></div>
+    <div style="margin-top:16px">
+      <div class="settings-row">
+        <label>מספר כיתות חדשות:</label>
+        <input type="number" id="num-classes" value="3" min="2" max="5">
+        <label style="margin-right:16px">שמות הכיתות החדשות:</label>
+        <input type="text" id="class-names" value="א,ב,ג" style="width:120px">
+      </div>
+      <button class="btn btn-success" onclick="runAlgorithm()" style="font-size:1rem;padding:12px 28px">
+        ▶ צור חלוקה לכיתות
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: RESULTS -->
+<div class="section" id="sec-2">
+  <div class="card" style="padding:12px 20px">
+    <div class="toolbar">
+      <button class="btn btn-outline btn-sm" onclick="goStep(1)">⬅ חזור לעריכה</button>
+      <button class="btn btn-primary btn-sm" onclick="runAlgorithm()">🔄 הרץ מחדש</button>
+      <button class="btn btn-success btn-sm" onclick="exportResults()">💾 ייצא לExcel</button>
+      <button class="btn btn-warning btn-sm" onclick="goStep(3)">📊 דוח גרפי</button>
+      <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 הדפס</button>
+      <div class="legend">
+        <span class="legend-item"><span class="badge badge-blue">ש</span> שילוב</span>
+        <span class="legend-item"><span class="badge badge-orange">⚡</span> עוצמה</span>
+        <span class="legend-item"><span class="badge badge-purple">ס</span> סל אישי</span>
+        <span class="legend-item"><span class="friend-ok">✓</span> חבר מצא</span>
+        <span class="legend-item"><span class="friend-miss">✗</span> ללא חבר</span>
+      </div>
+    </div>
+  </div>
+  <div class="results-wrap" id="results-wrap">
+    <div class="empty-state"><div class="icon">⏳</div><p>מריץ אלגוריתם...</p></div>
+  </div>
+</div>
+
+<!-- STEP 3: GRAPHICAL REPORT -->
+<div class="section" id="sec-3">
+  <div class="card" style="padding:12px 20px">
+    <div class="toolbar">
+      <button class="btn btn-outline btn-sm" onclick="goStep(2)">⬅ חזור לתוצאות</button>
+      <button class="btn btn-success btn-sm" onclick="exportResults()">💾 ייצא לExcel</button>
+      <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 הדפס</button>
+    </div>
+  </div>
+  <div id="report-wrap"></div>
+</div>
+
+</main>
+
+<!-- MODAL: Student Edit -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>✏️ עריכת תלמיד/ה</h2>
+    <div id="modal-content"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveModal()">שמור</button>
+      <button class="btn btn-outline" onclick="document.getElementById('modal-bg').classList.remove('open')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let students = [];
+let assignedClasses = [];
+let dragSrc = null;
+let modalStudentIdx = -1;
+
+// ==================== COLUMN MAPPING ====================
+const COL_MAP = {
+  שם:['שם','name','full name','שם מלא'],
+  מגדר:['מגדר','gender','sex','pol'],
+  כיתה:['כיתה','כיתת מוצא','class','source','מקור','source class'],
+  שילוב:['שילוב','integration','special','מיוחד'],
+  עוצמה:['עוצמה','intensity','turbulent','סוערות','עוצמה גבוהה'],
+  סל:['סל','סל אישי','personal basket','basket','personal'],
+  בקשה1:['בקשה 1','בקשה1','friend 1','request 1','req1','חבר 1','חברה 1'],
+  בקשה2:['בקשה 2','בקשה2','friend 2','request 2','req2','חבר 2','חברה 2'],
+  בקשה3:['בקשה 3','בקשה3','friend 3','request 3','req3','חבר 3','חברה 3'],
+  תאום:['תאום','תאומה','twin','twins'],
+  קונפליקט:['קונפליקט','קונפליקטים','conflicts','conflict','ניגוד','לא יחד']
+};
+
+function detectCol(headers, key) {
+  const synonyms = COL_MAP[key];
+  for (const h of headers) {
+    const hl = h.trim().toLowerCase();
+    for (const s of synonyms) {
+      if (hl === s.toLowerCase() || hl.includes(s.toLowerCase())) return h;
+    }
+  }
+  return null;
+}
+
+function parseBool(v) {
+  if (!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return s === 'כן' || s === 'yes' || s === '1' || s === 'true' || s === 'v' || s === '✓';
+}
+
+function parseList(v) {
+  if (!v) return [];
+  return String(v).split(/[,،;]+/).map(s=>s.trim()).filter(Boolean);
+}
+
+// ==================== FILE UPLOAD ====================
+const uploadZone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+
+uploadZone.addEventListener('click', () => { console.log('[Upload] אזור העלאה נלחץ'); fileInput.click(); });
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  console.log('[Upload] קובץ הוטל בגרירה:', e.dataTransfer.files[0]?.name);
+  handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  console.log('[Upload] קובץ נבחר:', file?.name);
+  fileInput.value = '';
+  handleFile(file);
+});
+
+function handleFile(file) {
+  if (!file) { console.warn('[Upload] לא התקבל קובץ'); return; }
+  console.log('[Upload] מעבד קובץ:', file.name, '| גודל:', file.size, 'bytes');
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      console.log('[Upload] קובץ נקרא בהצלחה, מנתח...');
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      console.log('[Upload] גיליונות:', wb.SheetNames);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
+      console.log('[Upload] שורות שנמצאו:', data.length);
+      parseStudents(data);
+    } catch(err) {
+      console.error('[Upload] שגיאה בקריאת הקובץ:', err);
+      alert('שגיאה בקריאת הקובץ: ' + err.message);
+    }
+  };
+  reader.onerror = e => console.error('[Upload] FileReader שגיאה:', e);
+  reader.readAsBinaryString(file);
+}
+
+function parseStudents(rows) {
+  if (!rows.length) { console.warn('[Parse] הקובץ ריק'); alert('הקובץ ריק'); return; }
+  const headers = Object.keys(rows[0]);
+  console.log('[Parse] עמודות שזוהו:', headers);
+  const cols = {};
+  for (const k of Object.keys(COL_MAP)) cols[k] = detectCol(headers, k);
+  console.log('[Parse] מיפוי עמודות:', cols);
+
+  students = rows.map((row, i) => ({
+    id: i,
+    name: String(row[cols['שם']] || '').trim(),
+    gender: String(row[cols['מגדר']] || '').trim(),
+    sourceClass: String(row[cols['כיתה']] || '').trim(),
+    integration: parseBool(row[cols['שילוב']]),
+    intensity: parseBool(row[cols['עוצמה']]),
+    basket: parseBool(row[cols['סל']]),
+    requests: [
+      String(row[cols['בקשה1']] || '').trim(),
+      String(row[cols['בקשה2']] || '').trim(),
+      String(row[cols['בקשה3']] || '').trim()
+    ].filter(Boolean),
+    twin: String(row[cols['תאום']] || '').trim(),
+    conflicts: parseList(row[cols['קונפליקט']])
+  })).filter(s => s.name);
+
+  if (!students.length) { console.warn('[Parse] לא נמצאו תלמידים'); alert('לא נמצאו תלמידים בקובץ'); return; }
+  console.log(`[Parse] נטענו ${students.length} תלמידים בהצלחה`);
+  goStep(1);
+}
+
+// ==================== DEMO DATA ====================
+function loadDemo() {
+  const names = [
+    // Class א
+    ['יוסי כהן','זכר','א'],['רחל לוי','נקבה','א'],['מיכאל ברק','זכר','א'],
+    ['שרה גולן','נקבה','א'],['אבי נדב','זכר','א'],['נועה שמיר','נקבה','א'],
+    ['עמית דוד','זכר','א'],['ליאת כהן','נקבה','א'],['רן גרין','זכר','א'],
+    ['מיה שפיר','נקבה','א'],['גיל פרץ','זכר','א'],['תמר אלון','נקבה','א'],
+    ['אור לם','זכר','א'],['דנה ביטון','נקבה','א'],['ידיד חן','זכר','א'],
+    ['ענת שור','נקבה','א'],['ניב פרידמן','זכר','א'],['כרמית אשד','נקבה','א'],
+    ['שי מור','זכר','א'],['רינת שגיא','נקבה','א'],['איתי גל','זכר','א'],
+    // Class ב
+    ['לירן בן-דוד','זכר','ב'],['טל ויס','נקבה','ב'],['אמיר שלום','זכר','ב'],
+    ['שיר נחום','נקבה','ב'],['בן-אל כץ','זכר','ב'],['לימור בר','נקבה','ב'],
+    ['יניב סגל','זכר','ב'],['אפרת מזרחי','נקבה','ב'],['אדם גוטמן','זכר','ב'],
+    ['לינוי שרף','נקבה','ב'],['גיא לפיד','זכר','ב'],['ורד עמיר','נקבה','ב'],
+    ['אלון שפירא','זכר','ב'],['כפיר טל','זכר','ב'],['הילה דן','נקבה','ב'],
+    ['יפית נוי','נקבה','ב'],['ניר פז','זכר','ב'],['מאיה שוקרון','נקבה','ב'],
+    ['אריאל שרן','זכר','ב'],['שיר-לי כהן','נקבה','ב'],['בר גפן','זכר','ב'],
+    // Class ג
+    ['רועי מלכה','זכר','ג'],['מורן גל','נקבה','ג'],['ליאב קמחי','זכר','ג'],
+    ['אדוה ירון','נקבה','ג'],['עמרי בר-אל','זכר','ג'],['שלי אהרון','נקבה','ג'],
+    ['נתן ריבלין','זכר','ג'],['אפרים רוזן','זכר','ג'],['ריה פלד','נקבה','ג'],
+    ['דביר שמש','זכר','ג'],['שרית הרוש','נקבה','ג'],['עידן כרמי','זכר','ג'],
+    ['נוגה שיין','נקבה','ג'],['אמנון חדד','זכר','ג'],['רוני ספיר','נקבה','ג'],
+    ['ילדה פנחס','נקבה','ג'],['תדהר ברק','זכר','ג'],['מעין לוין','נקבה','ג'],
+    ['ישי אורן','זכר','ג'],['חן גור','נקבה','ג'],['קרן בן-ארי','נקבה','ג']
+  ];
+
+  students = names.map((n,i) => ({
+    id:i,
+    name:n[0],
+    gender:n[1],
+    sourceClass:n[2],
+    integration: i%7===0,
+    intensity: i%5===0,
+    basket: i%9===0,
+    requests: ['','',''],
+    twin: '',
+    conflicts: []
+  }));
+
+  // Add some twins
+  students[0].twin = students[2].name;
+  students[2].twin = students[0].name;
+  students[21].twin = students[22].name;
+  students[22].twin = students[21].name;
+
+  // Add some friend requests
+  students[0].requests = [students[4].name, students[6].name, ''];
+  students[1].requests = [students[3].name, '', ''];
+  students[4].requests = [students[0].name, '', ''];
+  students[10].requests = [students[12].name, students[14].name, ''];
+
+  // Add some conflicts
+  students[5].conflicts = [students[8].name];
+  students[8].conflicts = [students[5].name];
+
+  goStep(1);
+}
+
+// ==================== STUDENTS TABLE ====================
+function renderStudentsTable() {
+  const wrap = document.getElementById('students-table-wrap');
+  document.getElementById('student-count-label').textContent =
+    `סה"כ: ${students.length} תלמידים | ${students.filter(s=>s.gender==='זכר').length} בנים | ${students.filter(s=>s.gender==='נקבה').length} בנות`;
+
+  const colHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>שם</th><th>מגדר</th><th>כיתת מוצא</th>
+        <th>שילוב</th><th>עוצמה</th><th>סל אישי</th>
+        <th>בקשה 1</th><th>בקשה 2</th><th>בקשה 3</th><th>תאום/ת</th><th>קונפליקט</th>
+        <th>פעולות</th>
+      </tr></thead>
+      <tbody>
+        ${students.map((s,i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td><input value="${esc(s.name)}" onchange="students[${i}].name=this.value;refreshCount()"></td>
+          <td>
+            <select onchange="students[${i}].gender=this.value">
+              <option value="זכר" ${s.gender==='זכר'?'selected':''}>זכר</option>
+              <option value="נקבה" ${s.gender==='נקבה'?'selected':''}>נקבה</option>
+            </select>
+          </td>
+          <td><input value="${esc(s.sourceClass)}" onchange="students[${i}].sourceClass=this.value" style="width:50px"></td>
+          <td style="text-align:center">
+            <input type="checkbox" ${s.integration?'checked':''} onchange="students[${i}].integration=this.checked">
+          </td>
+          <td style="text-align:center">
+            <input type="checkbox" ${s.intensity?'checked':''} onchange="students[${i}].intensity=this.checked">
+          </td>
+          <td style="text-align:center">
+            <input type="checkbox" ${s.basket?'checked':''} onchange="students[${i}].basket=this.checked">
+          </td>
+          <td><input value="${esc(s.requests[0]||'')}" onchange="students[${i}].requests[0]=this.value.trim()" placeholder="שם..." style="width:110px"></td>
+          <td><input value="${esc(s.requests[1]||'')}" onchange="students[${i}].requests[1]=this.value.trim()" placeholder="שם..." style="width:110px"></td>
+          <td><input value="${esc(s.requests[2]||'')}" onchange="students[${i}].requests[2]=this.value.trim()" placeholder="שם..." style="width:110px"></td>
+          <td><input value="${esc(s.twin)}" onchange="students[${i}].twin=this.value.trim()" placeholder="שם תאום..." style="width:100px"></td>
+          <td><input value="${esc(s.conflicts.join(', '))}" onchange="students[${i}].conflicts=parseList(this.value)" placeholder="שם, שם..." style="width:150px"></td>
+          <td><button class="btn btn-danger btn-sm" onclick="removeStudent(${i})">🗑</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  wrap.innerHTML = colHTML;
+}
+
+function esc(str) {
+  return String(str||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function refreshCount() {
+  document.getElementById('student-count-label').textContent =
+    `סה"כ: ${students.length} תלמידים | ${students.filter(s=>s.gender==='זכר').length} בנים | ${students.filter(s=>s.gender==='נקבה').length} בנות`;
+}
+
+function addStudentRow() {
+  students.push({id:Date.now(),name:'',gender:'זכר',sourceClass:'',integration:false,intensity:false,basket:false,requests:['','',''],twin:'',conflicts:[]});
+  renderStudentsTable();
+}
+
+function removeStudent(i) {
+  if (!confirm(`למחוק את ${students[i].name}?`)) return;
+  students.splice(i,1);
+  renderStudentsTable();
+}
+
+// ==================== ALGORITHM ====================
+const COLORS = ['#3182ce','#2f855a','#c05621','#553c9a','#b7791f'];
+
+function runAlgorithm() {
+  const numC = parseInt(document.getElementById('num-classes').value) || 3;
+  const namesRaw = (document.getElementById('class-names').value || 'א,ב,ג').split(',').map(s=>s.trim());
+  const classNames = Array.from({length:numC}, (_,i) => namesRaw[i] || String(i+1));
+
+  if (students.length < numC*10) {
+    if(!confirm('מספר התלמידים קטן מהמצופה. להמשיך?')) return;
+  }
+
+  assignedClasses = Array.from({length:numC}, (_,i) => ({
+    id: i,
+    name: classNames[i],
+    color: COLORS[i % COLORS.length],
+    students: []
+  }));
+
+  // Group by source class
+  const sourceMap = {};
+  students.forEach(s => {
+    const k = s.sourceClass || '?';
+    if (!sourceMap[k]) sourceMap[k] = [];
+    sourceMap[k].push({...s, assignedTo: -1});
+  });
+
+  const srcKeys = Object.keys(sourceMap);
+
+  // Assign personal basket students first (ensure each class gets one)
+  const basketStudents = students.filter(s=>s.basket);
+  const basketPerClass = Math.ceil(basketStudents.length / numC);
+
+  // For each source class, distribute students
+  for (const srcKey of srcKeys) {
+    const group = sourceMap[srcKey];
+    distributeGroup(group, numC, assignedClasses);
+  }
+
+  console.log('[Algo] חלוקה ראשונית:', assignedClasses.map(c=>`${c.name}: ${c.students.length}`).join(' | '));
+
+  // Optimize friendship requests (local swap)
+  optimizeFriendships(assignedClasses);
+
+  console.log('[Algo] אחרי אופטימיזציה:', assignedClasses.map(c=>`${c.name}: ${c.students.length}`).join(' | '));
+  const violations = getViolations();
+  const warnings = getWarnings();
+  if (violations.length) console.warn('[Algo] הפרות:', violations);
+  if (warnings.length) console.info('[Algo] אזהרות:', warnings);
+
+  goStep(2);
+  renderResults();
+}
+
+function distributeGroup(group, numC, classes) {
+  const boys = group.filter(s => s.gender === 'זכר');
+  const girls = group.filter(s => s.gender === 'נקבה');
+
+  const boyTargets = boys.length < 7 ? classes.slice(0, 2) : classes;
+  const girlTargets = girls.length < 7 ? classes.slice(0, 2) : classes;
+
+  distributeGender(boys, boyTargets, classes);
+  distributeGender(girls, girlTargets, classes);
+}
+
+function distributeGender(students, allowedClasses, allClasses) {
+  // Sort: twins and conflicts first (most constrained)
+  const sorted = [...students].sort((a,b) => {
+    const aS = (a.twin?3:0) + (a.conflicts.length>0?2:0) + (a.basket?1:0);
+    const bS = (b.twin?3:0) + (b.conflicts.length>0?2:0) + (b.basket?1:0);
+    return bS - aS;
+  });
+
+  for (const student of sorted) {
+    const best = findBest(student, allowedClasses, allClasses);
+    best.students.push({...student, assignedTo: best.id});
+  }
+}
+
+function findBest(student, allowed, all) {
+  let best = allowed[0], bestScore = -Infinity;
+  for (const cls of allowed) {
+    const sc = score(student, cls, all);
+    if (sc > bestScore) { bestScore = sc; best = cls; }
+  }
+  return best;
+}
+
+function score(student, cls, all) {
+  let s = 0;
+
+  // Hard penalties
+  if (student.twin) {
+    if (cls.students.find(x => x.name === student.twin)) s -= 10000;
+  }
+  for (const c of student.conflicts) {
+    if (cls.students.find(x => x.name === c)) s -= 5000;
+  }
+
+  // Soft rewards
+  for (const r of student.requests.filter(Boolean)) {
+    if (cls.students.find(x => x.name === r)) s += 200;
+  }
+  // If someone in this class requested this student
+  if (cls.students.find(x => x.requests && x.requests.includes(student.name))) s += 100;
+
+  // Balance penalties — measure deviation AFTER placing the student (+1)
+  const avg = all.reduce((sum,c) => sum+c.students.length, 0) / all.length;
+  s -= Math.abs((cls.students.length + 1) - avg) * 15;
+
+  const avgI = all.reduce((sum,c) => sum+c.students.filter(x=>x.integration).length,0) / all.length;
+  const curI = cls.students.filter(x=>x.integration).length + (student.integration?1:0);
+  s -= Math.abs(curI - avgI) * 25;
+
+  const avgT = all.reduce((sum,c) => sum+c.students.filter(x=>x.intensity).length,0) / all.length;
+  const curT = cls.students.filter(x=>x.intensity).length;
+  if (student.intensity) s -= Math.abs(curT + 1 - avgT) * 25;
+
+  // Ensure basket in each class
+  if (student.basket) {
+    const hasBask = cls.students.some(x=>x.basket);
+    if (!hasBask) s += 150;
+  }
+
+  return s;
+}
+
+function optimizeFriendships(classes) {
+  // Try swaps to improve friend matches
+  let improved = true;
+  let rounds = 0;
+  while (improved && rounds < 50) {
+    improved = false; rounds++;
+    for (let a = 0; a < classes.length; a++) {
+      for (let b = a+1; b < classes.length; b++) {
+        for (let i = 0; i < classes[a].students.length; i++) {
+          for (let j = 0; j < classes[b].students.length; j++) {
+            const sa = classes[a].students[i];
+            const sb = classes[b].students[j];
+            if (canSwap(sa, sb, classes[a], classes[b])) {
+              const before = friendScore(sa, classes[a]) + friendScore(sb, classes[b]);
+              const after = friendScore(sa, classes[b]) + friendScore(sb, classes[a]);
+              if (after > before) {
+                // Do the swap
+                classes[a].students[i] = {...sb, assignedTo: a};
+                classes[b].students[j] = {...sa, assignedTo: b};
+                improved = true;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function canSwap(sa, sb, clsA, clsB) {
+  // Simulate swap and check hard constraints
+  const newA = clsA.students.map(s => s.name === sa.name ? sb : s);
+  const newB = clsB.students.map(s => s.name === sb.name ? sa : s);
+  return !hasViolations(newA) && !hasViolations(newB);
+}
+
+function hasViolations(students) {
+  for (const s of students) {
+    if (s.twin && students.find(x=>x.name===s.twin)) return true;
+    for (const c of s.conflicts) {
+      if (students.find(x=>x.name===c)) return true;
+    }
+  }
+  return false;
+}
+
+function friendScore(student, cls) {
+  let sc = 0;
+  for (const r of student.requests.filter(Boolean)) {
+    if (cls.students.find(x=>x.name===r && x.name!==student.name)) sc++;
+  }
+  return sc;
+}
+
+function hasFriendMatch(student, cls) {
+  for (const r of student.requests.filter(Boolean)) {
+    if (cls.students.find(x=>x.name===r)) return true;
+  }
+  // Someone in cls requested this student
+  if (cls.students.find(x=>x.requests && x.requests.includes(student.name))) return true;
+  return false;
+}
+
+// ==================== RENDER RESULTS ====================
+function renderResults() {
+  const wrap = document.getElementById('results-wrap');
+  wrap.innerHTML = '';
+
+  // Class columns
+  for (const cls of assignedClasses) {
+    const col = document.createElement('div');
+    col.className = 'class-col';
+    col.dataset.col = cls.id;
+    col.innerHTML = `
+      <div class="class-header" style="background:${cls.color}">
+        <span>כיתה ${cls.name}</span>
+        <span class="count">${cls.students.length} תלמידים</span>
+      </div>
+      <div class="class-body" id="class-body-${cls.id}"></div>`;
+    wrap.appendChild(col);
+
+    const body = col.querySelector('.class-body');
+    body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('drop-zone-active'); });
+    body.addEventListener('dragleave', () => body.classList.remove('drop-zone-active'));
+    body.addEventListener('drop', e => {
+      e.preventDefault(); body.classList.remove('drop-zone-active');
+      if (dragSrc) dropStudent(dragSrc, cls.id);
+    });
+
+    renderClassStudents(cls, body);
+  }
+
+  // Sidebar
+  const sidebar = document.createElement('div');
+  sidebar.className = 'sidebar';
+  sidebar.id = 'sidebar';
+  wrap.appendChild(sidebar);
+  renderSidebar();
+}
+
+function renderClassStudents(cls, body) {
+  body.innerHTML = '';
+  if (!cls.students.length) {
+    body.innerHTML = '<div class="empty-state" style="padding:20px"><div class="icon">👤</div><p>אין תלמידים</p></div>';
+    return;
+  }
+  for (const [i, s] of cls.students.entries()) {
+    const card = document.createElement('div');
+    card.className = 'student-card';
+    card.draggable = true;
+    const hasMatch = hasFriendMatch(s, cls);
+    const hasRequest = s.requests.filter(Boolean).length > 0;
+
+    card.innerHTML = `
+      <span class="s-name">${s.gender==='זכר'?'👦':'👧'} ${esc(s.name)}</span>
+      <span style="font-size:.75rem;color:#718096">${esc(s.sourceClass)}</span>
+      <span class="s-icons">
+        ${s.integration?'<span class="icon-badge badge-blue">ש</span>':''}
+        ${s.intensity?'<span class="icon-badge badge-orange">⚡</span>':''}
+        ${s.basket?'<span class="icon-badge badge-purple">ס</span>':''}
+      </span>
+      ${hasRequest ? (hasMatch ? '<span class="friend-ok" title="בקשת חברות נענתה">✓</span>' : '<span class="friend-miss" title="בקשת חברות לא נענתה">✗</span>') : ''}
+    `;
+    card.title = buildTooltip(s, cls);
+
+    card.addEventListener('dragstart', e => {
+      dragSrc = {student: s, fromClass: cls.id};
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+    body.appendChild(card);
+  }
+}
+
+function buildTooltip(s, cls) {
+  let lines = [`${s.name} (${s.sourceClass})`];
+  const reqs = s.requests.filter(Boolean);
+  if (reqs.length) lines.push('בקשות: ' + reqs.join(', '));
+  if (s.twin) lines.push('תאום/ת: ' + s.twin);
+  if (s.conflicts.length) lines.push('קונפליקט: ' + s.conflicts.join(', '));
+  return lines.join('\n');
+}
+
+function dropStudent(src, toClassId) {
+  if (src.fromClass === toClassId) return;
+  const fromCls = assignedClasses[src.fromClass];
+  const toCls = assignedClasses[toClassId];
+  const idx = fromCls.students.findIndex(s => s.name === src.student.name);
+  if (idx < 0) return;
+  const [moved] = fromCls.students.splice(idx, 1);
+  moved.assignedTo = toClassId;
+  toCls.students.push(moved);
+  dragSrc = null;
+  renderResults();
+}
+
+// ==================== SIDEBAR / VALIDATION ====================
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  sidebar.innerHTML = '';
+
+  const violations = getViolations();
+  const warnings = getWarnings();
+
+  // Overall status
+  const overall = document.createElement('div');
+  if (violations.length === 0 && warnings.length === 0) {
+    overall.className = 'overall-ok';
+    overall.innerHTML = '✅ כל הדרישות מולאו!';
+  } else if (violations.length === 0) {
+    overall.className = 'overall-warn';
+    overall.innerHTML = `⚠️ ${warnings.length} אזהרות`;
+  } else {
+    overall.className = 'overall-err';
+    overall.innerHTML = `❌ ${violations.length} בעיות | ${warnings.length} אזהרות`;
+  }
+  sidebar.appendChild(overall);
+
+  // Stats per class
+  for (const cls of assignedClasses) {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    const boys = cls.students.filter(s=>s.gender==='זכר').length;
+    const girls = cls.students.filter(s=>s.gender==='נקבה').length;
+    const integ = cls.students.filter(s=>s.integration).length;
+    const intens = cls.students.filter(s=>s.intensity).length;
+    const bask = cls.students.filter(s=>s.basket).length;
+    const noFriend = cls.students.filter(s=>s.requests.filter(Boolean).length>0 && !hasFriendMatch(s,cls)).length;
+
+    const cnt = cls.students.length;
+    const cntOk = cnt>=20 && cnt<=22;
+    const hasBask = bask > 0;
+
+    card.innerHTML = `
+      <h3 style="color:${cls.color}">כיתה ${cls.name}</h3>
+      <div class="stat-row">
+        <span>סה"כ תלמידים</span>
+        <span class="${cntOk?'stat-ok':'stat-err'}">${cnt} ${cntOk?'✓':'✗'}</span>
+      </div>
+      <div class="stat-row">
+        <span>👦 בנים / 👧 בנות</span>
+        <span>${boys} / ${girls}</span>
+      </div>
+      <div class="stat-row">
+        <span>שילוב</span><span>${integ}</span>
+      </div>
+      <div class="stat-row">
+        <span>⚡ עוצמה גבוהה</span><span>${intens}</span>
+      </div>
+      <div class="stat-row">
+        <span>סל אישי</span>
+        <span class="${hasBask?'stat-ok':'stat-err'}">${bask} ${hasBask?'✓':'✗'}</span>
+      </div>
+      <div class="stat-row">
+        <span>✗ ללא חבר</span>
+        <span class="${noFriend>0?'stat-warn':'stat-ok'}">${noFriend}</span>
+      </div>
+      ${renderSourceDist(cls)}
+    `;
+    sidebar.appendChild(card);
+  }
+
+  // Violations
+  if (violations.length || warnings.length) {
+    const vcard = document.createElement('div');
+    vcard.className = 'stat-card';
+    vcard.innerHTML = `<h3>⚠️ בעיות ואזהרות</h3><div class="violation-list">
+      ${violations.map(v=>`<div class="violation-item">❌ ${esc(v)}</div>`).join('')}
+      ${warnings.map(w=>`<div class="violation-item warn">⚠️ ${esc(w)}</div>`).join('')}
+    </div>`;
+    sidebar.appendChild(vcard);
+  }
+
+  // Friend match summary
+  const allWithReq = students.filter(s=>s.requests.filter(Boolean).length>0);
+  const matched = allWithReq.filter(s=>{
+    const cls = assignedClasses.find(c=>c.students.find(x=>x.name===s.name));
+    return cls && hasFriendMatch(s, cls);
+  });
+  const fcard = document.createElement('div');
+  fcard.className = 'stat-card';
+  const pct = allWithReq.length ? Math.round(matched.length/allWithReq.length*100) : 100;
+  fcard.innerHTML = `
+    <h3>👫 בקשות חברות</h3>
+    <div style="margin-bottom:6px;font-size:.85rem">
+      ${matched.length} מתוך ${allWithReq.length} בקשות נענו (${pct}%)
+    </div>
+    <div class="prog-bar">
+      <div class="prog-fill" style="width:${pct}%;background:${pct>=80?'#48bb78':pct>=50?'#ecc94b':'#fc8181'}"></div>
+    </div>
+  `;
+  sidebar.appendChild(fcard);
+}
+
+function renderSourceDist(cls) {
+  const srcMap = {};
+  cls.students.forEach(s => { srcMap[s.sourceClass] = (srcMap[s.sourceClass]||0)+1; });
+  const rows = Object.entries(srcMap).map(([src,cnt]) => {
+    const ok = cnt>=6 && cnt<=8;
+    return `<div class="stat-row"><span>מכיתה ${esc(src)}</span><span class="${ok?'stat-ok':'stat-warn'}">${cnt} ${ok?'✓':'⚠'}</span></div>`;
+  });
+  return rows.join('');
+}
+
+function getViolations() {
+  const v = [];
+  for (const cls of assignedClasses) {
+    const names = cls.students.map(s=>s.name);
+    for (const s of cls.students) {
+      if (s.twin && names.includes(s.twin)) {
+        v.push(`תאומים יחד בכיתה ${cls.name}: ${s.name} ו-${s.twin}`);
+      }
+      for (const c of s.conflicts) {
+        if (names.includes(c)) {
+          v.push(`קונפליקט בכיתה ${cls.name}: ${s.name} ו-${c}`);
+        }
+      }
+    }
+    if (!cls.students.some(s=>s.basket)) {
+      v.push(`אין תלמיד עם סל אישי בכיתה ${cls.name}`);
+    }
+  }
+  return [...new Set(v)];
+}
+
+function getWarnings() {
+  const w = [];
+  for (const cls of assignedClasses) {
+    const cnt = cls.students.length;
+    if (cnt < 18 || cnt > 24) w.push(`כיתה ${cls.name}: ${cnt} תלמידים (מצופה 20-22)`);
+    const boys = cls.students.filter(s=>s.gender==='זכר').length;
+    const girls = cls.students.filter(s=>s.gender==='נקבה').length;
+    if (Math.abs(boys-girls) > 4) w.push(`כיתה ${cls.name}: פערי מגדר גדולים (${boys} בנים, ${girls} בנות)`);
+
+    const noFriend = cls.students.filter(s=>s.requests.filter(Boolean).length>0 && !hasFriendMatch(s,cls));
+    for (const s of noFriend) {
+      w.push(`${s.name} (כיתה ${cls.name}) - אין חבר מבוקש`);
+    }
+
+    const srcMap = {};
+    cls.students.forEach(s => { srcMap[s.sourceClass] = (srcMap[s.sourceClass]||0)+1; });
+    for (const [src, cnt] of Object.entries(srcMap)) {
+      if (cnt < 6) w.push(`כיתה ${cls.name}: רק ${cnt} מכיתת מוצא ${src} (מינימום 6)`);
+      if (cnt > 8) w.push(`כיתה ${cls.name}: ${cnt} מכיתת מוצא ${src} (מקסימום 8)`);
+    }
+  }
+  return w;
+}
+
+// ==================== STEP NAVIGATION ====================
+function goStep(n) {
+  document.querySelectorAll('.section').forEach((s,i) => {
+    s.classList.toggle('active', i===n);
+  });
+  document.querySelectorAll('.step-btn').forEach((b,i) => {
+    b.classList.toggle('active', i===n);
+  });
+
+  if (n === 1) {
+    document.getElementById('btn-step1').disabled = false;
+    document.getElementById('btn-step1').classList.add('done');
+    renderStudentsTable();
+  }
+  if (n === 2) {
+    document.getElementById('btn-step2').disabled = false;
+    document.getElementById('btn-step2').classList.add('done');
+  }
+  if (n === 3) {
+    document.getElementById('btn-step3').disabled = false;
+    document.getElementById('btn-step3').classList.add('done');
+    renderReport();
+  }
+}
+
+// ==================== EXPORT ====================
+function exportResults() {
+  const wb = XLSX.utils.book_new();
+
+  for (const cls of assignedClasses) {
+    const rows = cls.students.map(s => ({
+      'שם': s.name,
+      'מגדר': s.gender,
+      'כיתת מוצא': s.sourceClass,
+      'שילוב': s.integration?'כן':'לא',
+      'עוצמה': s.intensity?'כן':'לא',
+      'סל אישי': s.basket?'כן':'לא',
+      'בקשה 1': s.requests[0] || '',
+      'בקשה 2': s.requests[1] || '',
+      'בקשה 3': s.requests[2] || '',
+      'חבר מצא': hasFriendMatch(s,cls)?'כן':'לא'
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, `כיתה ${cls.name}`);
+  }
+
+  // Summary sheet
+  const summary = [];
+  for (const cls of assignedClasses) {
+    summary.push({
+      'כיתה': cls.name,
+      'סה"כ': cls.students.length,
+      'בנים': cls.students.filter(s=>s.gender==='זכר').length,
+      'בנות': cls.students.filter(s=>s.gender==='נקבה').length,
+      'שילוב': cls.students.filter(s=>s.integration).length,
+      'עוצמה': cls.students.filter(s=>s.intensity).length,
+      'סל אישי': cls.students.filter(s=>s.basket).length
+    });
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'סיכום');
+  XLSX.writeFile(wb, 'חלוקת_כיתות.xlsx');
+}
+
+// ==================== TEMPLATE DOWNLOAD ====================
+function downloadTemplate() {
+  const headers = ['שם','מגדר','כיתה','שילוב','עוצמה','סל','בקשה 1','בקשה 2','בקשה 3','תאום','קונפליקט'];
+  const example = [
+    ['ישראל ישראלי','זכר','א','לא','לא','לא','שרה כהן','רחל לוי','','',''],
+    ['שרה כהן','נקבה','א','כן','לא','כן','ישראל ישראלי','','','','דינה מזרחי'],
+    ['רחל לוי','נקבה','א','לא','כן','לא','','','','דינה מזרחי',''],
+    ['דינה מזרחי','נקבה','א','לא','לא','לא','','','','רחל לוי','שרה כהן']
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...example]);
+  ws['!cols'] = headers.map(() => ({wch: 18}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'תלמידים');
+  XLSX.writeFile(wb, 'תבנית_תלמידים.xlsx');
+}
+// ==================== GRAPHICAL REPORT ====================
+function renderReport() {
+  const wrap = document.getElementById('report-wrap');
+  if (!assignedClasses.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>אין נתונים להצגה — הרץ את האלגוריתם תחילה</p></div>';
+    return;
+  }
+  wrap.innerHTML = '';
+
+  const colors = assignedClasses.map(c => c.color);
+  const names  = assignedClasses.map(c => `כיתה ${c.name}`);
+  const total  = assignedClasses.reduce((s,c) => s + c.students.length, 0);
+
+  // ---- ROW 1: metric cards ----
+  const allWithReq = students.filter(s => s.requests.filter(Boolean).length > 0);
+  const matchedCount = allWithReq.filter(s => {
+    const cls = assignedClasses.find(c => c.students.find(x => x.name === s.name));
+    return cls && hasFriendMatch(s, cls);
+  }).length;
+  const friendPct = allWithReq.length ? Math.round(matchedCount / allWithReq.length * 100) : 100;
+  const totalInteg = students.filter(s => s.integration).length;
+  const totalIntens = students.filter(s => s.intensity).length;
+  const totalBasket = students.filter(s => s.basket).length;
+
+  const metricRow = document.createElement('div');
+  metricRow.className = 'metric-row';
+  metricRow.innerHTML = `
+    ${metricCard(total, 'סה"כ תלמידים', `${assignedClasses.length} כיתות חדשות`, '#2b6cb0')}
+    ${metricCard(students.filter(s=>s.gender==='זכר').length + ' / ' + students.filter(s=>s.gender==='נקבה').length, 'בנים / בנות', 'חלוקת מגדר כוללת', '#2f855a')}
+    ${metricCard(totalInteg, 'תלמידי שילוב', `${Math.round(totalInteg/total*100)}% מהכלל`, '#553c9a')}
+    ${metricCard(totalIntens, 'עוצמה גבוהה', `${Math.round(totalIntens/total*100)}% מהכלל`, '#c05621')}
+    ${metricCard(totalBasket, 'סל אישי', `${Math.round(totalBasket/total*100)}% מהכלל`, '#b7791f')}
+    ${metricCard(friendPct + '%', 'בקשות חברות', `${matchedCount} מתוך ${allWithReq.length} נענו`, friendPct>=80?'#276749':friendPct>=50?'#d69e2e':'#c53030')}
+  `;
+  wrap.appendChild(metricRow);
+
+  // ---- ROW 2: class sizes + gender stacked ----
+  const row2 = document.createElement('div');
+  row2.className = 'report-grid';
+
+  // Class sizes bar chart
+  const sizes = assignedClasses.map(c => c.students.length);
+  const maxSize = Math.max(...sizes, 22);
+  row2.appendChild(makeBarChart(
+    'גודל כיתות',
+    'מספר תלמידים בכל כיתה חדשה (טווח תקין: 20–22)',
+    names,
+    [{ values: sizes, colors }],
+    maxSize,
+    [{ y: 20, color: '#276749', label: 'מינימום' }, { y: 22, color: '#c53030', label: 'מקסימום' }]
+  ));
+
+  // Gender stacked bar
+  row2.appendChild(makeStackedChart(
+    'איזון מגדרי',
+    'חלוקת בנים ובנות בכל כיתה חדשה',
+    names,
+    assignedClasses.map(c => ({
+      label: `כיתה ${c.name}`,
+      segments: [
+        { val: c.students.filter(s=>s.gender==='זכר').length, color:'#4299e1', label:'בנים' },
+        { val: c.students.filter(s=>s.gender==='נקבה').length, color:'#ed64a6', label:'בנות' }
+      ]
+    })),
+    colors
+  ));
+  wrap.appendChild(row2);
+
+  // ---- ROW 3: integration + intensity + basket bar charts ----
+  const row3 = document.createElement('div');
+  row3.className = 'report-grid-3';
+
+  row3.appendChild(makeBarChart(
+    'תלמידי שילוב',
+    'מספר תלמידי שילוב לכיתה',
+    names,
+    [{ values: assignedClasses.map(c=>c.students.filter(s=>s.integration).length), colors }],
+    Math.max(...assignedClasses.map(c=>c.students.filter(s=>s.integration).length), 4)
+  ));
+  row3.appendChild(makeBarChart(
+    '⚡ עוצמה גבוהה',
+    'מספר ילדים עם עוצמה גבוהה לכיתה',
+    names,
+    [{ values: assignedClasses.map(c=>c.students.filter(s=>s.intensity).length), colors }],
+    Math.max(...assignedClasses.map(c=>c.students.filter(s=>s.intensity).length), 4)
+  ));
+  row3.appendChild(makeBarChart(
+    'סל אישי',
+    'מספר תלמידים עם סל אישי לכיתה',
+    names,
+    [{ values: assignedClasses.map(c=>c.students.filter(s=>s.basket).length), colors }],
+    Math.max(...assignedClasses.map(c=>c.students.filter(s=>s.basket).length), 4)
+  ));
+  wrap.appendChild(row3);
+
+  // ---- ROW 4: source class distribution + friendship donuts ----
+  const row4 = document.createElement('div');
+  row4.className = 'report-grid';
+
+  row4.appendChild(makeSourceDistChart());
+  row4.appendChild(makeFriendshipChart());
+  wrap.appendChild(row4);
+
+  // ---- ROW 5: full comparison table ----
+  const tableCard = document.createElement('div');
+  tableCard.className = 'chart-card report-full';
+  tableCard.innerHTML = `
+    <h3>📋 טבלת השוואה מלאה</h3>
+    <p class="chart-subtitle">סיכום כל המדדים לכל כיתה חדשה</p>
+    ${makeComparisonTable()}
+  `;
+  wrap.appendChild(tableCard);
+}
+
+function metricCard(val, label, sub, color) {
+  return `<div class="metric-card">
+    <div class="metric-val" style="color:${color}">${val}</div>
+    <div class="metric-label">${label}</div>
+    <div class="metric-sub">${sub}</div>
+  </div>`;
+}
+
+function makeBarChart(title, subtitle, labels, series, maxVal, refLines) {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  const safeMax = maxVal || 1;
+
+  let barsHTML = '';
+  for (let i = 0; i < labels.length; i++) {
+    let barsInner = '';
+    for (const s of series) {
+      const pct = Math.round((s.values[i] / safeMax) * 100);
+      barsInner += `<div class="bar-item" style="height:${Math.max(pct,3)}%;background:${s.colors[i] || s.colors[0]};flex:1">
+        <span class="bar-val">${s.values[i]}</span>
+      </div>`;
+    }
+    barsHTML += `<div class="bar-group">
+      <div class="bars-row">${barsInner}</div>
+      <div class="bar-group-label">${labels[i]}</div>
+    </div>`;
+  }
+
+  // Reference lines as absolute % markers
+  let refHTML = '';
+  if (refLines) {
+    for (const r of refLines) {
+      const pct = 100 - Math.round((r.y / safeMax) * 100);
+      refHTML += `<div style="position:absolute;right:0;left:0;top:${pct}%;border-top:2px dashed ${r.color};z-index:2">
+        <span style="font-size:.65rem;color:${r.color};background:#fff;padding:0 2px">${r.label} ${r.y}</span>
+      </div>`;
+    }
+  }
+
+  card.innerHTML = `
+    <h3>${title}</h3>
+    <p class="chart-subtitle">${subtitle}</p>
+    <div style="position:relative">
+      ${refHTML}
+      <div class="bar-chart">${barsHTML}</div>
+    </div>`;
+  return card;
+}
+
+function makeStackedChart(title, subtitle, labels, classData, colors) {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+
+  const rows = classData.map((d, i) => {
+    const total = d.segments.reduce((s, seg) => s + seg.val, 0) || 1;
+    const segs = d.segments.map(seg => {
+      const pct = Math.round((seg.val / total) * 100);
+      return `<div class="stacked-seg" style="width:${pct}%;background:${seg.color}" title="${seg.label}: ${seg.val}">
+        ${pct > 12 ? seg.val : ''}
+      </div>`;
+    }).join('');
+    return `<div class="stacked-row">
+      <div class="stacked-label" style="color:${colors[i]}">${d.label}</div>
+      <div class="stacked-bar">${segs}</div>
+      <div style="font-size:.8rem;color:#718096;min-width:30px;text-align:left">${total}</div>
+    </div>`;
+  }).join('');
+
+  // Legend from first class
+  const legendItems = classData[0]?.segments.map(seg =>
+    `<div class="stacked-legend-item"><div class="stacked-legend-dot" style="background:${seg.color}"></div>${seg.label}</div>`
+  ).join('') || '';
+
+  card.innerHTML = `
+    <h3>${title}</h3>
+    <p class="chart-subtitle">${subtitle}</p>
+    ${rows}
+    <div class="stacked-legend">${legendItems}</div>`;
+  return card;
+}
+
+function makeSourceDistChart() {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+
+  const srcKeys = [...new Set(students.map(s => s.sourceClass))].sort();
+  const srcColors = ['#f6ad55','#68d391','#76e4f7','#b794f4','#fc8181'];
+
+  const rows = assignedClasses.map((cls, ci) => {
+    const total = cls.students.length || 1;
+    const segs = srcKeys.map((src, si) => {
+      const cnt = cls.students.filter(s => s.sourceClass === src).length;
+      const pct = Math.round((cnt / total) * 100);
+      const ok = cnt >= 6 && cnt <= 8;
+      return `<div class="stacked-seg" style="width:${pct}%;background:${srcColors[si % srcColors.length]}" title="כיתת מוצא ${src}: ${cnt}">
+        ${pct > 10 ? cnt : ''}
+      </div>`;
+    }).join('');
+    return `<div class="stacked-row">
+      <div class="stacked-label" style="color:${cls.color}">${`כיתה ${cls.name}`}</div>
+      <div class="stacked-bar">${segs}</div>
+      <div style="font-size:.8rem;color:#718096;min-width:30px;text-align:left">${cls.students.length}</div>
+    </div>`;
+  }).join('');
+
+  const legend = srcKeys.map((src, si) =>
+    `<div class="stacked-legend-item"><div class="stacked-legend-dot" style="background:${srcColors[si % srcColors.length]}"></div>כיתה ${src}</div>`
+  ).join('');
+
+  card.innerHTML = `
+    <h3>חלוקת כיתות מוצא</h3>
+    <p class="chart-subtitle">כמה תלמידים מכל כיתת מוצא בכל כיתה חדשה (תקין: 6–8)</p>
+    ${rows}
+    <div class="stacked-legend">${legend}</div>`;
+  return card;
+}
+
+function makeFriendshipChart() {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+
+  const donuts = assignedClasses.map(cls => {
+    const withReq = cls.students.filter(s => s.requests.filter(Boolean).length > 0);
+    const matched = withReq.filter(s => hasFriendMatch(s, cls)).length;
+    const total = withReq.length || 1;
+    const pct = Math.round((matched / total) * 100);
+    const color = pct >= 80 ? '#48bb78' : pct >= 50 ? '#ecc94b' : '#fc8181';
+    const r = 38, circ = 2 * Math.PI * r;
+    const dash = (pct / 100) * circ;
+    return `
+      <div style="text-align:center;flex:1">
+        <div class="donut-container">
+          <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="14"/>
+            <circle cx="55" cy="55" r="${r}" fill="none" stroke="${color}" stroke-width="14"
+              stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}"
+              stroke-dashoffset="${(circ/4).toFixed(1)}"
+              transform="rotate(-90 55 55)" stroke-linecap="round"/>
+            <text x="55" y="50" text-anchor="middle" font-size="18" font-weight="800" fill="${color}">${pct}%</text>
+            <text x="55" y="65" text-anchor="middle" font-size="9" fill="#718096">${matched}/${total}</text>
+          </svg>
+        </div>
+        <div style="font-size:.82rem;font-weight:700;color:${cls.color};margin-top:4px">כיתה ${cls.name}</div>
+        <div style="font-size:.75rem;color:#718096">${matched} מתוך ${total} נענו</div>
+      </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <h3>👫 בקשות חברות לפי כיתה</h3>
+    <p class="chart-subtitle">אחוז התלמידים שלפחות בקשה אחת שלהם התקבלה</p>
+    <div style="display:flex;gap:12px;justify-content:space-around;margin-top:8px">${donuts}</div>`;
+  return card;
+}
+
+function makeComparisonTable() {
+  const srcKeys = [...new Set(students.map(s => s.sourceClass))].sort();
+  const headers = ['<th>מדד</th>', ...assignedClasses.map(c =>
+    `<th><span class="cmp-dot" style="background:${c.color}"></span>כיתה ${c.name}</th>`)].join('');
+
+  const maxStudents = Math.max(...assignedClasses.map(c => c.students.length));
+
+  function row(label, vals, colorFn, barFn) {
+    const cells = vals.map((v, i) => {
+      const color = colorFn ? colorFn(v, i) : '#2d3748';
+      const barPct = barFn ? barFn(v) : null;
+      const barHTML = barPct !== null ? `
+        <div class="inline-bar">
+          <span style="min-width:24px;font-weight:700;color:${color}">${v}</span>
+          <div class="inline-bar-track">
+            <div class="inline-bar-fill" style="width:${barPct}%;background:${color}"></div>
+          </div>
+        </div>` : `<span style="font-weight:600;color:${color}">${v}</span>`;
+      return `<td>${barHTML}</td>`;
+    }).join('');
+    return `<tr><td style="font-weight:600;color:#4a5568">${label}</td>${cells}</tr>`;
+  }
+
+  const rows = [
+    row('סה"כ תלמידים',
+      assignedClasses.map(c => c.students.length),
+      (v) => v>=20&&v<=22?'#276749':'#c53030',
+      (v) => Math.round(v/maxStudents*100)),
+    row('👦 בנים',
+      assignedClasses.map(c => c.students.filter(s=>s.gender==='זכר').length),
+      () => '#4299e1',
+      (v) => Math.round(v/maxStudents*100)),
+    row('👧 בנות',
+      assignedClasses.map(c => c.students.filter(s=>s.gender==='נקבה').length),
+      () => '#ed64a6',
+      (v) => Math.round(v/maxStudents*100)),
+    row('שילוב',
+      assignedClasses.map(c => c.students.filter(s=>s.integration).length),
+      () => '#553c9a',
+      (v) => Math.round(v/maxStudents*100)),
+    row('⚡ עוצמה גבוהה',
+      assignedClasses.map(c => c.students.filter(s=>s.intensity).length),
+      () => '#c05621',
+      (v) => Math.round(v/maxStudents*100)),
+    row('סל אישי',
+      assignedClasses.map(c => c.students.filter(s=>s.basket).length),
+      (v) => v>0?'#b7791f':'#c53030',
+      (v) => Math.round(v/maxStudents*100)),
+    row('✓ בקשות חברות נענו',
+      assignedClasses.map(cls => {
+        const wr = cls.students.filter(s=>s.requests.filter(Boolean).length>0);
+        const m = wr.filter(s=>hasFriendMatch(s,cls)).length;
+        return wr.length ? `${m}/${wr.length}` : '—';
+      }),
+      () => '#276749', null),
+    ...srcKeys.map(src => row(`מכיתת מוצא ${src}`,
+      assignedClasses.map(c => c.students.filter(s=>s.sourceClass===src).length),
+      (v) => v>=6&&v<=8?'#276749':v<6?'#c53030':'#c05621',
+      (v) => Math.round(v/maxStudents*100))),
+  ].join('');
+
+  return `<table class="cmp-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+</script>
+</body>
+</html>

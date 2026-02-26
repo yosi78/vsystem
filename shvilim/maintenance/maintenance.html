@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ניהול תקלות — בית הספר</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ספריות לייצוא דוחות -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+  <style>
+    * { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; box-sizing: border-box; }
+    body { background: #f1f5f9; margin: 0; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 1px solid;
+      letter-spacing: 0.01em;
+    }
+    select option { direction: rtl; }
+    textarea, input, select { font-family: inherit; font-size: 1rem; }
+    @media (max-width: 480px) { .stat-num { font-size: 1.6rem !important; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+  </style>
+</head>
+<body dir="rtl">
+  <div id="root"></div>
+  <!-- מיכל מוסתר לעיבוד PDF -->
+  <div id="pdf-render" style="position:absolute;left:-99999px;top:0;width:840px;background:white;direction:rtl;"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useReducer, createContext, useContext, useMemo } = React;
+
+    /* ═══════════════════════════════════════════
+       FIREBASE INIT
+    ═══════════════════════════════════════════ */
+    firebase.initializeApp({
+      apiKey:            "AIzaSyB5pKO88UBzUVvpI1gOa-S2T6O6iXs9-4Y",
+      authDomain:        "maintenance-9948b.firebaseapp.com",
+      databaseURL:       "https://maintenance-9948b-default-rtdb.firebaseio.com",
+      projectId:         "maintenance-9948b",
+      storageBucket:     "maintenance-9948b.firebasestorage.app",
+      messagingSenderId: "297347231304",
+      appId:             "1:297347231304:web:1937db9d1d773939a8b27d",
+    });
+    const db = firebase.database();
+
+    /* ═══════════════════════════════════════════
+       CONSTANTS
+    ═══════════════════════════════════════════ */
+    const LOCATIONS = [
+      "בניין א׳ — קומה 1 — כיתה 101", "בניין א׳ — קומה 1 — כיתה 102",
+      "בניין א׳ — קומה 1 — כיתה 103", "בניין א׳ — קומה 1 — כיתה 104",
+      "בניין א׳ — קומה 2 — כיתה 201", "בניין א׳ — קומה 2 — כיתה 202",
+      "בניין א׳ — קומה 2 — כיתה 203", "בניין א׳ — קומה 2 — כיתה 204",
+      "בניין א׳ — קומה 3 — כיתה 301", "בניין א׳ — קומה 3 — כיתה 302",
+      "בניין א׳ — קומה 3 — כיתה 303", "בניין א׳ — קומה 3 — כיתה 304",
+      "בניין ב׳ — קומה 1 — כיתה 105", "בניין ב׳ — קומה 1 — כיתה 106",
+      "בניין ב׳ — קומה 1 — כיתה 107", "בניין ב׳ — קומה 2 — כיתה 205",
+      "בניין ב׳ — קומה 2 — כיתה 206", "בניין ב׳ — קומה 2 — כיתה 207",
+      "חדר מורים", "מנהלות", "ספרייה", "חדר אוכל / קנטינה",
+      "חדר מחשבים", "אולם ספורט", "מגרש / חצר",
+      "שירותים — בניין א׳ קומה 1", "שירותים — בניין א׳ קומה 2",
+      "שירותים — בניין ב׳", "חניה / כניסה ראשית", "מחסן", "גינה / שטח חיצוני",
+    ];
+
+    const PRI_LABEL  = { urgent: 'דחוף', normal: 'רגיל', future: 'בטיפול עתידי' };
+    const PRI_BADGE  = {
+      urgent: 'bg-red-100 text-red-800 border-red-300',
+      normal: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      future: 'bg-blue-100 text-blue-700 border-blue-300',
+    };
+    const PRI_BORDER = {
+      urgent: 'border-r-4 border-r-red-500',
+      normal: 'border-r-4 border-r-yellow-400',
+      future: 'border-r-4 border-r-blue-400',
+    };
+    const EXEC_LABEL = {
+      ordered_part:    'הוזמן חלק / ספק חיצוני',
+      waiting_holiday: 'ממתין לחופשה / סוף שבוע',
+      done:            'בוצע ✅',
+    };
+    const EXEC_BADGE = {
+      ordered_part:    'bg-purple-100 text-purple-800 border-purple-200',
+      waiting_holiday: 'bg-gray-100 text-gray-700 border-gray-300',
+      done:            'bg-green-100 text-green-800 border-green-200',
+    };
+    const ROLE_LABEL = { teacher: 'מורה', manager: 'מנהל', caretaker: 'אב הבית' };
+    const ROLE_ICON  = { teacher: '📚', manager: '👔', caretaker: '🔧' };
+
+    /* ═══════════════════════════════════════════
+       STATE / STORE  (Firebase Realtime Database)
+    ═══════════════════════════════════════════ */
+    const USER_KEY = 'school-user-v1';
+
+    // ממיר ticket מ-Firebase (אובייקט עם מפתחות) למבנה תקין
+    function normalizeTicket(id, data) {
+      return {
+        ...data,
+        id,
+        executionStatus: data.executionStatus || null,
+        closedAt:        data.closedAt        || null,
+        image:           data.image           || null,
+        notes: data.notes
+          ? Object.values(data.notes).sort((a, b) => a.time > b.time ? 1 : -1)
+          : [],
+      };
+    }
+
+    const Ctx = createContext(null);
+
+    function StoreProvider({ children }) {
+      const [tickets,     setTickets]     = useState([]);
+      const [loading,     setLoading]     = useState(true);
+      const [currentUser, setCurrentUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); }
+        catch(e) { return null; }
+      });
+
+      // האזנה בזמן אמת לנתוני הטיקטים
+      useEffect(() => {
+        const ref = db.ref('tickets');
+        const handler = ref.on('value', snap => {
+          const val = snap.val() || {};
+          const list = Object.entries(val)
+            .map(([id, data]) => normalizeTicket(id, data))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setTickets(list);
+          setLoading(false);
+        }, () => setLoading(false)); // on error
+        return () => ref.off('value', handler);
+      }, []);
+
+      const dispatch = (action) => {
+        switch (action.type) {
+
+          case 'LOGIN':
+            localStorage.setItem(USER_KEY, JSON.stringify(action.payload));
+            setCurrentUser(action.payload);
+            break;
+
+          case 'LOGOUT':
+            localStorage.removeItem(USER_KEY);
+            setCurrentUser(null);
+            break;
+
+          case 'ADD_TICKET': {
+            const id = 'T-' + Date.now();
+            db.ref('tickets/' + id).set({
+              id,
+              teacherName:     currentUser.name,
+              description:     action.payload.description,
+              location:        action.payload.location,
+              image:           action.payload.image || null,
+              priority:        'normal',
+              status:          'open',
+              executionStatus: null,
+              createdAt:       new Date().toISOString(),
+              closedAt:        null,
+            });
+            break;
+          }
+
+          case 'SET_PRIORITY':
+            db.ref('tickets/' + action.id + '/priority').set(action.priority);
+            break;
+
+          case 'UPDATE_EXEC':
+            db.ref('tickets/' + action.id + '/executionStatus').set(action.status);
+            break;
+
+          case 'ADD_NOTE':
+            db.ref('tickets/' + action.id + '/notes').push({
+              text:   action.text,
+              author: currentUser.name,
+              role:   currentUser.role,
+              time:   new Date().toISOString(),
+            });
+            break;
+
+          case 'CLOSE_TICKET':
+            db.ref('tickets/' + action.id).update({
+              status:   'closed',
+              closedAt: new Date().toISOString(),
+            });
+            break;
+
+          case 'REOPEN_TICKET':
+            db.ref('tickets/' + action.id).update({
+              status:          'open',
+              closedAt:        null,
+              executionStatus: null,
+            });
+            break;
+        }
+      };
+
+      const state = { tickets, currentUser, loading };
+      return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>;
+    }
+
+    const useStore = () => useContext(Ctx);
+
+    /* ═══════════════════════════════════════════
+       HELPERS
+    ═══════════════════════════════════════════ */
+    function fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('he-IL', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function fmtDateShort(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('he-IL', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+      });
+    }
+
+    async function compressImg(dataURL) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 700;
+          let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+            else       { w = Math.round(w * MAX / h); h = MAX; }
+          }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(c.toDataURL('image/jpeg', 0.65));
+        };
+        img.onerror = () => resolve(dataURL);
+        img.src = dataURL;
+      });
+    }
+
+    /* ═══════════════════════════════════════════
+       EXPORT: HELPERS
+    ═══════════════════════════════════════════ */
+
+    // מייצר תמונה של גרף Chart.js ומחזיר dataURL
+    function makeChartImg(type, data, options, w, h) {
+      return new Promise(resolve => {
+        const canvas = document.createElement('canvas');
+        canvas.width  = w || 380;
+        canvas.height = h || 270;
+        canvas.style.cssText = 'position:absolute;top:-9999px;left:-9999px;';
+        document.body.appendChild(canvas);
+        const chart = new Chart(canvas.getContext('2d'), {
+          type,
+          data,
+          options: {
+            ...options,
+            animation: { duration: 0 },
+            responsive: false,
+            plugins: {
+              ...(options && options.plugins),
+              legend: {
+                position: 'bottom',
+                labels: { font: { family: 'Arial, Tahoma', size: 11 }, boxWidth: 13, padding: 10,
+                  ...(options && options.plugins && options.plugins.legend && options.plugins.legend.labels) }
+              }
+            }
+          }
+        });
+        setTimeout(() => {
+          const img = canvas.toDataURL('image/png');
+          chart.destroy();
+          document.body.removeChild(canvas);
+          resolve(img);
+        }, 120);
+      });
+    }
+
+    /* ═══════════════════════════════════════════
+       EXPORT: EXCEL
+    ═══════════════════════════════════════════ */
+    function exportToExcel(tickets, fromDate, toDate) {
+      const wb   = XLSX.utils.book_new();
+      const from = fromDate ? new Date(fromDate).toLocaleDateString('he-IL') : 'תחילת הזמן';
+      const to   = toDate   ? new Date(toDate).toLocaleDateString('he-IL')   : 'היום';
+
+      const open   = tickets.filter(t => t.status === 'open').length;
+      const closed = tickets.filter(t => t.status === 'closed').length;
+      const urgent = tickets.filter(t => t.priority === 'urgent').length;
+      const normal = tickets.filter(t => t.priority === 'normal').length;
+      const future = tickets.filter(t => t.priority === 'future').length;
+
+      // גיליון סיכום
+      const locMap = {};
+      tickets.forEach(t => { locMap[t.location] = (locMap[t.location] || 0) + 1; });
+      const topLocs = Object.entries(locMap).sort((a,b) => b[1]-a[1]).slice(0, 10);
+
+      const summaryData = [
+        ['דוח תחזוקה ותקלות — בית הספר'],
+        [''],
+        ['תאריך הפקה:', new Date().toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })],
+        ['תקופה:', `${from} עד ${to}`],
+        [''],
+        ['═══ סיכום ═══'],
+        ['סה"כ קריאות:',  tickets.length],
+        ['פתוחות:',        open],
+        ['סגורות:',        closed],
+        [''],
+        ['═══ חלוקה לפי עדיפות ═══'],
+        ['דחוף:',           urgent],
+        ['רגיל:',            normal],
+        ['בטיפול עתידי:',  future],
+        [''],
+        ['═══ Top 10 מיקומים ═══'],
+        ['מיקום', 'מספר קריאות'],
+        ...topLocs.map(([loc, cnt]) => [loc, cnt]),
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      wsSummary['!cols'] = [{ wch: 28 }, { wch: 35 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'סיכום');
+
+      // גיליון פירוט קריאות
+      const headers = [
+        'מזהה', 'תאריך דיווח', 'שם מורה', 'מיקום', 'תיאור הבעיה',
+        'עדיפות', 'סטטוס ביצוע', 'סטטוס קריאה', 'תאריך סגירה', 'הערות'
+      ];
+      const rows = tickets.map(t => [
+        t.id,
+        fmtDate(t.createdAt),
+        t.teacherName,
+        t.location,
+        t.description,
+        PRI_LABEL[t.priority],
+        t.executionStatus ? EXEC_LABEL[t.executionStatus].replace(' ✅','') : '—',
+        t.status === 'closed' ? 'סגור' : 'פתוח',
+        t.closedAt ? fmtDate(t.closedAt) : '—',
+        t.notes.map(n => `${n.author}: ${n.text}`).join(' | ') || '—',
+      ]);
+      const wsData = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      wsData['!cols'] = [
+        {wch:14},{wch:20},{wch:16},{wch:32},{wch:44},
+        {wch:12},{wch:26},{wch:10},{wch:20},{wch:50},
+      ];
+      XLSX.utils.book_append_sheet(wb, wsData, 'פירוט קריאות');
+
+      const fname = `דוח_תקלות_${from.replace(/\//g,'-')}_${to.replace(/\//g,'-')}.xlsx`;
+      XLSX.writeFile(wb, fname);
+    }
+
+    /* ═══════════════════════════════════════════
+       EXPORT: PDF
+    ═══════════════════════════════════════════ */
+    async function exportToPDF(tickets, fromDate, toDate) {
+      const from = fromDate ? new Date(fromDate).toLocaleDateString('he-IL') : 'תחילת הזמן';
+      const to   = toDate   ? new Date(toDate).toLocaleDateString('he-IL')   : 'היום';
+
+      const open   = tickets.filter(t => t.status === 'open').length;
+      const closed = tickets.filter(t => t.status === 'closed').length;
+      const urgent = tickets.filter(t => t.priority === 'urgent').length;
+      const normal = tickets.filter(t => t.priority === 'normal').length;
+      const future = tickets.filter(t => t.priority === 'future').length;
+
+      // ─── בניית גרפים ───
+      const [imgStatus, imgPriority, imgLoc, imgTrend] = await Promise.all([
+
+        // גרף עוגה: סטטוס
+        makeChartImg('doughnut', {
+          labels: ['פתוח', 'סגור'],
+          datasets: [{ data: [open, closed],
+            backgroundColor: ['#f97316','#22c55e'], borderWidth: 3, borderColor: '#fff', hoverOffset: 5 }]
+        }),
+
+        // גרף עוגה: עדיפות
+        makeChartImg('doughnut', {
+          labels: ['דחוף','רגיל','בטיפול עתידי'],
+          datasets: [{ data: [urgent, normal, future],
+            backgroundColor: ['#ef4444','#eab308','#3b82f6'], borderWidth: 3, borderColor: '#fff', hoverOffset: 5 }]
+        }),
+
+        // גרף עמודות: מיקומים
+        (() => {
+          const m = {};
+          tickets.forEach(t => { m[t.location] = (m[t.location]||0)+1; });
+          const top = Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);
+          return makeChartImg('bar',
+            { labels: top.map(([l]) => l.length > 24 ? l.slice(0,24)+'…' : l),
+              datasets:[{ data: top.map(([,v])=>v), backgroundColor:'#3b82f6',
+                borderRadius:5, label:'קריאות' }]},
+            { indexAxis:'y', plugins:{legend:{display:false}},
+              scales:{ x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},
+                       y:{ticks:{font:{size:9}}}}},
+            680, 300);
+        })(),
+
+        // גרף עמודות: מגמה חודשית
+        (() => {
+          const labels=[], data=[];
+          for (let i=5; i>=0; i--) {
+            const d = new Date(); d.setMonth(d.getMonth()-i);
+            labels.push(d.toLocaleDateString('he-IL',{month:'short',year:'2-digit'}));
+            data.push(tickets.filter(t => {
+              const td = new Date(t.createdAt);
+              return td.getMonth()===d.getMonth() && td.getFullYear()===d.getFullYear();
+            }).length);
+          }
+          return makeChartImg('bar',
+            { labels, datasets:[{ data, backgroundColor:'#6366f1', borderRadius:5, label:'קריאות' }]},
+            { plugins:{legend:{display:false}},
+              scales:{ y:{beginAtZero:true, ticks:{stepSize:1,font:{size:11}}} }},
+            680, 250);
+        })(),
+      ]);
+
+      // ─── בניית HTML לדוח ───
+      const tableRows = tickets.slice(0, 200).map((t, i) => `
+        <tr style="background:${i%2?'#f9fafb':'#fff'}">
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px;color:#6b7280">${t.id.slice(-8)}</td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px;white-space:nowrap">${fmtDateShort(t.createdAt)}</td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px">${t.teacherName}</td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px">${t.location.length>22?t.location.slice(0,22)+'…':t.location}</td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px">${t.description.length>38?t.description.slice(0,38)+'…':t.description}</td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px;text-align:center">
+            <span style="padding:2px 7px;border-radius:99px;font-size:9px;font-weight:700;
+              background:${t.priority==='urgent'?'#fee2e2':t.priority==='normal'?'#fef9c3':'#dbeafe'};
+              color:${t.priority==='urgent'?'#991b1b':t.priority==='normal'?'#92400e':'#1e40af'}">
+              ${PRI_LABEL[t.priority]}
+            </span>
+          </td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px;text-align:center">
+            <span style="padding:2px 7px;border-radius:99px;font-size:9px;font-weight:700;
+              background:${t.status==='closed'?'#dcfce7':'#fff7ed'};
+              color:${t.status==='closed'?'#166534':'#9a3412'}">
+              ${t.status==='closed'?'✓ סגור':'פתוח'}
+            </span>
+          </td>
+          <td style="padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:10px">${t.closedAt?fmtDateShort(t.closedAt):'—'}</td>
+        </tr>`).join('');
+
+      const container = document.getElementById('pdf-render');
+      container.innerHTML = `
+        <div style="direction:rtl;font-family:Arial,Tahoma,sans-serif;width:800px;padding:28px 28px 20px;background:#fff;color:#111827">
+
+          <!-- כותרת -->
+          <div style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);color:#fff;border-radius:16px;padding:26px 28px;margin-bottom:24px;text-align:center">
+            <div style="font-size:38px;margin-bottom:10px">🏫</div>
+            <h1 style="margin:0 0 8px;font-size:21px;font-weight:bold;letter-spacing:0.5px">דוח תחזוקה ותקלות — בית הספר</h1>
+            <p style="margin:0 0 4px;opacity:.88;font-size:13px">תקופה: ${from} עד ${to}</p>
+            <p style="margin:0;opacity:.6;font-size:11px">הופק: ${new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+          </div>
+
+          <!-- קלפי סטטיסטיקה -->
+          <div style="display:flex;gap:12px;margin-bottom:22px">
+            <div style="flex:1;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:bold;color:#1d4ed8;line-height:1">${tickets.length}</div>
+              <div style="font-size:11px;color:#1e40af;margin-top:5px;font-weight:600">סה"כ קריאות</div>
+            </div>
+            <div style="flex:1;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:bold;color:#ea580c;line-height:1">${open}</div>
+              <div style="font-size:11px;color:#c2410c;margin-top:5px;font-weight:600">פתוחות</div>
+            </div>
+            <div style="flex:1;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:bold;color:#16a34a;line-height:1">${closed}</div>
+              <div style="font-size:11px;color:#15803d;margin-top:5px;font-weight:600">סגורות</div>
+            </div>
+            <div style="flex:1;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:bold;color:#dc2626;line-height:1">${urgent}</div>
+              <div style="font-size:11px;color:#b91c1c;margin-top:5px;font-weight:600">דחוף</div>
+            </div>
+            <div style="flex:1;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:12px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:bold;color:#7c3aed;line-height:1">${tickets.filter(t=>t.executionStatus==='done').length}</div>
+              <div style="font-size:11px;color:#6d28d9;margin-top:5px;font-weight:600">בוצעו</div>
+            </div>
+          </div>
+
+          <!-- פס עדיפויות -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:22px">
+            <p style="margin:0 0 10px;font-weight:bold;font-size:13px;color:#374151">חלוקה לפי עדיפות</p>
+            <div style="display:flex;border-radius:8px;overflow:hidden;height:24px;margin-bottom:8px;gap:1px">
+              ${urgent>0?`<div style="flex:${urgent};background:#ef4444;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:bold">${urgent}</div>`:''}
+              ${normal>0?`<div style="flex:${normal};background:#eab308;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:bold">${normal}</div>`:''}
+              ${future>0?`<div style="flex:${future};background:#3b82f6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:bold">${future}</div>`:''}
+            </div>
+            <div style="display:flex;gap:20px;font-size:11px;color:#6b7280">
+              <span>🔴 דחוף: ${urgent} (${tickets.length?Math.round(urgent/tickets.length*100):0}%)</span>
+              <span>🟡 רגיל: ${normal} (${tickets.length?Math.round(normal/tickets.length*100):0}%)</span>
+              <span>🔵 עתידי: ${future} (${tickets.length?Math.round(future/tickets.length*100):0}%)</span>
+            </div>
+          </div>
+
+          <!-- גרפי עוגה -->
+          <div style="display:flex;gap:16px;margin-bottom:20px">
+            <div style="flex:1;border:1px solid #e5e7eb;border-radius:12px;padding:14px">
+              <h3 style="margin:0 0 8px;font-size:13px;font-weight:bold;text-align:center;color:#374151">📊 סטטוס קריאות</h3>
+              <img src="${imgStatus}" style="width:100%;display:block"/>
+            </div>
+            <div style="flex:1;border:1px solid #e5e7eb;border-radius:12px;padding:14px">
+              <h3 style="margin:0 0 8px;font-size:13px;font-weight:bold;text-align:center;color:#374151">📊 חלוקה לפי עדיפות</h3>
+              <img src="${imgPriority}" style="width:100%;display:block"/>
+            </div>
+          </div>
+
+          <!-- גרף מיקומים -->
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:20px">
+            <h3 style="margin:0 0 8px;font-size:13px;font-weight:bold;text-align:center;color:#374151">📍 תקלות לפי מיקום — Top 8</h3>
+            <img src="${imgLoc}" style="width:100%;display:block"/>
+          </div>
+
+          <!-- גרף מגמה -->
+          <div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:24px">
+            <h3 style="margin:0 0 8px;font-size:13px;font-weight:bold;text-align:center;color:#374151">📈 מגמה חודשית — 6 חודשים אחרונים</h3>
+            <img src="${imgTrend}" style="width:100%;display:block"/>
+          </div>
+
+          <!-- טבלת פירוט -->
+          <div style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+            <div style="background:#1e3a8a;color:#fff;padding:12px 16px;font-size:14px;font-weight:bold">
+              📋 פירוט קריאות${tickets.length>200?' (200 ראשונות)':''}
+            </div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr style="background:#dbeafe">
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">מזהה</th>
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">תאריך</th>
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">מורה</th>
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">מיקום</th>
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">תיאור</th>
+                  <th style="padding:8px 7px;text-align:center;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">עדיפות</th>
+                  <th style="padding:8px 7px;text-align:center;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">סטטוס</th>
+                  <th style="padding:8px 7px;text-align:right;font-size:10px;color:#1e40af;border-bottom:1px solid #bfdbfe">נסגר</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+
+        </div>`;
+
+      // ─── html2canvas → jsPDF ───
+      const canvas = await html2canvas(container.firstElementChild, {
+        scale: 1.8,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const { jsPDF } = window.jspdf;
+      const pdf  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pgW  = pdf.internal.pageSize.getWidth();
+      const pgH  = pdf.internal.pageSize.getHeight();
+      const imgD = canvas.toDataURL('image/png', 1.0);
+      const totH = canvas.height * (pgW / canvas.width);
+
+      let yOff = 0;
+      let first = true;
+      while (yOff < totH) {
+        if (!first) pdf.addPage();
+        pdf.addImage(imgD, 'PNG', 0, -yOff, pgW, totH);
+        yOff += pgH;
+        first = false;
+      }
+
+      container.innerHTML = '';
+      pdf.save(`דוח_תקלות_${from.replace(/\//g,'-')}_${to.replace(/\//g,'-')}.pdf`);
+    }
+
+    /* ═══════════════════════════════════════════
+       SHARED: HEADER
+    ═══════════════════════════════════════════ */
+    function Header({ title }) {
+      const { state, dispatch } = useStore();
+      const u = state.currentUser;
+      return (
+        <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-2xl flex-shrink-0">🏫</span>
+              <div className="min-w-0">
+                <div className="font-bold text-gray-800 text-sm leading-tight truncate">{title}</div>
+                <div className="text-xs text-gray-500 truncate">
+                  {ROLE_ICON[u.role]} {u.name} — {ROLE_LABEL[u.role]}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => dispatch({ type: 'LOGOUT' })}
+              className="flex-shrink-0 text-xs text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              יציאה
+            </button>
+          </div>
+        </header>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       SHARED: NOTES PANEL
+    ═══════════════════════════════════════════ */
+    function NotesPanel({ ticket }) {
+      const { dispatch } = useStore();
+      const [text, setText] = useState('');
+      const [show, setShow] = useState(false);
+      const save = () => {
+        if (text.trim()) {
+          dispatch({ type: 'ADD_NOTE', id: ticket.id, text: text.trim() });
+          setText(''); setShow(false);
+        }
+      };
+      return (
+        <div>
+          {ticket.notes.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wide">הערות</p>
+              <div className="space-y-2">
+                {ticket.notes.map((n, i) => (
+                  <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <p className="text-sm text-gray-800">{n.text}</p>
+                    <p className="text-xs text-gray-400 mt-1">{n.author} • {fmtDate(n.time)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {ticket.status !== 'closed' && (
+            show ? (
+              <div className="flex gap-2">
+                <input
+                  type="text" value={text}
+                  onChange={e => setText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && save()}
+                  placeholder="הוסף הערה..."
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                />
+                <button onClick={save} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">שמור</button>
+                <button onClick={() => { setShow(false); setText(''); }} className="text-gray-400 hover:text-gray-600 text-xl px-1">×</button>
+              </div>
+            ) : (
+              <button onClick={() => setShow(true)} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                + הוסף הערה
+              </button>
+            )
+          )}
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       TEACHER VIEW
+    ═══════════════════════════════════════════ */
+    function TeacherView() {
+      const { state, dispatch } = useStore();
+      const [desc, setDesc]         = useState('');
+      const [location, setLocation] = useState('');
+      const [image, setImage]       = useState(null);
+      const [preview, setPreview]   = useState(null);
+      const [done, setDone]         = useState(false);
+      const [uploading, setUp]      = useState(false);
+      const [errs, setErrs]         = useState({});
+
+      const handleImg = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUp(true);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const c = await compressImg(reader.result);
+          setImage(c); setPreview(c); setUp(false);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const submit = () => {
+        const e = {};
+        if (!desc.trim()) e.desc = 'נא לתאר את הבעיה';
+        if (!location)    e.loc  = 'נא לבחור מיקום';
+        setErrs(e);
+        if (Object.keys(e).length) return;
+        dispatch({ type: 'ADD_TICKET', payload: { description: desc.trim(), location, image } });
+        setDone(true);
+      };
+
+      const reset = () => {
+        setDesc(''); setLocation(''); setImage(null); setPreview(null);
+        setErrs({}); setDone(false);
+      };
+
+      const myOpen = state.tickets.filter(t =>
+        t.teacherName === state.currentUser.name && t.status !== 'closed'
+      ).length;
+
+      if (done) return (
+        <div className="min-h-screen bg-slate-100">
+          <Header title="דיווח תקלה" />
+          <div className="max-w-sm mx-auto px-4 py-12 text-center">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="text-6xl mb-4">✅</div>
+              <h2 className="text-xl font-bold text-green-700 mb-2">הדיווח התקבל!</h2>
+              <p className="text-gray-500 text-sm mb-6">
+                הקריאה נרשמה במערכת ותועבר לבדיקת המנהל וטיפול אב הבית
+              </p>
+              <button onClick={reset} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-base transition-colors">
+                📋 דיווח תקלה נוספת
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-slate-100">
+          <Header title="דיווח תקלה" />
+          <div className="max-w-lg mx-auto px-4 py-4">
+            {myOpen > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-sm text-blue-700 font-medium">
+                📋 יש לך {myOpen} קריאה/ות פתוחה/ות כרגע
+              </div>
+            )}
+            <div className="bg-white rounded-2xl shadow p-5 space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">תיאור הבעיה <span className="text-red-500">*</span></label>
+                <textarea
+                  value={desc}
+                  onChange={e => { setDesc(e.target.value); setErrs(p => ({...p, desc: ''})); }}
+                  placeholder="תאר את הבעיה (למשל: ברז דולף, נורה שרופה, מזגן לא עובד, דלת שבורה...)"
+                  rows={4}
+                  className={`w-full border-2 rounded-xl px-4 py-3 resize-none focus:outline-none transition-colors ${
+                    errs.desc ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                  }`}
+                />
+                {errs.desc && <p className="text-red-500 text-xs mt-1">{errs.desc}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">מיקום <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={e => { setLocation(e.target.value); setErrs(p => ({...p, loc: ''})); }}
+                  placeholder="למשל: בניין א׳ קומה 2 כיתה 204, חדר מורים, אולם ספורט..."
+                  className={`w-full border-2 rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+                    errs.loc ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                  }`}
+                />
+                {errs.loc && <p className="text-red-500 text-xs mt-1">{errs.loc}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  צילום תקלה <span className="text-gray-400 font-normal">(אופציונלי)</span>
+                </label>
+                {preview ? (
+                  <div className="relative">
+                    <img src={preview} alt="תמונת תקלה" className="w-full h-44 object-cover rounded-xl" />
+                    <button
+                      onClick={() => { setImage(null); setPreview(null); }}
+                      className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-base shadow transition-colors"
+                    >×</button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                    uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  }`}>
+                    <span className="text-3xl mb-1">{uploading ? '⏳' : '📷'}</span>
+                    <span className="text-gray-500 text-sm">{uploading ? 'מעלה תמונה...' : 'לחץ לצילום או בחירת תמונה'}</span>
+                    <input type="file" accept="image/*" capture="environment" onChange={handleImg} className="hidden" disabled={uploading} />
+                  </label>
+                )}
+              </div>
+              <button
+                onClick={submit}
+                className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-colors"
+              >
+                📤 שלח דיווח
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       SHARED: TICKET CARD
+    ═══════════════════════════════════════════ */
+    function TicketCard({ ticket, mode }) {
+      const { dispatch } = useStore();
+      const [open, setOpen] = useState(false);
+      const isManager   = mode === 'manager';
+      const isCaretaker = mode === 'caretaker';
+      const isClosed    = ticket.status === 'closed';
+      const canClose    = isManager && ticket.executionStatus === 'done' && !isClosed;
+
+      return (
+        <div className={`bg-white rounded-xl shadow-sm mb-3 overflow-hidden ${PRI_BORDER[ticket.priority]} ${isClosed ? 'opacity-80' : ''}`}>
+          <div className="p-4 cursor-pointer select-none active:bg-gray-50" onClick={() => setOpen(!open)}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className={`badge ${PRI_BADGE[ticket.priority]}`}>{PRI_LABEL[ticket.priority]}</span>
+                  {ticket.executionStatus && (
+                    <span className={`badge ${EXEC_BADGE[ticket.executionStatus]}`}>{EXEC_LABEL[ticket.executionStatus]}</span>
+                  )}
+                  {isClosed && <span className="badge bg-slate-100 text-slate-600 border-slate-300">סגור</span>}
+                </div>
+                <p className="font-semibold text-gray-800 text-sm leading-snug">{ticket.description}</p>
+                <p className="text-xs text-gray-500 mt-1">📍 {ticket.location}</p>
+                <p className="text-xs text-gray-400 mt-0.5">👤 {ticket.teacherName} • {fmtDate(ticket.createdAt)}</p>
+              </div>
+              <span className="text-gray-400 flex-shrink-0 mt-1 text-sm">{open ? '▲' : '▼'}</span>
+            </div>
+          </div>
+
+          {open && (
+            <div className="px-4 pb-5 border-t border-gray-100 pt-4 space-y-4">
+              {ticket.image && (
+                <img src={ticket.image} alt="תמונת תקלה" className="w-full max-h-52 object-cover rounded-xl" />
+              )}
+              {isManager && !isClosed && (
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wide">קביעת עדיפות</p>
+                  <div className="flex gap-2">
+                    {Object.entries(PRI_LABEL).map(([k, v]) => (
+                      <button
+                        key={k}
+                        onClick={() => dispatch({ type: 'SET_PRIORITY', id: ticket.id, priority: k })}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                          ticket.priority === k
+                            ? 'bg-gray-800 border-gray-800 text-white shadow-md'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'
+                        }`}
+                      >{v}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {isCaretaker && !isClosed && (
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wide">עדכון סטטוס ביצוע</p>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'ordered_part',    label: 'הוזמן חלק / ספק חיצוני',  emoji: '📦' },
+                      { id: 'waiting_holiday', label: 'ממתין לחופשה / סוף שבוע', emoji: '⏳' },
+                      { id: 'done',            label: 'בוצע!',                    emoji: '✅' },
+                    ].map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => dispatch({ type: 'UPDATE_EXEC', id: ticket.id, status: s.id })}
+                        className={`w-full py-3 px-4 rounded-xl text-sm font-semibold border-2 flex items-center gap-2 transition-all ${
+                          ticket.executionStatus === s.id
+                            ? 'bg-gray-800 border-gray-800 text-white shadow'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-400 bg-white'
+                        }`}
+                      >
+                        <span className="text-xl">{s.emoji}</span>{s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <NotesPanel ticket={ticket} />
+              {isManager && (
+                isClosed ? (
+                  <button
+                    onClick={() => dispatch({ type: 'REOPEN_TICKET', id: ticket.id })}
+                    className="w-full py-3 rounded-xl font-bold text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors border border-orange-200"
+                  >🔄 פתח מחדש</button>
+                ) : (
+                  <button
+                    onClick={() => canClose && dispatch({ type: 'CLOSE_TICKET', id: ticket.id })}
+                    disabled={!canClose}
+                    title={!canClose ? 'ניתן לסגור רק לאחר שאב הבית סימן "בוצע"' : ''}
+                    className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${
+                      canClose
+                        ? 'bg-green-600 hover:bg-green-700 text-white shadow'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {canClose ? '✅ סגור קריאה' : '🔒 ממתין לאישור ביצוע מאב הבית'}
+                  </button>
+                )
+              )}
+              {isCaretaker && isClosed && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                  <p className="text-green-700 font-bold text-sm">✅ נסגר ע"י המנהל</p>
+                  <p className="text-green-600 text-xs mt-0.5">{fmtDate(ticket.closedAt)}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       REPORT VIEW
+    ═══════════════════════════════════════════ */
+    function ReportView() {
+      const { state }           = useStore();
+      const [fromDate, setFrom] = useState('');
+      const [toDate,   setTo]   = useState('');
+      const [busy,     setBusy] = useState(''); // 'excel' | 'pdf' | ''
+      const [msg,      setMsg]  = useState('');
+
+      const filtered = useMemo(() => {
+        return state.tickets.filter(t => {
+          const d = new Date(t.createdAt);
+          if (fromDate && d < new Date(fromDate + 'T00:00:00')) return false;
+          if (toDate   && d > new Date(toDate   + 'T23:59:59')) return false;
+          return true;
+        });
+      }, [state.tickets, fromDate, toDate]);
+
+      const st = useMemo(() => ({
+        total:  filtered.length,
+        open:   filtered.filter(t => t.status === 'open').length,
+        closed: filtered.filter(t => t.status === 'closed').length,
+        urgent: filtered.filter(t => t.priority === 'urgent').length,
+        normal: filtered.filter(t => t.priority === 'normal').length,
+        future: filtered.filter(t => t.priority === 'future').length,
+        done:   filtered.filter(t => t.executionStatus === 'done').length,
+      }), [filtered]);
+
+      const setPreset = preset => {
+        const now = new Date();
+        const fmt = d => d.toISOString().split('T')[0];
+        if (preset === 'thisMonth') {
+          setFrom(fmt(new Date(now.getFullYear(), now.getMonth(), 1)));
+          setTo(fmt(now));
+        } else if (preset === 'lastMonth') {
+          setFrom(fmt(new Date(now.getFullYear(), now.getMonth()-1, 1)));
+          setTo(fmt(new Date(now.getFullYear(), now.getMonth(), 0)));
+        } else if (preset === 'thisYear') {
+          setFrom(fmt(new Date(now.getFullYear(), 0, 1)));
+          setTo(fmt(now));
+        } else if (preset === 'lastYear') {
+          setFrom(fmt(new Date(now.getFullYear()-1, 0, 1)));
+          setTo(fmt(new Date(now.getFullYear()-1, 11, 31)));
+        } else {
+          setFrom(''); setTo('');
+        }
+      };
+
+      const doExcel = () => {
+        setBusy('excel'); setMsg('');
+        try {
+          exportToExcel(filtered, fromDate, toDate);
+          setMsg('✅ קובץ האקסל הורד בהצלחה');
+        } catch(e) {
+          setMsg('❌ שגיאה: ' + e.message);
+        } finally {
+          setBusy('');
+        }
+      };
+
+      const doPDF = async () => {
+        setBusy('pdf'); setMsg('');
+        try {
+          await exportToPDF(filtered, fromDate, toDate);
+          setMsg('✅ קובץ ה-PDF הורד בהצלחה');
+        } catch(e) {
+          setMsg('❌ שגיאה: ' + e.message);
+        } finally {
+          setBusy('');
+        }
+      };
+
+      // Top 5 locations for preview
+      const locMap = {};
+      filtered.forEach(t => { locMap[t.location] = (locMap[t.location]||0)+1; });
+      const topLocs = Object.entries(locMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-4">
+
+          {/* בחירת טווח תאריכים */}
+          <div className="bg-white rounded-2xl shadow p-5 mb-4">
+            <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">📅</span> בחר טווח תאריכים
+            </h2>
+
+            {/* קיצורי דרך */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                { id: 'all',       label: 'כל הזמן'   },
+                { id: 'thisMonth', label: 'חודש זה'    },
+                { id: 'lastMonth', label: 'חודש שעבר'  },
+                { id: 'thisYear',  label: 'שנה זו'     },
+                { id: 'lastYear',  label: 'שנה שעברה'  },
+              ].map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setPreset(p.id)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 rounded-xl text-sm font-semibold transition-colors border border-transparent hover:border-blue-200"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">מתאריך</label>
+                <input
+                  type="date" value={fromDate}
+                  onChange={e => setFrom(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-gray-600 mb-1.5">עד תאריך</label>
+                <input
+                  type="date" value={toDate}
+                  onChange={e => setTo(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* תצוגה מקדימה */}
+          <div className="bg-white rounded-2xl shadow p-5 mb-4">
+            <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">📊</span>
+              תצוגה מקדימה
+              <span className="text-sm font-normal text-gray-400">
+                {!fromDate && !toDate ? '(כל הזמן)' : `${fromDate || '…'} עד ${toDate || '…'}`}
+              </span>
+            </h2>
+
+            {filtered.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <p className="text-3xl mb-2">📭</p>
+                <p>אין קריאות בטווח הנבחר</p>
+              </div>
+            ) : (
+              <>
+                {/* כרטיסי מספרים */}
+                <div className="grid grid-cols-4 gap-2 mb-5">
+                  {[
+                    { val: st.total,  label: 'סה"כ',   color: 'text-blue-600',   bg: 'bg-blue-50'   },
+                    { val: st.open,   label: 'פתוחות', color: 'text-orange-500', bg: 'bg-orange-50' },
+                    { val: st.closed, label: 'סגורות', color: 'text-green-600',  bg: 'bg-green-50'  },
+                    { val: st.urgent, label: 'דחוף',   color: 'text-red-500',    bg: 'bg-red-50'    },
+                  ].map(s => (
+                    <div key={s.label} className={`${s.bg} rounded-xl p-3 text-center`}>
+                      <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* פס עדיפויות */}
+                {st.total > 0 && (
+                  <div className="mb-5">
+                    <p className="text-xs font-bold text-gray-500 mb-2">חלוקה לפי עדיפות</p>
+                    <div className="flex rounded-full overflow-hidden h-6 gap-0.5 mb-1.5">
+                      {st.urgent > 0 && (
+                        <div style={{flex: st.urgent}} className="bg-red-400 flex items-center justify-center text-xs text-white font-bold">{st.urgent}</div>
+                      )}
+                      {st.normal > 0 && (
+                        <div style={{flex: st.normal}} className="bg-yellow-400 flex items-center justify-center text-xs text-white font-bold">{st.normal}</div>
+                      )}
+                      {st.future > 0 && (
+                        <div style={{flex: st.future}} className="bg-blue-400 flex items-center justify-center text-xs text-white font-bold">{st.future}</div>
+                      )}
+                    </div>
+                    <div className="flex gap-4 text-xs text-gray-500 flex-wrap">
+                      <span><span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400 ml-1"></span>דחוף: {st.urgent} ({st.total?Math.round(st.urgent/st.total*100):0}%)</span>
+                      <span><span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400 ml-1"></span>רגיל: {st.normal} ({st.total?Math.round(st.normal/st.total*100):0}%)</span>
+                      <span><span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-400 ml-1"></span>עתידי: {st.future} ({st.total?Math.round(st.future/st.total*100):0}%)</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Top מיקומים */}
+                {topLocs.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 mb-2">📍 מיקומים עם הכי הרבה תקלות</p>
+                    <div className="space-y-1.5">
+                      {topLocs.map(([loc, cnt]) => (
+                        <div key={loc} className="flex items-center gap-2">
+                          <div className="text-xs text-gray-600 w-40 truncate flex-shrink-0" title={loc}>{loc}</div>
+                          <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                            <div
+                              className="bg-blue-400 h-3 rounded-full transition-all"
+                              style={{width: `${Math.round(cnt/topLocs[0][1]*100)}%`}}
+                            />
+                          </div>
+                          <div className="text-xs font-bold text-gray-600 w-5 text-left">{cnt}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* הודעת סטטוס */}
+          {msg && (
+            <div className={`rounded-xl p-3 mb-4 text-sm font-semibold text-center ${
+              msg.startsWith('✅') ? 'bg-green-50 border border-green-200 text-green-700'
+                                   : 'bg-red-50 border border-red-200 text-red-700'
+            }`}>
+              {msg}
+            </div>
+          )}
+
+          {/* כפתורי ייצוא */}
+          <div className="space-y-3">
+            <button
+              onClick={doExcel}
+              disabled={!filtered.length || !!busy}
+              className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 shadow-md transition-all ${
+                !filtered.length || busy
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 active:scale-[.98] text-white'
+              }`}
+            >
+              {busy === 'excel'
+                ? <><span className="spin text-xl">⏳</span> מייצא לאקסל...</>
+                : <><span className="text-2xl">📊</span> ייצוא לאקסל (.xlsx)</>
+              }
+            </button>
+
+            <button
+              onClick={doPDF}
+              disabled={!filtered.length || !!busy}
+              className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 shadow-md transition-all ${
+                !filtered.length || busy
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-rose-600 hover:bg-rose-700 active:scale-[.98] text-white'
+              }`}
+            >
+              {busy === 'pdf'
+                ? <><span className="spin text-xl">⏳</span> מייצר PDF עם גרפים... (עד 10 שנ׳)</>
+                : <><span className="text-2xl">📄</span> ייצוא PDF עם אינפוגרפיקה</>
+              }
+            </button>
+
+            {filtered.length > 0 && (
+              <p className="text-center text-xs text-gray-400">
+                {filtered.length} קריאות יכללו בדוח
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       MANAGER VIEW
+    ═══════════════════════════════════════════ */
+    function ManagerView() {
+      const { state }             = useStore();
+      const [mainTab, setMainTab] = useState('tickets'); // 'tickets' | 'reports'
+      const [tab,    setTab]      = useState('open');
+      const [priF,   setPriF]     = useState('all');
+      const [search, setSearch]   = useState('');
+
+      const tickets = state.tickets;
+      const open    = tickets.filter(t => t.status === 'open');
+      const closed  = tickets.filter(t => t.status === 'closed');
+      const urgent  = open.filter(t => t.priority === 'urgent');
+      const pending = open.filter(t => t.executionStatus === 'done');
+
+      const now = new Date();
+      const closedThisMonth = closed.filter(t => {
+        const d = new Date(t.closedAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+
+      let list = tab === 'open' ? open : tab === 'closed' ? closed : tickets;
+      if (priF !== 'all') list = list.filter(t => t.priority === priF);
+      if (search.trim()) list = list.filter(t =>
+        t.description.includes(search) || t.location.includes(search) || t.teacherName.includes(search)
+      );
+      list = [...list].sort((a, b) => {
+        const o = { urgent: 0, normal: 1, future: 2 };
+        if (o[a.priority] !== o[b.priority]) return o[a.priority] - o[b.priority];
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      return (
+        <div className="min-h-screen bg-slate-100">
+          <Header title="לוח בקרה — מנהל" />
+
+          {/* ניווט ראשי */}
+          <div className="max-w-2xl mx-auto px-4 pt-4">
+            <div className="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow-sm">
+              <button
+                onClick={() => setMainTab('tickets')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  mainTab === 'tickets'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>📋</span> ניהול קריאות
+              </button>
+              <button
+                onClick={() => setMainTab('reports')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  mainTab === 'reports'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>📊</span> דוחות וסטטיסטיקות
+              </button>
+            </div>
+          </div>
+
+          {/* תוכן ראשי */}
+          {mainTab === 'reports' ? <ReportView /> : (
+            <div className="max-w-2xl mx-auto px-4 pb-4">
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {[
+                  { val: open.length,            label: 'קריאות פתוחות', color: 'text-orange-500' },
+                  { val: urgent.length,           label: 'דחוף',          color: 'text-red-500'    },
+                  { val: pending.length,          label: 'ממתין לאישורך', color: 'text-green-600'  },
+                  { val: closedThisMonth.length,  label: 'נסגרו החודש',   color: 'text-blue-500'   },
+                ].map(s => (
+                  <div key={s.label} className="bg-white rounded-xl p-4 shadow-sm">
+                    <p className={`stat-num text-3xl font-bold ${s.color}`}>{s.val}</p>
+                    <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {pending.length > 0 && (
+                <div className="bg-green-50 border border-green-300 rounded-xl p-3 mb-4 text-sm text-green-800 font-semibold">
+                  ✅ {pending.length} קריאה/ות בוצעו ע"י אב הבית — ממתינות לאישורך וסגירה
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl shadow-sm px-4 py-3 mb-3">
+                <input
+                  type="text" value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="🔍 חפש לפי תיאור, מיקום או שם מורה..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                />
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-3 mb-4 space-y-2">
+                <div className="flex gap-2">
+                  {[['open','פתוחות'], ['closed','סגורות'], ['all','הכל']].map(([id, lbl]) => (
+                    <button
+                      key={id} onClick={() => setTab(id)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+                        tab === id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >{lbl}</button>
+                  ))}
+                </div>
+                <div className="flex gap-1.5">
+                  {[['all','הכל'], ['urgent','דחוף'], ['normal','רגיל'], ['future','עתידי']].map(([id, lbl]) => (
+                    <button
+                      key={id} onClick={() => setPriF(id)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        priF === id ? 'bg-slate-700 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >{lbl}</button>
+                  ))}
+                </div>
+              </div>
+
+              {list.length === 0 ? (
+                <div className="bg-white rounded-xl p-10 text-center text-gray-400">
+                  <p className="text-4xl mb-2">📋</p>
+                  <p className="font-medium">אין קריאות להצגה</p>
+                </div>
+              ) : list.map(t => <TicketCard key={t.id} ticket={t} mode="manager" />)}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       CARETAKER VIEW
+    ═══════════════════════════════════════════ */
+    function CaretakerView() {
+      const { state } = useStore();
+      const [showClosed, setShowClosed] = useState(false);
+
+      const sortByPri = arr => [...arr].sort((a, b) => {
+        const o = { urgent: 0, normal: 1, future: 2 };
+        if (o[a.priority] !== o[b.priority]) return o[a.priority] - o[b.priority];
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      const open   = sortByPri(state.tickets.filter(t => t.status === 'open'));
+      const closed = state.tickets
+        .filter(t => t.status === 'closed')
+        .sort((a, b) => new Date(b.closedAt) - new Date(a.closedAt));
+
+      const urgentCount = open.filter(t => t.priority === 'urgent').length;
+      const doneCount   = open.filter(t => t.executionStatus === 'done').length;
+
+      return (
+        <div className="min-h-screen bg-slate-100">
+          <Header title="משימות — אב הבית" />
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { val: open.length,   label: 'פתוחות', color: 'text-orange-500' },
+                { val: urgentCount,   label: 'דחוף',   color: 'text-red-500'    },
+                { val: doneCount,     label: 'בוצע',   color: 'text-green-600'  },
+              ].map(s => (
+                <div key={s.label} className="bg-white rounded-xl p-3 shadow-sm text-center">
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            {urgentCount > 0 && (
+              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mb-4 text-sm text-red-800 font-bold">
+                🚨 יש {urgentCount} תקלה/ות דחופה/ות — יש לטפל בהן בהקדם!
+              </div>
+            )}
+            {open.length === 0 ? (
+              <div className="bg-white rounded-xl p-10 text-center text-gray-400 mb-4">
+                <p className="text-4xl mb-2">🎉</p>
+                <p className="font-bold text-gray-600">כל המשימות הושלמו!</p>
+                <p className="text-sm mt-1">אין קריאות פתוחות כרגע</p>
+              </div>
+            ) : (
+              open.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)
+            )}
+            {closed.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowClosed(!showClosed)}
+                  className="w-full bg-white rounded-xl shadow-sm p-3 text-sm text-gray-600 font-semibold flex items-center justify-center gap-2 mb-3 hover:bg-gray-50 transition-colors"
+                >
+                  {showClosed ? '▲' : '▼'} קריאות שנסגרו ({closed.length})
+                </button>
+                {showClosed && closed.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       LOGIN
+    ═══════════════════════════════════════════ */
+    const PASSWORDS = { manager: 'g0987', caretaker: 'm0987' };
+    const ROLE_DEFAULT_NAME = { manager: 'מנהל', caretaker: 'אב הבית' };
+
+    function Login() {
+      const { dispatch } = useStore();
+      const [role,     setRole]  = useState('');
+      const [name,     setName]  = useState('');
+      const [password, setPass]  = useState('');
+      const [showPass, setShow]  = useState(false);
+      const [err,      setErr]   = useState('');
+
+      const roles = [
+        { id: 'teacher',   label: 'מורה',    desc: 'דיווח תקלות',    icon: '📚', bg: 'bg-blue-50 border-blue-200',     sel: 'bg-blue-100 border-blue-500 ring-2 ring-blue-300'     },
+        { id: 'manager',   label: 'מנהל',    desc: 'בקרה ותיעוד',   icon: '👔', bg: 'bg-purple-50 border-purple-200', sel: 'bg-purple-100 border-purple-500 ring-2 ring-purple-300' },
+        { id: 'caretaker', label: 'אב הבית', desc: 'ביצוע תיקונים', icon: '🔧', bg: 'bg-green-50 border-green-200',   sel: 'bg-green-100 border-green-500 ring-2 ring-green-300'   },
+      ];
+
+      const selectRole = r => { setRole(r); setErr(''); setName(''); setPass(''); };
+
+      const go = () => {
+        if (!role) { setErr('נא לבחור תפקיד'); return; }
+        if (role === 'teacher') {
+          if (!name.trim()) { setErr('נא להזין שם מלא'); return; }
+          dispatch({ type: 'LOGIN', payload: { name: name.trim(), role } });
+        } else {
+          if (!password) { setErr('נא להזין סיסמה'); return; }
+          if (password !== PASSWORDS[role]) { setErr('סיסמה שגויה'); setPass(''); return; }
+          dispatch({ type: 'LOGIN', payload: { name: ROLE_DEFAULT_NAME[role], role } });
+        }
+      };
+
+      const needsPassword = role === 'manager' || role === 'caretaker';
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm">
+            <div className="text-center mb-7">
+              <div className="text-5xl mb-3">🏫</div>
+              <h1 className="text-xl font-bold text-gray-800">מערכת ניהול תקלות</h1>
+              <p className="text-gray-400 text-sm mt-1">בית הספר "שבילים" <span className="text-gray-300 mx-1">•</span> <span className="text-gray-300 text-xs">v0.1</span></p>
+            </div>
+
+            {/* בחירת תפקיד */}
+            <div className="mb-5">
+              <label className="block text-sm font-bold text-gray-700 mb-3">בחר תפקיד</label>
+              <div className="grid grid-cols-3 gap-2">
+                {roles.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => selectRole(r.id)}
+                    className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${role === r.id ? r.sel : r.bg}`}
+                  >
+                    <span className="text-3xl mb-1">{r.icon}</span>
+                    <span className="font-bold text-xs">{r.label}</span>
+                    <span className="text-gray-500 text-xs mt-0.5 leading-tight text-center">{r.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* שדה שם — רק למורה */}
+            {role === 'teacher' && (
+              <div className="mb-5">
+                <label className="block text-sm font-bold text-gray-700 mb-2">שם מלא</label>
+                <input
+                  type="text" value={name}
+                  onChange={e => { setName(e.target.value); setErr(''); }}
+                  onKeyDown={e => e.key === 'Enter' && go()}
+                  placeholder="הזן את שמך המלא"
+                  autoFocus
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-400 focus:outline-none transition-colors"
+                />
+              </div>
+            )}
+
+            {/* שדה סיסמה — מנהל ואב בית */}
+            {needsPassword && (
+              <div className="mb-5">
+                <label className="block text-sm font-bold text-gray-700 mb-2">סיסמה</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => { setPass(e.target.value); setErr(''); }}
+                    onKeyDown={e => e.key === 'Enter' && go()}
+                    placeholder="הזן סיסמה"
+                    autoFocus
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-blue-400 focus:outline-none transition-colors pl-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow(!showPass)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
+                  >
+                    {showPass ? '🙈' : '👁'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {err && <p className="text-red-500 text-sm mb-4 text-center font-medium">{err}</p>}
+
+            <button
+              onClick={go}
+              disabled={!role}
+              className={`w-full font-bold py-4 rounded-xl text-base transition-colors shadow-md ${
+                role ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              כניסה למערכת
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       LOADING SCREEN
+    ═══════════════════════════════════════════ */
+    function LoadingScreen() {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-6xl mb-5">🏫</div>
+            <p className="text-xl font-bold mb-2">מערכת ניהול תקלות</p>
+            <p className="text-sm opacity-75 mb-6">בית הספר "שבילים"</p>
+            <div className="flex items-center justify-center gap-2 opacity-80">
+              <span className="spin text-2xl">⏳</span>
+              <span className="text-sm">מתחבר למסד הנתונים...</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
+       APP ROOT
+    ═══════════════════════════════════════════ */
+    function App() {
+      const { state } = useStore();
+      if (state.loading)        return <LoadingScreen />;
+      if (!state.currentUser)   return <Login />;
+      const { role } = state.currentUser;
+      if (role === 'teacher')   return <TeacherView />;
+      if (role === 'manager')   return <ManagerView />;
+      if (role === 'caretaker') return <CaretakerView />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <StoreProvider><App /></StoreProvider>
+    );
+  </script>
+</body>
+</html>
