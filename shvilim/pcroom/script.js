@@ -3,8 +3,8 @@ let currentTeacher = "";
 let selectedDate = null;
 let selectedHours = [];
 let selectedTimeStrings = []; // שמירת השעות המלאות (09:50, 09:00 וכו')
-let currentViewYear = 2025;
-let currentViewMonth = 10; // נובמבר - החודש הנוכחי
+let currentViewYear = new Date().getFullYear();
+let currentViewMonth = new Date().getMonth();
 
 // Admin Password
 const ADMIN_PASSWORD = "n0987";
@@ -115,8 +115,9 @@ function goToMonthSelection() {
         return;
     }
     currentTeacher = teacherName;
-    currentViewYear = 2025;
-    currentViewMonth = 10; // נובמבר - החודש הנוכחי
+    const now = new Date();
+    currentViewYear = now.getFullYear();
+    currentViewMonth = now.getMonth();
     showScreen('monthScreen');
     loadMonthView();
 }
@@ -142,9 +143,12 @@ function previousMonth() {
         currentViewMonth = 11;
         currentViewYear--;
     }
-    if (currentViewYear < 2025 || (currentViewYear === 2025 && currentViewMonth < 10)) {
-        currentViewMonth = 10;
-        currentViewYear = 2025;
+    const minDate = new Date();
+    const minYear = minDate.getFullYear();
+    const minMonth = minDate.getMonth();
+    if (currentViewYear < minYear || (currentViewYear === minYear && currentViewMonth < minMonth)) {
+        currentViewMonth = minMonth;
+        currentViewYear = minYear;
     }
     loadMonthView();
 }
