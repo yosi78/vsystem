@@ -774,6 +774,9 @@
               </button>
             </div>
           </div>
+          <div className="max-w-2xl mx-auto w-full">
+            <Footer />
+          </div>
         </div>
       );
 
@@ -842,6 +845,9 @@
                 📤 שלח דיווח
               </button>
             </div>
+          </div>
+          <div className="max-w-lg mx-auto w-full">
+            <Footer />
           </div>
         </div>
       );
@@ -1531,6 +1537,9 @@
               ) : list.map(t => <TicketCard key={t.id} ticket={t} mode="manager" />)}
             </div>
           )}
+          <div className="max-w-2xl mx-auto w-full">
+            <Footer />
+          </div>
         </div>
       );
     }
@@ -1597,6 +1606,9 @@
                 {showClosed && closed.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)}
               </div>
             )}
+          </div>
+          <div className="max-w-2xl mx-auto w-full">
+            <Footer />
           </div>
         </div>
       );
@@ -1709,16 +1721,17 @@
 
             {err && <p className="text-red-500 text-base mb-4 text-center font-medium">{err}</p>}
 
-            <div className="mt-auto">
-              <button
-                onClick={go}
-                disabled={!role}
-                className={`w-full font-bold py-5 rounded-2xl text-xl transition-colors shadow-md ${
-                  role ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                כניסה למערכת
-              </button>
+            <button
+              onClick={go}
+              disabled={!role}
+              className={`w-full font-bold py-5 rounded-2xl text-xl transition-colors shadow-md ${
+                role ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              כניסה למערכת
+            </button>
+            <div className="-mx-6 -mb-10 mt-auto">
+              <Footer />
             </div>
           </div>
         </div>
@@ -1747,6 +1760,22 @@
     /* ═══════════════════════════════════════════
        APP ROOT
     ═══════════════════════════════════════════ */
+    function Footer() {
+      return (
+        <footer style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          className="w-full text-center py-4 block">
+          <a
+            href="mailto:yosiel3@gmail.com?subject=בנוגע למערכת ניהול תקלות&body=שלום יוסי,"
+            className="font-bold text-sm inline-block transition-all"
+            style={{ color: '#ecf0f1', textDecoration: 'none' }}
+            onMouseEnter={e => e.target.style.color = '#93c5fd'}
+            onMouseLeave={e => e.target.style.color = '#ecf0f1'}
+          >ByteLogicx</a>
+          <div className="text-xs mt-1" style={{ color: '#bdc3c7', opacity: 0.8 }}>© 2025 כל הזכויות שמורות</div>
+        </footer>
+      );
+    }
+
     function App() {
       const { state } = useStore();
       if (state.loading)        return <LoadingScreen />;
