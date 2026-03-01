@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הגדרת EmailJS - הוראות</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 30px 20px;
+            direction: rtl;
+        }
+
+        .page {
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            font-size: 1.6rem;
+        }
+
+        h1 span {
+            display: block;
+            font-size: 1rem;
+            font-weight: normal;
+            opacity: 0.85;
+            margin-top: 6px;
+        }
+
+        .step {
+            background: white;
+            border-radius: 10px;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-right: 5px solid #4CAF50;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .step-number {
+            background: #4CAF50;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        ol, ul {
+            margin: 0;
+            padding-right: 22px;
+            line-height: 2;
+        }
+
+        li {
+            margin-bottom: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 14px;
+            text-align: right;
+        }
+
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        tr:nth-child(even) td {
+            background: #f9f9f9;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-top: 12px;
+            line-height: 2;
+            font-family: Consolas, monospace;
+            font-size: 0.95rem;
+            white-space: pre;
+        }
+
+        .highlight {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .note {
+            background: #fff8e1;
+            border-right: 4px solid #FFC107;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.92rem;
+            line-height: 1.8;
+        }
+
+        .note strong {
+            color: #e65100;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2E7D32;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+            font-size: 0.9rem;
+        }
+
+        .arrow {
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <h1>
+        📧 הגדרת EmailJS עם Gmail
+        <span>הוראות הפעלה - שליחת מייל אוטומטי למנהל</span>
+    </h1>
+
+    <!-- שלב 1 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">יצירת חשבון EmailJS</div>
+        </div>
+        <ol>
+            <li>היכנס לאתר <strong>emailjs.com</strong></li>
+            <li>לחץ על <strong>Sign Up</strong> והירשם עם כל מייל שתרצה</li>
+            <li>אמת את החשבון דרך המייל שקיבלת</li>
+        </ol>
+    </div>
+
+    <!-- שלב 2 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">חיבור Gmail וקבלת Service ID</div>
+        </div>
+        <ol>
+            <li>בתפריט הצדדי לחץ על <strong>Email Services</strong></li>
+            <li>לחץ <strong>Add New Service</strong></li>
+            <li>בחר <strong>Gmail</strong></li>
+            <li>לחץ <strong>Connect Account</strong> <span class="arrow">←</span> בחר את חשבון Gmail שלך <span class="arrow">←</span> אשר גישה</li>
+            <li>לחץ <strong>Create Service</strong></li>
+            <li>📋 העתק את <strong>Service ID</strong> שנוצר (נראה כך: <span class="tag">service_xxxxxxx</span>)</li>
+        </ol>
+    </div>
+
+    <!-- שלב 3 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">יצירת תבנית מייל וקבלת Template ID</div>
+        </div>
+        <ol>
+            <li>בתפריט לחץ על <strong>Email Templates</strong></li>
+            <li>לחץ <strong>Create New Template</strong></li>
+            <li>EmailJS פותח תבנית ברירת מחדל עם שדות לדוגמה — <strong>מחק את כל התוכן הקיים</strong> ב-Subject וב-Content והחלף בשלנו:</li>
+        </ol>
+
+        <table>
+            <tr>
+                <th>שדה בתבנית</th>
+                <th>מה לרשום</th>
+            </tr>
+            <tr>
+                <td><strong>To Email</strong></td>
+                <td>בחר מהרשימה את כתובת ה-Gmail שחיברת בשלב 2</td>
+            </tr>
+            <tr>
+                <td><strong>Subject</strong></td>
+                <td>מחק מה שיש ← הדבק: <span class="tag">הזמנה חדשה - {{teacher}}</span></td>
+            </tr>
+            <tr>
+                <td><strong>Content</strong></td>
+                <td>מחק מה שיש ← הדבק את הטקסט מהמלבן הכהה למטה</td>
+            </tr>
+        </table>
+
+        <div style="background:#fff3cd; border-right:4px solid #ffc107; padding:10px 14px; border-radius:6px; margin-top:14px; font-size:0.9rem;">
+            💡 <strong>המשתנים כמו {{teacher_name}} לא צריך להגדיר מראש</strong> — פשוט כתוב אותם בתוך התבנית ו-EmailJS יזהה אותם אוטומטית.
+        </div>
+
+        <div class="code-block"><span class="highlight">מורה:</span> {{teacher}}
+<span class="highlight">כיתה:</span> {{kita}}
+<span class="highlight">תאריך:</span> {{date}}
+
+<span class="highlight">פריטים שהוזמנו:</span>
+{{items}}</div>
+
+        <ol start="4">
+            <li>לחץ <strong>Save</strong></li>
+            <li>📋 העתק את <strong>Template ID</strong> (נראה כך: <span class="tag">template_xxxxxxx</span>)</li>
+        </ol>
+    </div>
+
+    <!-- שלב 4 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">קבלת Public Key</div>
+        </div>
+        <ol>
+            <li>לחץ על שמך בפינה הימנית העליונה <span class="arrow">←</span> <strong>Account</strong></li>
+            <li>לחץ על <strong>General</strong></li>
+            <li>תחת <strong>API Keys</strong> — 📋 העתק את <strong>Public Key</strong></li>
+        </ol>
+    </div>
+
+    <!-- שלב 5 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">הזנה במסך ההגדרות במערכת</div>
+        </div>
+        <p>היכנס למערכת כמנהל <span class="arrow">←</span> לחץ על טאב <strong>🔔 הגדרות</strong> ומלא:</p>
+
+        <table>
+            <tr>
+                <th>שדה</th>
+                <th>מה להכניס</th>
+            </tr>
+            <tr>
+                <td>📮 כתובת מייל לקבלת התראות</td>
+                <td>כתובת ה-Gmail שלך</td>
+            </tr>
+            <tr>
+                <td>Public Key</td>
+                <td>מה שהעתקת בשלב 4</td>
+            </tr>
+            <tr>
+                <td>Service ID</td>
+                <td>מה שהעתקת בשלב 2</td>
+            </tr>
+            <tr>
+                <td>Template ID</td>
+                <td>מה שהעתקת בשלב 3</td>
+            </tr>
+        </table>
+
+        <p style="margin-top:16px;">לחץ <strong>💾 שמור הגדרות</strong> — וזהו, המיילים יתחילו להגיע אוטומטית!</p>
+    </div>
+
+    <div class="note">
+        <strong>⚠️ שים לב:</strong> כתובת הנמען היא ה-Gmail שחיברת בשלב 2.
+        אם תרצה לשנות את הכתובת בעתיד — חבר שירות Gmail חדש וערוך את שדה <strong>To Email</strong> בתבנית.<br><br>
+        <strong>📊 מגבלת EmailJS חינמי:</strong> 200 מיילים בחודש — מספיק לבית ספר רגיל.
+    </div>
+
+</div>
+</body>
+</html>

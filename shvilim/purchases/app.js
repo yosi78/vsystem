@@ -1245,7 +1245,12 @@ async function saveEmailSettings() {
 
 async function sendOrderEmail(orderData, orderId) {
     try {
-        if (!appSettings.adminEmail || !appSettings.emailjsPublicKey ||
+        // וודא שההגדרות נטענו (חשוב כשמורה שולח מהר אחרי טעינה)
+        if (!appSettings.emailjsPublicKey) {
+            await loadSettings();
+        }
+
+        if (!appSettings.emailjsPublicKey ||
             !appSettings.emailjsServiceId || !appSettings.emailjsTemplateId) {
             console.log('Email settings not configured - skipping notification');
             return;
@@ -1263,15 +1268,13 @@ async function sendOrderEmail(orderData, orderId) {
             appSettings.emailjsServiceId,
             appSettings.emailjsTemplateId,
             {
-                to_email: appSettings.adminEmail,
-                teacher_name: orderData.teacherName,
-                order_class: orderData.class,
-                order_date: new Date().toLocaleDateString('he-IL'),
-                items_list: itemsList,
-                order_id: orderId.substring(0, 20)
+                teacher: orderData.teacherName,
+                kita: orderData.class,
+                date: new Date().toLocaleDateString('he-IL'),
+                items: itemsList
             }
         );
-        console.log('✓ Email notification sent to', appSettings.adminEmail);
+        console.log('✓ Email notification sent');
     } catch (error) {
         console.error('Email send error (non-critical):', error);
     }
