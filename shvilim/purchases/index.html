@@ -109,6 +109,8 @@
                     <button class="tab-btn" onclick="switchAdminTab('export', this)">ייצוא למסמך</button>
                     <button class="tab-btn" onclick="switchAdminTab('receiving', this)">קליטת ציוד</button>
                     <button class="tab-btn" onclick="switchAdminTab('itemsManagement', this)">⚙️ ניהול ציוד</button>
+                    <button class="tab-btn" onclick="switchAdminTab('archive', this)">📦 ארכיון</button>
+                    <button class="tab-btn" onclick="switchAdminTab('settings', this)">🔔 הגדרות</button>
                 </div>
 
                 <!-- טאב כל ההזמנות -->
@@ -175,9 +177,82 @@
                     <h4>רשימת הציוד הנוכחית:</h4>
                     <div id="itemsList" class="items-management-list"></div>
                 </div>
+
+                <!-- טאב ארכיון -->
+                <div id="archiveTab" class="tab-content">
+                    <h3>📦 הזמנות ישנות - ארכיון</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <select id="archiveStatusFilter" onchange="filterArchivedOrders()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+                            <option value="">הכל</option>
+                            <option value="distributed">חולקו</option>
+                            <option value="rejected">נדחו</option>
+                            <option value="received">התקבלו</option>
+                        </select>
+                        <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;" onclick="exportArchivedOrders()">📊 ייצוא ארכיון</button>
+                    </div>
+                    <div id="archivedOrdersList" class="orders-list">
+                        <p class="placeholder">אין הזמנות בארכיון</p>
+                    </div>
+                </div>
+
+                <!-- טאב הגדרות -->
+                <div id="settingsTab" class="tab-content">
+                    <h3>🔔 הגדרות מייל</h3>
+
+                    <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--medium-gray); margin-bottom: 20px;">
+                        <p style="color: var(--dark-gray); font-size: 0.9rem; margin-bottom: 20px;">
+                            כאשר מורה שולח הזמנה חדשה, תישלח התראה לכתובת המייל שתוגדר כאן.
+                        </p>
+
+                        <div class="form-group">
+                            <label for="settingsAdminEmail">📮 כתובת מייל לקבלת התראות:</label>
+                            <input type="email" id="settingsAdminEmail" placeholder="admin@school.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="settingsEmailjsPublicKey">EmailJS - Public Key:</label>
+                            <input type="text" id="settingsEmailjsPublicKey" placeholder="xxxxxxxxxxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="settingsEmailjsServiceId">EmailJS - Service ID:</label>
+                            <input type="text" id="settingsEmailjsServiceId" placeholder="service_xxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="settingsEmailjsTemplateId">EmailJS - Template ID:</label>
+                            <input type="text" id="settingsEmailjsTemplateId" placeholder="template_xxxxxxx">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveEmailSettings()">💾 שמור הגדרות</button>
+                    </div>
+
+                    <div style="background: #f0f7ff; padding: 20px; border-radius: 10px; border: 1px solid #c3e0ff;">
+                        <h4 style="margin-bottom: 12px; color: var(--secondary);">📋 הוראות הגדרת EmailJS (חינמי)</h4>
+                        <ol style="line-height: 2.2; font-size: 0.9rem; padding-right: 20px;">
+                            <li>כנס לאתר <strong>emailjs.com</strong> וצור חשבון חינמי</li>
+                            <li>לחץ <strong>"Add New Service"</strong> → בחר Gmail → אשר גישה → העתק <strong>Service ID</strong></li>
+                            <li>לחץ <strong>"Email Templates"</strong> → <strong>"Create New Template"</strong></li>
+                            <li>בשדה <strong>To Email</strong> רשום: <code>{{to_email}}</code></li>
+                            <li>בשדה <strong>Subject</strong> רשום: <code>הזמנה חדשה - {{teacher_name}}</code></li>
+                            <li>בגוף המייל רשום:
+                                <code style="display:block; background:#fff; padding:8px; border-radius:4px; margin-top:5px; line-height:1.8; direction:ltr; text-align:left; font-size:0.85rem;">
+                                    מורה: {{teacher_name}}<br>
+                                    כיתה: {{order_class}}<br>
+                                    תאריך: {{order_date}}<br>
+                                    <br>
+                                    פריטים שהוזמנו:<br>
+                                    {{items_list}}
+                                </code>
+                            </li>
+                            <li>שמור → העתק <strong>Template ID</strong></li>
+                            <li>לחץ <strong>Account</strong> → <strong>General</strong> → העתק <strong>Public Key</strong></li>
+                        </ol>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

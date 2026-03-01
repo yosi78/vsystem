@@ -11,6 +11,8 @@ let userSessionId = null;
 let db = null;
 let firebaseConnected = false;
 let orderJustSubmitted = false; // משתנה לזכור שהזמנה בדיוק נשלחה
+let appSettings = {};
+let archivedOrders = [];
 
 // ===============================================
 // INITIALIZATION
@@ -33,7 +35,8 @@ function initializeApp() {
         updateConnectionStatus();
     }
 
-    // טען את רשימת הציוד מ-localStorage
+    // טען הגדרות (מייל) ורשימת ציוד
+    loadSettings();
     loadItemsFromStorage();
 
     // בדוק אם יש משתמש בסשן
@@ -77,7 +80,7 @@ async function loadTeacherOrders(userId) {
         if (snapshot.exists()) {
             const data = snapshot.val();
             currentUserOrders = Object.keys(data)
-                .filter(id => data[id] && data[id].userId === userId)
+                .filter(id => data[id] && data[id].userId === userId && data[id].status !== 'archived')
                 .map(id => ({
                     id,
                     ...data[id]
@@ -99,6 +102,7 @@ async function loadTeacherOrders(userId) {
 
 async function loadAllOrders() {
     try {
+        await loadSettings();
         const database = firebase.database();
         const snapshot = await database.ref('orders').once('value');
 
@@ -109,6 +113,7 @@ async function loadAllOrders() {
                     id,
                     ...data[id]
                 }))
+                .filter(o => o.status !== 'archived')
                 .sort((a, b) => {
                     const dateA = new Date(a.createdAt);
                     const dateB = new Date(b.createdAt);
@@ -281,7 +286,7 @@ function switchTab(tabName, button) {
 }
 
 function switchAdminTab(tabName, button) {
-    document.querySelectorAll('#allOrdersTab, #exportTab, #receivingTab, #itemsManagementTab').forEach(tab => {
+    document.querySelectorAll('#allOrdersTab, #exportTab, #receivingTab, #itemsManagementTab, #archiveTab, #settingsTab').forEach(tab => {
         tab.classList.remove('active');
     });
     document.querySelectorAll('.navbar + .container .tab-btn').forEach(btn => {
@@ -312,6 +317,10 @@ function switchAdminTab(tabName, button) {
                 btn.classList.add('active');
             } else if (btn.textContent.includes('ניהול') && tabName === 'itemsManagement') {
                 btn.classList.add('active');
+            } else if (btn.textContent.includes('ארכיון') && tabName === 'archive') {
+                btn.classList.add('active');
+            } else if (btn.textContent.includes('הגדרות') && tabName === 'settings') {
+                btn.classList.add('active');
             }
         });
     }
@@ -319,6 +328,12 @@ function switchAdminTab(tabName, button) {
     // אם זה טאב ניהול ציוד, טען את הרשימה
     if (tabName === 'itemsManagement') {
         displayItemsList();
+    }
+    if (tabName === 'archive') {
+        loadArchivedOrders();
+    }
+    if (tabName === 'settings') {
+        loadSettingsForm();
     }
 }
 
@@ -474,7 +489,8 @@ async function submitOrder(e) {
         };
 
         const orderId = await saveOrder(orderData);
-        
+        sendOrderEmail(orderData, orderId);
+
         // הגדר שהזמנה בדיוק נשלחה
         orderJustSubmitted = true;
         
@@ -724,6 +740,9 @@ function displayAdminOrders() {
                 ${order.status === 'received' ? `
                     <button class="btn btn-secondary" onclick="updateStatusOrder('${order.id}', 'distributed')">✓ חילקתי</button>
                 ` : ''}
+                ${(order.status === 'distributed' || order.status === 'rejected') ? `
+                    <button class="btn btn-archive" onclick="archiveOrder('${order.id}')">📦 ארכיון</button>
+                ` : ''}
             </div>
         </div>
     `).join('');
@@ -788,6 +807,9 @@ function filterOrdersByStatus() {
                 ` : ''}
                 ${order.status === 'received' ? `
                     <button class="btn btn-secondary" onclick="updateStatusOrder('${order.id}', 'distributed')">✓ חילקתי</button>
+                ` : ''}
+                ${(order.status === 'distributed' || order.status === 'rejected') ? `
+                    <button class="btn btn-archive" onclick="archiveOrder('${order.id}')">📦 ארכיון</button>
                 ` : ''}
             </div>
         </div>
@@ -1101,7 +1123,8 @@ function getStatusText(status) {
         'ordered': 'הוזמן מהספק',
         'received': 'התקבל ✓',
         'distributed': 'חולק ✓',
-        'rejected': 'נדחה ✕'
+        'rejected': 'נדחה ✕',
+        'archived': 'בארכיון'
     };
     return statusMap[status] || status;
 }
@@ -1157,4 +1180,206 @@ function updateConnectionStatus() {
             statusEl.style.opacity = '0.7';
         }
     }
+}
+
+// ===============================================
+// SETTINGS & EMAIL FUNCTIONS
+// ===============================================
+
+async function loadSettings() {
+    try {
+        const database = firebase.database();
+        const snapshot = await database.ref('settings').once('value');
+        if (snapshot.exists()) {
+            appSettings = snapshot.val();
+            if (appSettings.emailjsPublicKey && typeof emailjs !== 'undefined') {
+                emailjs.init(appSettings.emailjsPublicKey);
+            }
+        }
+        return appSettings;
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        return {};
+    }
+}
+
+function loadSettingsForm() {
+    const fields = {
+        'settingsAdminEmail': 'adminEmail',
+        'settingsEmailjsPublicKey': 'emailjsPublicKey',
+        'settingsEmailjsServiceId': 'emailjsServiceId',
+        'settingsEmailjsTemplateId': 'emailjsTemplateId'
+    };
+    Object.entries(fields).forEach(([fieldId, settingKey]) => {
+        const el = document.getElementById(fieldId);
+        if (el && appSettings[settingKey]) {
+            el.value = appSettings[settingKey];
+        }
+    });
+}
+
+async function saveEmailSettings() {
+    const adminEmail = document.getElementById('settingsAdminEmail').value.trim();
+    const publicKey = document.getElementById('settingsEmailjsPublicKey').value.trim();
+    const serviceId = document.getElementById('settingsEmailjsServiceId').value.trim();
+    const templateId = document.getElementById('settingsEmailjsTemplateId').value.trim();
+
+    if (!adminEmail) {
+        alert('הזן כתובת מייל');
+        return;
+    }
+
+    try {
+        const database = firebase.database();
+        const newSettings = { adminEmail, emailjsPublicKey: publicKey, emailjsServiceId: serviceId, emailjsTemplateId: templateId };
+        await database.ref('settings').set(newSettings);
+        appSettings = newSettings;
+        if (publicKey && typeof emailjs !== 'undefined') {
+            emailjs.init(publicKey);
+        }
+        alert('✓ ההגדרות נשמרו בהצלחה');
+    } catch (error) {
+        alert('שגיאה בשמירת ההגדרות: ' + error.message);
+    }
+}
+
+async function sendOrderEmail(orderData, orderId) {
+    try {
+        if (!appSettings.adminEmail || !appSettings.emailjsPublicKey ||
+            !appSettings.emailjsServiceId || !appSettings.emailjsTemplateId) {
+            console.log('Email settings not configured - skipping notification');
+            return;
+        }
+        if (typeof emailjs === 'undefined') {
+            console.log('EmailJS not loaded');
+            return;
+        }
+
+        const itemsList = orderData.items
+            .map(item => `• ${item.name}: ${item.quantity}`)
+            .join('\n');
+
+        await emailjs.send(
+            appSettings.emailjsServiceId,
+            appSettings.emailjsTemplateId,
+            {
+                to_email: appSettings.adminEmail,
+                teacher_name: orderData.teacherName,
+                order_class: orderData.class,
+                order_date: new Date().toLocaleDateString('he-IL'),
+                items_list: itemsList,
+                order_id: orderId.substring(0, 20)
+            }
+        );
+        console.log('✓ Email notification sent to', appSettings.adminEmail);
+    } catch (error) {
+        console.error('Email send error (non-critical):', error);
+    }
+}
+
+// ===============================================
+// ARCHIVE FUNCTIONS
+// ===============================================
+
+async function archiveOrder(orderId) {
+    const order = currentOrders.find(o => o.id === orderId);
+    if (!order) return;
+
+    if (confirm('להעביר הזמנה זו לארכיון?\nהיא לא תופיע ברשימה הראשית אך תהיה זמינה בטאב הארכיון.')) {
+        try {
+            const database = firebase.database();
+            await database.ref('orders/' + orderId).update({
+                originalStatus: order.status,
+                status: 'archived',
+                archivedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            loadAllOrders();
+            showMessage('ההזמנה הועברה לארכיון בהצלחה', 'success');
+        } catch (error) {
+            showMessage('שגיאה בהעברה לארכיון', 'error');
+        }
+    }
+}
+
+async function loadArchivedOrders() {
+    try {
+        const database = firebase.database();
+        const snapshot = await database.ref('orders').once('value');
+
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            archivedOrders = Object.keys(data)
+                .map(id => ({ id, ...data[id] }))
+                .filter(o => o.status === 'archived')
+                .sort((a, b) => {
+                    const dateA = new Date(a.archivedAt || a.updatedAt);
+                    const dateB = new Date(b.archivedAt || b.updatedAt);
+                    return dateB - dateA;
+                });
+        } else {
+            archivedOrders = [];
+        }
+
+        displayArchivedOrders(archivedOrders);
+    } catch (error) {
+        console.error('Error loading archived orders:', error);
+    }
+}
+
+function displayArchivedOrders(list) {
+    const container = document.getElementById('archivedOrdersList');
+
+    if (!list || list.length === 0) {
+        container.innerHTML = '<p class="placeholder">אין הזמנות בארכיון</p>';
+        return;
+    }
+
+    container.innerHTML = list.map(order => `
+        <div class="order-card archived">
+            <div class="order-header">
+                <div>
+                    <div class="order-title">הזמנה מ- ${order.teacherName}</div>
+                    <div class="order-details">
+                        <p>כיתה: ${order.class}</p>
+                        <p>תאריך הזמנה: ${formatDate(order.createdAt)}</p>
+                        <p>הועבר לארכיון: ${formatDate(order.archivedAt || order.updatedAt)}</p>
+                    </div>
+                </div>
+                <span class="order-status status-${order.originalStatus || 'distributed'}">${getStatusText(order.originalStatus || 'distributed')}</span>
+            </div>
+            <div class="order-items">
+                ${order.items.map(item => `
+                    <div class="order-item">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-quantity">כמות: ${item.quantity}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterArchivedOrders() {
+    const status = document.getElementById('archiveStatusFilter').value;
+    const filtered = status
+        ? archivedOrders.filter(o => o.originalStatus === status)
+        : archivedOrders;
+    displayArchivedOrders(filtered);
+}
+
+function exportArchivedOrders() {
+    if (archivedOrders.length === 0) {
+        alert('אין הזמנות בארכיון לייצוא');
+        return;
+    }
+
+    let csv = '\uFEFFמורה,כיתה,תאריך הזמנה,תאריך ארכיון,סטטוס מקורי,פריטים\n';
+    archivedOrders.forEach(order => {
+        const items = order.items.map(i => `${i.name}(${i.quantity})`).join('; ');
+        const origStatus = getStatusText(order.originalStatus || 'distributed');
+        csv += `"${order.teacherName}","${order.class}","${formatDate(order.createdAt)}","${formatDate(order.archivedAt || order.updatedAt)}","${origStatus}","${items}"\n`;
+    });
+
+    downloadFile(csv, 'ארכיון_הזמנות.csv', 'text/csv;charset=utf-8;');
 }

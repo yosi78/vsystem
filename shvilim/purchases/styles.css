@@ -353,6 +353,31 @@ body {
     color: #1B5E20;
 }
 
+.status-rejected {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.status-archived {
+    background-color: #ECEFF1;
+    color: #546E7A;
+}
+
+.order-card.archived {
+    opacity: 0.75;
+    border-right-color: #90A4AE;
+}
+
+.btn-archive {
+    background-color: #78909C;
+    color: white;
+}
+
+.btn-archive:hover {
+    background-color: #546E7A;
+    transform: translateY(-2px);
+}
+
 .order-details {
     font-size: 0.9rem;
     color: #666;
