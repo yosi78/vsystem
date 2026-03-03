@@ -379,6 +379,12 @@ async function init() {
       document.getElementById('pick-error').textContent = '⚠️ אין הגדרות משחק. בקש/י מהמורה להפעיל את המשחק.';
       return;
     }
+    // Auto-select player from URL param (used by admin "שחק בשמו/ה")
+    const autoName = new URLSearchParams(location.search).get('as');
+    if (autoName && toArr(CONFIG.players).some(p => p.name === autoName)) {
+      selectPlayer(autoName);
+      return;
+    }
     buildPickScreen();
   } catch(e) {
     document.getElementById('pick-error').textContent = '⚠️ שגיאה בטעינה. בדוק/י חיבור לאינטרנט.';

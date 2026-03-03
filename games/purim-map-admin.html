@@ -103,6 +103,12 @@
       border-radius:10px; padding:11px 16px; font-size:.9rem; color:#FDE68A;
       word-break:break-all; margin-top:8px; }
     #setup-loading { text-align:center; padding:16px 0; color:#A5B4FC; font-size:1rem; }
+    .btn-admin-act { padding:5px 14px; border-radius:8px; font-size:.82rem; font-weight:700; border:none;
+      background:rgba(165,180,252,.2); border:1px solid rgba(165,180,252,.4); color:#C4B5FD;
+      cursor:pointer; transition:.15s; }
+    .btn-admin-act:hover { background:rgba(165,180,252,.35); }
+    .btn-skip { background:rgba(251,191,36,.15); border-color:rgba(251,191,36,.4); color:#FDE68A; margin-right:6px; }
+    .btn-skip:hover { background:rgba(251,191,36,.3); }
     @media(max-width:720px) { .setup-cols { grid-template-columns:1fr; } .actions { flex-direction:column; align-items:center; } }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -334,21 +340,37 @@ async function resetGame() {
 
 /* ===== LIVE STATUS ===== */
 const ZL = { A:'🔴', B:'🟢', mixed:'🥇' };
+let liveState = null;
+
+function getAllowedZones(zone) {
+  if (zone === 'A') return ['A'];
+  if (zone === 'B') return ['B'];
+  return ['A','B','mixed'];
+}
 
 function watchStatus() {
   db.ref('purim/mapState').on('value', snap => {
-    const s    = snap.val();
+    liveState  = snap.val();
+    const s    = liveState;
     const body = document.getElementById('status-body');
     if (!s) {
       body.innerHTML = '<div class="sp-row" style="text-align:center;color:#6B7280">אין משחק פעיל</div>';
       return;
     }
-    const played  = Object.keys(s.played || {});
-    const results = toArr(s.results);
+    const played    = Object.keys(s.played || {});
+    const results   = toArr(s.results);
+    const isActive  = s.status === 'playing';
     const statusTxt = s.status === 'gameover' ? '✅ הסתיים' : '🟢 פעיל';
     body.innerHTML = `
       <div class="sp-row">סטטוס: <span class="sp-val">${statusTxt}</span></div>
-      <div class="sp-row">תורו של: <span class="sp-val">${s.curPlayer||'—'}</span></div>
+      <div class="sp-row">
+        תורו של: <span class="sp-val">${s.curPlayer||'—'}</span>
+        ${isActive ? `
+          <span style="margin-right:12px">
+            <button class="btn-admin-act" onclick="playAs()">▶ שחק בשמו/ה</button>
+            <button class="btn-admin-act btn-skip" onclick="skipTurn()">⏭ דלג תור</button>
+          </span>` : ''}
+      </div>
       <div class="sp-row">שיחקו (${played.length}): <span class="sp-val">${played.join(', ')||'טרם שיחק אף אחד'}</span></div>
       ${results.length ? `
         <div class="sp-row" style="font-weight:700;color:var(--gold);margin-top:6px">תוצאות (${results.length}):</div>
@@ -359,6 +381,70 @@ function watchStatus() {
           <span style="font-weight:700;color:#4ADE80">${r.to}</span>
         </div>`).join('')}` : ''}`;
   });
+}
+
+/* ===== ADMIN ACTIONS ===== */
+
+function playAs() {
+  if (!liveState || liveState.status !== 'playing') return;
+  const gameUrl = document.getElementById('game-url').textContent.trim();
+  window.open(`${gameUrl}?as=${encodeURIComponent(liveState.curPlayer)}`, '_blank');
+}
+
+async function skipTurn() {
+  if (!liveState || liveState.status !== 'playing') return;
+  const s = liveState;
+
+  const cfgSnap = await db.ref('purim/mapConfig').get();
+  const cfg     = cfgSnap.val();
+  if (!cfg) return;
+
+  const players = toArr(cfg.players);
+  const cp      = players.find(p => p.name === s.curPlayer);
+  if (!cp) return;
+
+  // Random unused task
+  const usedT     = new Set(Object.keys(s.usedTasks || {}).map(Number));
+  const freeTasks = Array.from({length:25}, (_,i) => i).filter(i => !usedT.has(i));
+  if (!freeTasks.length) { alert('אין משימות פנויות!'); return; }
+  const taskIdx = freeTasks[Math.floor(Math.random() * freeTasks.length)];
+
+  // Random unused name card in allowed piles (not self)
+  const allowed = getAllowedZones(cp.zone);
+  const options = [];
+  for (const z of allowed) {
+    toArr(s.piles?.[z]).forEach((card, idx) => {
+      if (!card.used && card.name !== cp.name) options.push({ z, idx, name: card.name });
+    });
+  }
+  if (!options.length) { alert('אין קלפי שם פנויים!'); return; }
+  const pick = options[Math.floor(Math.random() * options.length)];
+
+  const results = toArr(s.results);
+  const played  = new Set(Object.keys(s.played || {}));
+  played.add(cp.name);
+
+  const updates = {
+    [`usedTasks/${taskIdx}`]: true,
+    [`piles/${pick.z}/${pick.idx}/used`]: true,
+    [`results/${results.length}`]: {
+      player: cp.name, playerZone: cp.zone,
+      to: pick.name, pile: pick.z, pileIdx: pick.idx, taskIdx,
+    },
+    [`played/${cp.name}`]: true,
+    phase: 'task', selTask: -1, nextPlayer: '',
+  };
+
+  if (played.size >= players.length) {
+    updates.status = 'gameover';
+  } else {
+    const nextP = !played.has(pick.name)
+      ? pick.name
+      : players.find(p => !played.has(p.name))?.name ?? '';
+    updates.curPlayer = nextP;
+  }
+
+  await db.ref('purim/mapState').update(updates);
 }
 
 buildSetup();
