@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔧 הגדרות – מפת ההפתעות של פורים</title>
+  <style>
+    :root { --gold:#F59E0B; --dgold:#D97706; --red-z:#F87171; --grn-z:#34D399; --yel-z:#FBBF24; }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh;
+      background:radial-gradient(ellipse at top,#0F172A 0%,#1E1B4B 45%,#07050E 100%);
+      direction:rtl; color:#fff; padding-bottom:50px; }
+    button { cursor:pointer; font-family:inherit; }
+    input,textarea,select { font-family:inherit; direction:rtl; }
+
+    .page { max-width:1060px; margin:0 auto; padding:26px 20px; }
+    .hdr  { text-align:center; margin-bottom:22px; }
+    .hdr-title { font-size:clamp(1.6rem,4vw,2.4rem); font-weight:900; color:var(--gold);
+      text-shadow:0 0 24px rgba(245,158,11,.45); }
+    .hdr-sub { margin-top:6px; font-size:1rem; color:#C4B5FD; }
+
+    /* zone labels */
+    .zone-row { display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+      border-radius:14px; padding:13px 18px; margin-bottom:16px; }
+    .zone-row label { font-size:.9rem; color:#A5B4FC; font-weight:600; }
+    .zone-inp { width:150px; padding:6px 11px; background:rgba(255,255,255,.1);
+      border:1.5px solid rgba(255,255,255,.2); border-radius:8px; color:#fff; font-size:.9rem; }
+    .zone-inp:focus { outline:none; border-color:var(--gold); }
+    .zone-fixed { display:inline-flex; align-items:center; gap:6px;
+      background:rgba(120,53,15,.3); border:1px solid var(--yel-z); border-radius:8px;
+      padding:6px 14px; font-size:.9rem; font-weight:600; color:#FDE68A; }
+
+    /* two-col layout */
+    .setup-cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    .panel { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+      border-radius:20px; padding:18px 16px; }
+    .panel-title { text-align:center; font-size:1.05rem; font-weight:700; color:var(--gold);
+      margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.12); }
+
+    /* player rows */
+    .pr { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .pr-num { font-size:.78rem; color:var(--gold); font-weight:700; width:20px; text-align:left; flex-shrink:0; }
+    .name-inp { flex:1; padding:6px 10px; background:rgba(255,255,255,.1);
+      border:1.5px solid rgba(255,255,255,.2); border-radius:8px; color:#fff; font-size:.85rem; }
+    .name-inp:focus { outline:none; border-color:var(--gold); }
+    .name-inp::placeholder { color:rgba(255,255,255,.35); }
+    .zone-sel { padding:6px 8px; background:rgba(255,255,255,.1);
+      border:1.5px solid rgba(255,255,255,.2); border-radius:8px; color:#fff;
+      font-size:.82rem; width:105px; flex-shrink:0; }
+    .zone-sel:focus { outline:none; border-color:var(--gold); }
+    .zone-sel option { background:#1E1B4B; }
+    .add-btn { display:block; width:100%; margin-top:8px; padding:7px;
+      background:rgba(255,255,255,.06); border:1.5px dashed rgba(255,255,255,.25);
+      border-radius:8px; color:#A5B4FC; font-size:.85rem; font-weight:600; transition:.2s; }
+    .add-btn:hover:not(:disabled) { background:rgba(255,255,255,.12); border-color:var(--gold); color:var(--gold); }
+    .add-btn:disabled { opacity:.35; cursor:default; }
+
+    /* tasks */
+    .tasks-scroll { max-height:540px; overflow-y:auto; padding-left:3px; }
+    .tasks-scroll::-webkit-scrollbar { width:5px; }
+    .tasks-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); border-radius:4px; }
+    .tr2 { display:flex; align-items:flex-start; gap:7px; margin-bottom:6px; }
+    .tr2-ic { font-size:1.2rem; width:26px; text-align:center; padding-top:5px; flex-shrink:0; }
+    .tr2-num { font-size:.72rem; color:var(--gold); font-weight:700; width:20px; padding-top:8px; flex-shrink:0; text-align:left; }
+    .task-inp { flex:1; padding:5px 10px; background:rgba(255,255,255,.1);
+      border:1.5px solid rgba(255,255,255,.2); border-radius:8px; color:#fff;
+      font-size:.78rem; line-height:1.4; resize:vertical; min-height:38px; }
+    .task-inp:focus { outline:none; border-color:var(--gold); }
+
+    /* action buttons */
+    .actions { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:26px; }
+    .btn-save  { padding:12px 28px; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.25);
+      border-radius:12px; color:#C4B5FD; font-size:1rem; font-weight:700; transition:.2s; }
+    .btn-save:hover { background:rgba(255,255,255,.18); }
+    .btn-start { padding:14px 44px; background:linear-gradient(135deg,var(--gold),var(--dgold));
+      color:#1C0800; font-size:1.2rem; font-weight:800; border:none; border-radius:14px;
+      box-shadow:0 6px 22px rgba(245,158,11,.45); transition:.15s; }
+    .btn-start:hover { transform:translateY(-2px); }
+    .btn-reset { padding:12px 24px; background:rgba(239,68,68,.15);
+      border:1.5px solid rgba(239,68,68,.4); border-radius:12px; color:#FCA5A5;
+      font-size:1rem; font-weight:700; transition:.2s; }
+    .btn-reset:hover { background:rgba(239,68,68,.25); }
+
+    /* status panel */
+    .status-panel { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+      border-radius:20px; padding:20px; margin-bottom:20px; }
+    .sp-title { text-align:center; font-size:1.05rem; font-weight:700; color:var(--gold);
+      margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.12); }
+    .sp-row { font-size:.92rem; color:#A5B4FC; padding:7px 0;
+      border-bottom:1px solid rgba(255,255,255,.06); }
+    .sp-row:last-child { border-bottom:none; }
+    .sp-val { color:#fff; font-weight:700; }
+    .res-row { display:flex; align-items:center; gap:7px; padding:6px 4px;
+      border-bottom:1px solid rgba(255,255,255,.05); font-size:.88rem; }
+    .zb { padding:2px 8px; border-radius:6px; font-size:.75rem; font-weight:700; }
+    .zb-A { background:rgba(159,18,18,.4); border:1px solid var(--red-z); color:#FCA5A5; }
+    .zb-B { background:rgba(6,78,59,.4); border:1px solid var(--grn-z); color:#6EE7B7; }
+    .zb-mixed { background:rgba(120,53,15,.4); border:1px solid var(--yel-z); color:#FDE68A; }
+
+    /* link box */
+    .link-box { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2);
+      border-radius:10px; padding:11px 16px; font-size:.9rem; color:#FDE68A;
+      word-break:break-all; margin-top:8px; }
+    #setup-loading { text-align:center; padding:16px 0; color:#A5B4FC; font-size:1rem; }
+    @media(max-width:720px) { .setup-cols { grid-template-columns:1fr; } .actions { flex-direction:column; align-items:center; } }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <div class="hdr-title">🔧 הגדרות – מפת ההפתעות של פורים</div>
+    <div class="hdr-sub">הגדר שמות, אזורים ומשימות — ואז הפעל את המשחק לכיתה</div>
+  </div>
+
+  <div id="setup-loading">⏳ טוען נתונים שמורים...</div>
+
+  <div class="zone-row">
+    <span style="color:#A5B4FC;font-weight:700">שמות הקבוצות:</span>
+    <label>🔴 <input type="text" class="zone-inp" id="zl-A" placeholder="אזור א'" maxlength="20"></label>
+    <label>🟢 <input type="text" class="zone-inp" id="zl-B" placeholder="אזור ב'" maxlength="20"></label>
+    <span class="zone-fixed">🥇 משולב — קבוע</span>
+  </div>
+
+  <div class="setup-cols">
+    <div class="panel">
+      <div class="panel-title">👨‍👩‍👧‍👦 ילדים + שיוך קבוצה</div>
+      <div id="names-cont"></div>
+      <button class="add-btn" id="add-btn" onclick="addRow()">+ הוסף ילד</button>
+    </div>
+    <div class="panel">
+      <div class="panel-title">🎯 25 המשימות</div>
+      <div class="tasks-scroll" id="tasks-cont"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-save"  onclick="saveConfig()">💾 שמור הגדרות</button>
+    <button class="btn-start" onclick="startNewGame()">🗺️ התחל משחק חדש!</button>
+    <button class="btn-reset" onclick="resetGame()">🔄 איפוס משחק</button>
+  </div>
+
+  <div class="status-panel">
+    <div class="sp-title">📊 סטטוס המשחק הנוכחי</div>
+    <div id="status-body"><div class="sp-row" style="text-align:center;color:#6B7280">טוען...</div></div>
+  </div>
+
+  <div>
+    <div style="color:#A5B4FC;font-size:.9rem;font-weight:600;margin-bottom:6px">🔗 קישור למשחק לשלוח לילדים:</div>
+    <div class="link-box" id="game-url">—</div>
+  </div>
+
+</div>
+<script>
+/* ===== FIREBASE ===== */
+firebase.initializeApp({
+  apiKey:"AIzaSyCg4ma1a9ZzoXSRwqnWDmlsFqEYFhaIXSg",
+  authDomain:"purim-116eb.firebaseapp.com",
+  databaseURL:"https://purim-116eb-default-rtdb.firebaseio.com",
+  projectId:"purim-116eb",
+  storageBucket:"purim-116eb.firebasestorage.app",
+  messagingSenderId:"818321822822",
+  appId:"1:818321822822:web:9bdcdb131fdf21a63409a7"
+});
+const db = firebase.database();
+
+/* ===== DATA ===== */
+const T_ICONS = ['🎭','🎶','🥐','👑','🤡','📜','🍷','💰','🏛️','🐴','🌸','⭐','🎪','🃏','🎨','🎬','🎤','🪗','🥁','🎺','🪅','🎯','🔮','🌟','🎠'];
+const DEF_TASKS = [
+  'ספיד-פורים: להגיד "עדלאידע" 10 פעמים הכי מהר שאפשר בלי להתבלבל.',
+  'צייד הצבעים: למצוא בחדר חפץ בצבע ירוק (או כתום) ולהראות למצלמה תוך 10 שניות.',
+  'הצייר המהיר: לצייר אוזן המן על דף (בכל גודל) ולהראות למצלמה.',
+  'המלך אמר: לתת פקודה אחת לכל הילדים בזום (למשל: "כולם להרים ידיים!").',
+  'אימוג\'י אנושי: לבחור אימוג\'י (מחייך/בוכה/קורץ) ולעשות את אותו הפרצוף למצלמה.',
+  'תחפושת אקספרס: לשים על עצמך אביזר (כובע, משקפיים או צעיף) תוך 10 שניות.',
+  'פנטומימה: לשיר את "חג פורים" רק בתנועות ידיים (בלי להוציא קול מהפה).',
+  'הבלש: להביא למצלמה חפץ שמתחיל באות הראשונה של השם שלך.',
+  'לב וירטואלי: לעשות סימן של "לב" עם הידיים לכל הקבוצה מול המצלמה.',
+  'משימת הגרביים: להראות למצלמה רק את הגרביים שלך (בלי הפנים).',
+  'הרובוט: להגיד "משלוח המנות שלי בדרך אליך" בקול של רובוט.',
+  'שיווי משקל: לעמוד על רגל אחת ולספור עד 10 בלי ליפול.',
+  'השופט: לבחור רקע של ילד אחר בזום ולהגיד עליו משהו נחמד.',
+  'הצייר באוויר: לצייר עם האצבע באוויר צורה של כתר או כוכב.',
+  'הפילטר האנושי: להתקרב מאוד למצלמה שיראו רק את האף, ואז להתרחק חזרה.',
+  'קריין החדשות: להקריא את שמות 3 ילדים מהמסך בטון רציני מאוד.',
+  'מבקר המסעדות: להגיד מה המילוי הכי טעים לאוזן המן לדעתך.',
+  'פסל סביבתי: להפוך לפסל של אוזן המן קפואה למשך 15 שניות.',
+  'המדבב השקט: לעשות עם השפתיים תנועה של מילה (למשל "רעשן") בלי קול, ומישהו צריך לנחש.',
+  'משימת הכרית: להביא כרית ולהחזיק אותה כמו "מגן" של גיבור על.',
+  'ספורטאי פורים: לעשות 5 קפיצות "כוכב" (ידיים ורגליים לצדדים) מול המצלמה.',
+  'סיפור ב-3 מילים: לספר סיפור על פורים שמשתמש ב-3 מילים בדיוק (למשל: "המן הרשע נפל").',
+  'ברכה מהירה: לתת ברכה של 2 מילים בדיוק לילד שיצא לך בהגרלה (למשל: "חג שמח!").',
+  'שיר הפתיחה: לשיר את השורה הראשונה של שיר פורים שאתה מכיר.',
+  'הכוכב: לעמוד וליצור צורת כוכב עם הגוף כולו – ידיים ורגליים פרושים – ולהחזיק 5 שניות.',
+];
+
+/* ===== SETUP ===== */
+let totalRows = 0;
+const MAX = 30;
+
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+function toArr(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  return Object.entries(v).sort(([a],[b]) => Number(a)-Number(b)).map(([,x])=>x);
+}
+
+async function buildSetup() {
+  // Build 25 task inputs
+  const tc = document.getElementById('tasks-cont');
+  for (let i = 0; i < 25; i++) {
+    const d = document.createElement('div'); d.className = 'tr2';
+    d.innerHTML = `<span class="tr2-ic">${T_ICONS[i]}</span><span class="tr2-num">${i+1}.</span>
+      <textarea class="task-inp" id="t${i}" rows="1">${DEF_TASKS[i]}</textarea>`;
+    tc.appendChild(d);
+  }
+
+  try {
+    const snap = await db.ref('purim/mapConfig').get();
+    const cfg  = snap.val() || {};
+    document.getElementById('setup-loading').style.display = 'none';
+
+    if (cfg.zoneLabels?.A) document.getElementById('zl-A').value = cfg.zoneLabels.A;
+    if (cfg.zoneLabels?.B) document.getElementById('zl-B').value = cfg.zoneLabels.B;
+
+    const players = toArr(cfg.players);
+    const count   = Math.min(Math.max(12, players.length), MAX);
+    for (let i = 0; i < count; i++) addRow(true);
+    players.forEach((p, i) => {
+      const ne = document.getElementById('n'+i), ze = document.getElementById('z'+i);
+      if (ne) ne.value = p.name||'';
+      if (ze && ['A','B','mixed'].includes(p.zone)) ze.value = p.zone;
+    });
+
+    toArr(cfg.tasks).forEach((text, i) => {
+      const el = document.getElementById('t'+i);
+      if (el && text) el.value = text;
+    });
+  } catch(e) {
+    document.getElementById('setup-loading').style.display = 'none';
+    for (let i = 0; i < 12; i++) addRow(true);
+  }
+
+  const dSave = debounce(saveConfig, 900);
+  document.getElementById('names-cont').addEventListener('input',  dSave);
+  document.getElementById('names-cont').addEventListener('change', dSave);
+  document.getElementById('tasks-cont').addEventListener('input',  dSave);
+  document.getElementById('zl-A').addEventListener('input', dSave);
+  document.getElementById('zl-B').addEventListener('input', dSave);
+
+  watchStatus();
+  document.getElementById('game-url').textContent =
+    window.location.href.replace('purim-map-admin.html','purim-map.html').replace('purim-map-admin','purim-map');
+}
+
+function addRow(silent=false) {
+  if (!silent && totalRows >= MAX) return;
+  const i = totalRows++;
+  const d = document.createElement('div'); d.className = 'pr';
+  d.innerHTML = `<span class="pr-num">${i+1}.</span>
+    <input type="text" class="name-inp" id="n${i}" placeholder="שם ${i+1}" maxlength="15">
+    <select class="zone-sel" id="z${i}">
+      <option value="A">🔴 אזור א'</option>
+      <option value="B">🟢 אזור ב'</option>
+      <option value="mixed" selected>🥇 משולב</option>
+    </select>`;
+  document.getElementById('names-cont').appendChild(d);
+  if (!silent) document.getElementById('n'+i).focus();
+  const btn = document.getElementById('add-btn');
+  if (btn) btn.disabled = (totalRows >= MAX);
+}
+
+function collectConfig() {
+  const players = [];
+  for (let i = 0; i < totalRows; i++) {
+    const name = document.getElementById('n'+i)?.value.trim();
+    const zone = document.getElementById('z'+i)?.value || 'mixed';
+    if (name) players.push({ name, zone });
+  }
+  const tasks = Array.from({length:25}, (_,i) =>
+    document.getElementById('t'+i)?.value.trim() || DEF_TASKS[i]);
+  const zoneLabels = {
+    A:     document.getElementById('zl-A').value.trim() || 'אזור א\'',
+    B:     document.getElementById('zl-B').value.trim() || 'אזור ב\'',
+    mixed: 'משולב',
+  };
+  return { players, tasks, zoneLabels };
+}
+
+async function saveConfig() {
+  await db.ref('purim/mapConfig').set(collectConfig());
+}
+
+function shuffle(a) {
+  for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+async function startNewGame() {
+  if (!confirm('להתחיל משחק חדש? המשחק הנוכחי יאופס.')) return;
+  await saveConfig();
+  const { players, tasks, zoneLabels } = collectConfig();
+  if (players.length < 2) { alert('נא להוסיף לפחות 2 ילדים!'); return; }
+
+  const rawPiles = { A:[], B:[], mixed:[] };
+  players.forEach(p => rawPiles[p.zone].push(p.name));
+  const piles = {};
+  for (const z of ['A','B','mixed']) {
+    piles[z] = {};
+    shuffle([...rawPiles[z]]).forEach((name,i) => { piles[z][i] = { name, used:false }; });
+  }
+
+  await db.ref('purim/mapState').set({
+    status:    'playing',
+    curPlayer: players[0].name,
+    phase:     'task',
+    selTask:   -1,
+    piles,
+    played:    {},
+    nextPlayer:'',
+    usedTasks: {},
+    results:   {},
+  });
+  alert('✅ המשחק התחיל! הילדים יכולים לפתוח את הקישור.');
+}
+
+async function resetGame() {
+  if (!confirm('לאפס את המשחק? כל ההתקדמות תימחק.')) return;
+  await db.ref('purim/mapState').remove();
+}
+
+/* ===== LIVE STATUS ===== */
+const ZL = { A:'🔴', B:'🟢', mixed:'🥇' };
+
+function watchStatus() {
+  db.ref('purim/mapState').on('value', snap => {
+    const s    = snap.val();
+    const body = document.getElementById('status-body');
+    if (!s) {
+      body.innerHTML = '<div class="sp-row" style="text-align:center;color:#6B7280">אין משחק פעיל</div>';
+      return;
+    }
+    const played  = Object.keys(s.played || {});
+    const results = toArr(s.results);
+    const statusTxt = s.status === 'gameover' ? '✅ הסתיים' : '🟢 פעיל';
+    body.innerHTML = `
+      <div class="sp-row">סטטוס: <span class="sp-val">${statusTxt}</span></div>
+      <div class="sp-row">תורו של: <span class="sp-val">${s.curPlayer||'—'}</span></div>
+      <div class="sp-row">שיחקו (${played.length}): <span class="sp-val">${played.join(', ')||'טרם שיחק אף אחד'}</span></div>
+      ${results.length ? `
+        <div class="sp-row" style="font-weight:700;color:var(--gold);margin-top:6px">תוצאות (${results.length}):</div>
+        ${results.map(r=>`<div class="res-row">
+          <span class="zb zb-${r.playerZone}">${ZL[r.playerZone]}</span>
+          <span style="font-weight:700">${r.player}</span>
+          <span style="color:var(--gold)">→</span>
+          <span style="font-weight:700;color:#4ADE80">${r.to}</span>
+        </div>`).join('')}` : ''}`;
+  });
+}
+
+buildSetup();
+</script>
+</body>
+</html>
