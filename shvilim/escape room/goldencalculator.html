@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חדר בריחה מתמטי - כיתה ד'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&family=Cousine&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #0f172a;
+            color: #e2e2e2;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            scroll-behavior: smooth;
+        }
+        .mystery-font {
+            font-family: 'Cousine', monospace;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .step-hidden { display: none; }
+        .success-glow { border-color: #4ade80; box-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+        .error-shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .math-display {
+            direction: ltr;
+            display: inline-block;
+        }
+        .task-description {
+            font-size: 1.25rem; 
+            line-height: 1.6;
+        }
+        .notebook-instruction {
+            font-size: 1.5rem; 
+        }
+        /* עיצוב הטיימר */
+        #timer-container {
+            position: sticky;
+            top: 1rem;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+        .timer-warning {
+            color: #ef4444;
+            animation: pulse-red 1s infinite;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 pb-20">
+
+    <!-- Timer UI -->
+    <div id="timer-container" class="w-full max-w-xs mb-4 step-hidden">
+        <div class="card border-yellow-500/50 rounded-2xl p-3 flex items-center justify-center space-x-4 space-x-reverse shadow-2xl bg-slate-900/90">
+            <img src="https://img.icons8.com/color/48/000000/alarm-clock.png" class="w-8 h-8" alt="[תמונה של שעון]">
+            <div class="text-center">
+                <p class="text-xs text-yellow-500 font-bold uppercase tracking-widest">זמן שנותר למשימה</p>
+                <p id="timer-display" class="text-3xl font-bold mystery-font">25:00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="text-center my-8">
+        <h1 class="text-4xl md:text-6xl font-bold text-yellow-500 mb-2 drop-shadow-lg">תעלומת מחשבון הזהב</h1>
+        <p class="text-xl text-blue-400">הסוכן "חשבוני" זקוק לעזרתכם!</p>
+    </header>
+
+    <main class="w-full max-w-2xl">
+        
+        <!-- Intro Section -->
+        <div id="intro" class="card p-8 rounded-3xl text-center border-yellow-500/30">
+            <div class="mb-6 relative">
+                <div class="absolute inset-0 bg-yellow-500/20 blur-3xl rounded-full"></div>
+                <img src="https://img.icons8.com/color/96/000000/detective.png" alt="[תמונה של בלש]" class="mx-auto relative z-10">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-yellow-500">דוח מודיעין סודי</h2>
+            <p class="task-description mb-6">
+                שלום לכם, בלשים. מישהו פרץ לכספת הראשית וגנב את <b>"מחשבון הזהב"</b>. 
+                הגנב השאיר אחריו רמזים שרק מומחים למתמטיקה יכולים לפענח. 
+                עליכם לעבור בין החדרים, לפתור את התרגילים ולהשיב את האבדה!
+                <br><br>
+                <span class="text-red-400 font-bold">שימו לב: יש לכם בדיוק 25 דקות לפני שהגנב נעלם לנצח!</span>
+            </p>
+            <button onclick="startGame()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-10 rounded-full transition-all hover:scale-105 shadow-[0_0_15px_rgba(202,138,4,0.5)]">
+                התחל במשימה
+            </button>
+        </div>
+
+        <!-- Task 1: Order of Operations -->
+        <div id="step1" class="step-hidden card p-8 rounded-3xl border-blue-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-blue-900/50 px-3 py-1 rounded-full text-blue-400 text-sm font-bold">משימה 1 מתוך 5</span>
+                <img src="https://img.icons8.com/color/48/000000/scroll.png" alt="[תמונה של מגילה]">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-blue-300">הקוד שעל דלת המרתף</h2>
+            <p class="task-description mb-6 text-gray-300 italic">
+                הגעתם לדלת הפלדה. הגנב השאיר פתק: 
+                "סדר הוא הכל בחיים! קודם סוגריים, אחר כך כפל וחילוק, ובסוף חיבור וחיסור."
+            </p>
+            <div class="bg-black/60 p-6 rounded-xl text-center mb-8 border border-white/5 shadow-inner">
+                <p class="text-3xl mystery-font text-blue-400 math-display font-bold tracking-wider">50 - 4 × (2 + 3) + 10 = ?</p>
+            </div>
+            <div class="space-y-4">
+                <input type="number" id="ans1" placeholder="הכנס את הקוד הסודי..." class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-center text-2xl focus:border-blue-500 outline-none transition-all">
+                <button onclick="checkAnswer(1, 40, 'step2')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg">נסה לפתוח את המנעול</button>
+            </div>
+        </div>
+
+        <!-- Task 2: Vertical Addition/Subtraction -->
+        <div id="step2" class="step-hidden card p-8 rounded-3xl border-purple-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-purple-900/50 px-3 py-1 rounded-full text-purple-400 text-sm font-bold">משימה 2 מתוך 5</span>
+                <img src="https://img.icons8.com/color/48/000000/stairs.png" alt="[תמונה של מדרגות]">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-purple-300">מדרגות האבן העתיקות</h2>
+            <div class="bg-purple-500/20 text-purple-100 p-4 rounded-lg mb-6 text-center font-bold border border-purple-500/40 notebook-instruction">
+                📝 העתיקו למחברת ופתרו במאונך!
+            </div>
+            <p class="task-description mb-6 text-gray-300 italic">
+                כדי לעבור את המדרגות, עליכם לחשב את שתי הערימות ולמצוא את <b>ההפרש</b> ביניהן.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-900/60 p-5 rounded-xl border border-white/5 text-center">
+                    <p class="text-xs text-purple-400 uppercase mb-2 tracking-widest font-bold">ערימה א'</p>
+                    <p class="text-2xl mystery-font math-display font-bold text-white">4,567 + 2,839 =</p>
+                </div>
+                <div class="bg-gray-900/60 p-5 rounded-xl border border-white/5 text-center">
+                    <p class="text-xs text-purple-400 uppercase mb-2 tracking-widest font-bold">ערימה ב'</p>
+                    <p class="text-2xl mystery-font math-display font-bold text-white">9,000 - 3,456 =</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <input type="number" id="ans2" placeholder="מהו ההפרש הסופי?" class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-center text-2xl outline-none focus:border-purple-500">
+                <button onclick="checkAnswer(2, 1862, 'step3')" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg">הזז את המכשול</button>
+            </div>
+        </div>
+
+        <!-- Task 3: Vertical Multiplication -->
+        <div id="step3" class="step-hidden card p-8 rounded-3xl border-amber-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-amber-900/50 px-3 py-1 rounded-full text-amber-400 text-sm font-bold">משימה 3 מתוך 5</span>
+                <img src="https://img.icons8.com/color/48/000000/chest.png" alt="[תמונה של תיבה]">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-amber-300">תיבת המטבעות הגנובים</h2>
+            <div class="bg-amber-500/20 text-amber-100 p-4 rounded-lg mb-6 text-center font-bold border border-amber-500/40 notebook-instruction">
+                📝 העתיקו למחברת ופתרו במאונך!
+            </div>
+            <p class="task-description mb-6 text-gray-300 italic">
+                התיבה הזו נפתחת רק אם תדעו את מספר המטבעות המדויק. בתיבה יש 24 שקיות, ובכל אחת 35 מטבעות זהב.
+            </p>
+            <div class="bg-black/60 p-8 rounded-xl text-center mb-8 border border-amber-500/20 shadow-inner">
+                <p class="text-4xl mystery-font text-amber-500 math-display font-bold tracking-widest">24 × 35 = ?</p>
+            </div>
+            <div class="space-y-4">
+                <input type="number" id="ans3" placeholder="כמות המטבעות היא..." class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-center text-2xl outline-none focus:border-amber-500">
+                <button onclick="checkAnswer(3, 840, 'step4')" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg">פתח את התיבה</button>
+            </div>
+        </div>
+
+        <!-- Task 4: Large Multiplication -->
+        <div id="step4" class="step-hidden card p-8 rounded-3xl border-red-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-red-900/50 px-3 py-1 rounded-full text-red-400 text-sm font-bold">משימה 4 מתוך 5</span>
+                <img src="https://img.icons8.com/color/48/000000/security-configuration.png" alt="[תמונה של כספת]">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-red-300">המנעול הגדול של הגנב</h2>
+            <div class="bg-red-500/20 text-red-100 p-4 rounded-lg mb-6 text-center font-bold border border-red-500/40 notebook-instruction">
+                📝 העתיקו למחברת ופתרו במאונך!
+            </div>
+            <p class="task-description mb-6 text-gray-300 italic">
+                הגעתם למנעול המשוכלל ביותר. כדי לפצח אותו, עליכם להכפיל את המספר הגדול במספר הקטן.
+            </p>
+            <div class="bg-black/60 p-8 rounded-xl text-center mb-8 border border-red-500/20 shadow-inner">
+                <p class="text-4xl mystery-font text-red-400 math-display font-bold tracking-widest">12,345 × 12 = ?</p>
+            </div>
+            <div class="space-y-4">
+                <input type="number" id="ans4" placeholder="תוצאת המכפלה היא..." class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-center text-2xl outline-none focus:border-red-500">
+                <button onclick="checkAnswer(4, 148140, 'step5')" class="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg">פרוץ את המנעול</button>
+            </div>
+        </div>
+
+        <!-- Task 5: Division with Remainder -->
+        <div id="step5" class="step-hidden card p-8 rounded-3xl border-emerald-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-emerald-900/50 px-3 py-1 rounded-full text-emerald-400 text-sm font-bold">המשימה האחרונה!</span>
+                <img src="https://img.icons8.com/color/48/000000/diamond--v1.png" alt="[תמונה של יהלום]">
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-emerald-300">חדר המראות והשארית</h2>
+            <p class="task-description mb-6 text-gray-300 italic">
+                הגנב נתקע במבוי סתום! כדי לנעול אותו בחדר המראות, עליכם להזין את <b>השארית</b> של התרגיל האחרון.
+            </p>
+            <div class="bg-emerald-900/20 p-8 rounded-xl text-center mb-8 border border-emerald-500/30">
+                <p class="text-xl mb-4 text-emerald-100">מחלקים 75 יהלומים בין 8 קופסאות שווה בשווה.</p>
+                <p class="text-4xl mystery-font text-emerald-400 math-display font-bold tracking-widest">75 ÷ 8 = ?</p>
+                <p class="text-red-400 font-bold mt-4 animate-pulse text-xl">מהי השארית?</p>
+            </div>
+            <div class="space-y-4">
+                <input type="number" id="ans5" placeholder="השארית היא..." class="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-center text-2xl outline-none focus:border-emerald-500">
+                <button onclick="checkAnswer(5, 3, 'victory')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg">סיים את המרדף!</button>
+            </div>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victory" class="step-hidden card p-10 rounded-3xl text-center border-yellow-500">
+            <div class="mb-8 relative">
+                <div class="absolute inset-0 bg-yellow-500/30 blur-3xl rounded-full animate-pulse"></div>
+                <img src="https://img.icons8.com/color/144/000000/trophy.png" alt="[תמונה של גביע]" class="mx-auto relative z-10 drop-shadow-2xl">
+            </div>
+            <h2 class="text-5xl font-bold text-yellow-500 mb-6">המשימה הושלמה!</h2>
+            <p class="text-2xl mb-8 leading-relaxed">
+                בלשים מדהימים! מחשבון הזהב חזר למקומו. <br>
+                הוכחתם שמתמטיקה היא כוח העל שלכם.
+            </p>
+            <div class="bg-white/5 p-6 rounded-2xl mb-8 border border-yellow-500/20">
+                <p class="text-yellow-400 font-bold text-lg">תעודת "סוכן חשבוני מוסמך" הוענקה לכם!</p>
+            </div>
+            <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-full transition-all">שחק שוב</button>
+        </div>
+
+    </main>
+
+    <script>
+        let timeLeft = 25 * 60; // 25 דקות בשניות
+        let timerInterval;
+
+        function startGame() {
+            document.getElementById('timer-container').classList.remove('step-hidden');
+            startTimer();
+            nextStep('step1');
+        }
+
+        function startTimer() {
+            const display = document.getElementById('timer-display');
+            timerInterval = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+
+                display.textContent = `${minutes}:${seconds}`;
+
+                // התראה ב-5 דקות האחרונות
+                if (timeLeft <= 300) {
+                    display.classList.add('timer-warning');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    gameOver();
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        function gameOver() {
+            alert("הזמן נגמר! הגנב הצליח להימלט. נסו שוב!");
+            location.reload();
+        }
+
+        function nextStep(stepId) {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('step-hidden'));
+            const next = document.getElementById(stepId);
+            next.classList.remove('step-hidden');
+
+            if (stepId === 'victory') {
+                clearInterval(timerInterval);
+                document.getElementById('timer-container').classList.add('step-hidden');
+            }
+            
+            setTimeout(() => {
+                next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        }
+
+        function checkAnswer(stepNum, correctValue, nextStepId) {
+            const input = document.getElementById('ans' + stepNum);
+            const val = parseInt(input.value);
+            const parent = input.closest('.card');
+
+            if (val === correctValue) {
+                parent.classList.add('success-glow');
+                parent.style.borderColor = "#4ade80";
+                input.classList.add('bg-green-900/20');
+                
+                setTimeout(() => {
+                    nextStep(nextStepId);
+                }, 800);
+            } else {
+                parent.classList.add('error-shake');
+                input.classList.add('border-red-500');
+                input.classList.add('bg-red-900/20');
+                setTimeout(() => {
+                    parent.classList.remove('error-shake');
+                    input.classList.remove('border-red-500');
+                    input.classList.remove('bg-red-900/20');
+                }, 500);
+            }
+        }
+    </script>
+</body>
+</html>
