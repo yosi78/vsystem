@@ -1,54 +1,72 @@
 <!DOCTYPE html>
-<!-- ver 0.3 -->
-
+<!-- ByteLogicx – Coding Club Page (תוכן מקורי + navbar/footer מותאמים) -->
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="חוג תכנות ולוגיקה עם יוסי אלעזר – ילדים בכיתות ד׳-ה׳ לומדים ליצור משחקי מחשב עם Microsoft Kodu Game Lab. בית ספר שבילים, פרדס חנה.">
-	<link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
-    <title>חוג תכנות ולוגיקה</title>
- <link rel="stylesheet" href="style.css">
- </head>
+    <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <title>ByteLogicx | חוג תכנות ולוגיקה</title>
+    <!-- main.css: navbar + footer -->
+    <link rel="stylesheet" href="main.css">
+    <!-- style.css: תוכן החוג המקורי -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* offset עבור ה-navbar הקבוע */
+        .hero-header { padding-top: 72px; }
+        /* וידוא שה-main לא ייחתך */
+        body { padding-top: 0; }
+    </style>
+</head>
 <body>
-    <!-- NAVIGATION MENU -->
-    <button class="nav-toggle" id="navToggle">☰</button>
-    <div class="nav-overlay" id="navOverlay"></div>
-    <nav class="nav-menu" id="navMenu">
-        <button class="nav-close" id="navClose">✕</button>
-        <ul>
-            <li><a href="#home">בית</a></li>
-            <li><a href="#what">מה נלמד</a></li>
-            <li><a href="#about">אודות</a></li>
-            <li><a href="#details">פרטים</a></li>
-            <li><a href="#registration">הרשמה</a></li>
-        </ul>
-    </nav>
 
-    <!-- HERO HEADER -->
+    <!-- ===== NAVBAR (תואם לכל האתר) ===== -->
+    <header class="navbar scrolled" id="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="navbar-brand">
+                <img src="logo.png" alt="ByteLogicx" class="navbar-logo-img">
+                <span class="navbar-logo-text">ByteLogicx</span>
+            </a>
+            <nav class="navbar-nav">
+                <a href="index.html">בית</a>
+                <a href="services.html">שירותים לבתי ספר</a>
+                <a href="coding_club.html" class="nav-active">חוג לילדים</a>
+                <a href="about.html">אודות</a>
+                <a href="contact.html" class="nav-cta">צור קשר</a>
+            </nav>
+            <button class="hamburger" id="hamburger" aria-label="תפריט">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <div class="mobile-nav" id="mobileNav">
+            <a href="index.html">בית</a>
+            <a href="services.html">שירותים לבתי ספר</a>
+            <a href="coding_club.html" class="nav-active">חוג לילדים</a>
+            <a href="about.html">אודות</a>
+            <a href="contact.html">צור קשר</a>
+        </div>
+    </header>
+
+    <!-- ===== HERO HEADER (מקורי) ===== -->
     <div class="hero-header" id="home">
         <div class="hero-image-wrapper"></div>
         <div class="hero-content">
             <h1>חוג "תכנות ולוגיקה"</h1>
-			<h2>עם יוסי אלעזר מורה מבית הספר הדמוקרטי שבילים</h2>
-           <!-- <span class="hero-tagline"> פותחים עולם של יצירה מחשבה ותכנות 
- </span>-->
+            <h2>עם יוסי אלעזר מורה מבית הספר הדמוקרטי שבילים</h2>
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- ===== MAIN CONTENT (מקורי בשלמותו) ===== -->
     <main>
+
         <!-- DUAL CARDS -->
         <div class="dual-cards">
             <div class="card card-primary">
-			
                 <h3>למה החוג שלנו?</h3>
-                <p>בחוג הילדים והילדות לומדים לתכנן שלבים, להגדיר חוקים ובעיקר להבין שהם יכולים להמציא עולמות שלמים. </p>
-<p>וכל זה בקבוצה קטנה, עם ליווי אישי של מורה שמלמד תכנות בבית ספר שבילים, ומכיר היטב את רוח הלמידה הדמוקרטית.</p>
-
+                <p>בחוג הילדים והילדות לומדים לתכנן שלבים, להגדיר חוקים ובעיקר להבין שהם יכולים להמציא עולמות שלמים.</p>
+                <p>וכל זה בקבוצה קטנה, עם ליווי אישי של מורה שמלמד תכנות בבית ספר שבילים, ומכיר היטב את רוח הלמידה הדמוקרטית.</p>
             </div>
             <div class="card card-secondary">
-			
                 <h3>פותחים עולם של יצירה, מחשבה ותכנות</h3>
                 <p>בחוג מיוחד וחווייתי, נלמד להשתמש ב־Microsoft Kodu Game Lab (מייקרוסופט), תוכנת תכנות צבעונית וידידותית שמשלבת דמיון עם חשיבה לוגית.</p>
             </div>
@@ -81,50 +99,43 @@
             </div>
         </section>
 
-       
-
-        <!-- REGISTRATION SECTION -->
+        <!-- מה נלמד בחוג -->
         <section class="about-section">
             <h2 class="section-title">מה נלמד בחוג</h2>
             <div class="about-text">
-<ul  style="list-style: none;">
-  <li>היכרות עם סביבת Microsoft Kodu Game Lab – סביבה תלת מימדית לפיתוח משחקים</li>
-  <li>הבנת מושגי יסוד בתכנות: תנאים, לולאות ומשתנים תוך כדי יצירת משחקים</li>
-  <li>שימוש בפקודות בלוקים לתכנות התנהגות של דמויות ואובייקטים</li>
-<li>תכנון שלבים: יצירת עולמות, משימות ומסלולים מותאמים</li>
-<li>פיתוח חשיבה לוגית דרך תרגולים מדורגים ויצירת פרויקטים עצמאיים</li>
-<li>חוויית הצלחה בעבודה על פרויקטים ובהתמודדות עם אתגרים</li>
-<li>כל ילד בונה עולם משלו – עם משחק מותאם אישית</li>
-</ul>
-<p><strong>החוג מיועד לילדים בכיתות ד' - ה' ללא צורך ברקע קודם בתחום ולא נדרש ידע באנגלית.</strong></p>
-
-
-			
+                <ul style="list-style: none;">
+                    <li>היכרות עם סביבת Microsoft Kodu Game Lab – סביבה תלת מימדית לפיתוח משחקים</li>
+                    <li>הבנת מושגי יסוד בתכנות: תנאים, לולאות ומשתנים תוך כדי יצירת משחקים</li>
+                    <li>שימוש בפקודות בלוקים לתכנות התנהגות של דמויות ואובייקטים</li>
+                    <li>תכנון שלבים: יצירת עולמות, משימות ומסלולים מותאמים</li>
+                    <li>פיתוח חשיבה לוגית דרך תרגולים מדורגים ויצירת פרויקטים עצמאיים</li>
+                    <li>חוויית הצלחה בעבודה על פרויקטים ובהתמודדות עם אתגרים</li>
+                    <li>כל ילד בונה עולם משלו – עם משחק מותאם אישית</li>
+                </ul>
+                <p><strong>החוג מיועד לילדים בכיתות ד׳–ה׳ ללא צורך ברקע קודם בתחום ולא נדרש ידע באנגלית.</strong></p>
             </div>
         </section>
 
         <!-- LIMITED SPOTS -->
-        <div class="limited-spots">מספר המקומות מוגבל
-		<a href="/cdn-cgi/l/email-protection#bec7d1cdd7dbd28dfed9d3dfd7d290ddd1d381cdcbdcd4dbddca83692a691669176920692a9e69226929692b692c9e69146925691e692b69149e692b6922692b692c69276919692a">שלח דוא״ל להרשמה</a>
-		</div>
+        <div class="limited-spots">
+            מספר המקומות מוגבל &nbsp;
+            <a href="mailto:yosiel3@gmail.com?subject=הרשמה לחוג תכנות ולוגיקה">שלח דוא״ל להרשמה</a>
+        </div>
 
-
- <!-- ABOUT SECTION -->
+        <!-- ABOUT ME SECTION -->
         <section class="about-me-section" id="about">
             <div class="about-me-content">
-				<h2 class="section-title">קצת עלי</h2>
+                <h2 class="section-title">קצת עלי</h2>
                 <p>שמי יוסי, עם ניסיון של כ־22 שנים בעולם התוכנה ובדיקות התוכנה בחברות הייטק מתחומים מגוונים.
-בשנים האחרונות בחרתי לחבר בין עולם הטכנולוגיה לעולם החינוך, וכיום אני מורה מחנך בשנתו הרביעית בבית הספר היסודי הדמוקרטי בפרדס חנה. </p>
- <p>
-השילוב בין ניסיון מקצועי עמוק בהייטק לבין עבודה יומיומית עם ילדים מאפשר לי ללמד תכנות בצורה נגישה, סבלנית ומותאמת לגיל, תוך יצירת חוויית למידה בטוחה, מקצועית ומהנה.
-בחוג אני שם דגש על חיבור אישי, פיתוח חשיבה ותחושת מסוגלות – כדי שכל ילד וילדה יוכלו לגלות שהם מסוגלים להבין, ליצור וליהנות מתכנות.</p>
-            </div>  
+                בשנים האחרונות בחרתי לחבר בין עולם הטכנולוגיה לעולם החינוך, וכיום אני מורה מחנך בשנתו הרביעית בבית הספר היסודי הדמוקרטי בפרדס חנה.</p>
+                <p>השילוב בין ניסיון מקצועי עמוק בהייטק לבין עבודה יומיומית עם ילדים מאפשר לי ללמד תכנות בצורה נגישה, סבלנית ומותאמת לגיל, תוך יצירת חוויית למידה בטוחה, מקצועית ומהנה.
+                בחוג אני שם דגש על חיבור אישי, פיתוח חשיבה ותחושת מסוגלות – כדי שכל ילד וילדה יוכלו לגלות שהם מסוגלים להבין, ליצור וליהנות מתכנות.</p>
+            </div>
         </section>
-	
 
-      <!-- DETAILS INFO SECTION -->
+        <!-- DETAILS INFO SECTION -->
         <section class="details-info-section" id="details">
-            <h2 class="section-title"> פרטים חשובים</h2>
+            <h2 class="section-title">פרטים חשובים</h2>
             <div class="details-info-grid">
                 <div class="detail-info-item">
                     <div class="detail-info-icon">📍</div>
@@ -170,6 +181,7 @@
                 </div>
             </div>
         </section>
+
         <!-- REGISTRATION SECTION -->
         <section class="registration-section" id="registration">
             <h2 class="section-title">להרשמה</h2>
@@ -195,59 +207,38 @@
                 </div>
             </div>
         </section>
-		
 
     </main>
 
-     <!-- FOOTER -->
-      <footer>
-        <p>תכנות ולוגיקה | <a href="/cdn-cgi/l/email-protection#1f66706c767a732c5f78727e7673317c7072206c6a7d757a7c6b22c88ec8bfc88ac88dc8bd3fc883c888c88ac88d3fc8b5c884c8bfc88ac8b53fc88ac883c88ac88dc886c8b8c88b397d707b6622c8b6c883c88ac8823fc886c88ac8bec88633" class="footer-name">ByteLogic</a> © 2025 | כל הזכויות שמורות</p>
+    <!-- ===== FOOTER (תואם לכל האתר) ===== -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <img src="logo.png" alt="ByteLogicx" class="footer-logo-img">
+                <span class="footer-brand-name">ByteLogicx</span>
+            </div>
+            <nav class="footer-nav">
+                <a href="services.html">שירותים לבתי ספר</a>
+                <a href="coding_club.html">חוג לילדים</a>
+                <a href="about.html">אודות</a>
+                <a href="contact.html">צור קשר</a>
+            </nav>
+            <p class="footer-copy">ByteLogicx | יוסי אלעזר &copy; 2025 | כל הזכויות שמורות</p>
+        </div>
     </footer>
 
-    <!-- NAVIGATION SCRIPT -->
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        const navToggle = document.getElementById('navToggle');
-        const navClose = document.getElementById('navClose');
-        const navMenu = document.getElementById('navMenu');
-        const navOverlay = document.getElementById('navOverlay');
-        const navLinks = document.querySelectorAll('.nav-menu a');
-
-        // Toggle menu
-        navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            navOverlay.classList.toggle('active');
-        });
-
-        // Close menu with X button
-        navClose.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            navOverlay.classList.remove('active');
-        });
-
-        // Close menu when clicking overlay
-        navOverlay.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            navOverlay.classList.remove('active');
-        });
-
-        // Close menu when clicking a link
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                navOverlay.classList.remove('active');
-            });
-        });
-
-                // Smooth scroll for anchor links
+    <script src="nav.js"></script>
+    <script>
+        // Smooth scroll לעוגנים פנימיים
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                const target = document.querySelector(href);
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    const offset = document.getElementById('navbar').offsetHeight + 10;
+                    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' });
                 }
             });
         });

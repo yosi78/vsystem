@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מי רוצה להיות מיליונר – פסח 🍷</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@400;700;900&display=swap');
+
+  :root {
+    --gold: #f5c518;
+    --gold-light: #ffe87c;
+    --gold-dark: #c9930a;
+    --navy: #07111f;
+    --navy-mid: #0d1f3c;
+    --navy-light: #152b50;
+    --navy-bright: #1a3560;
+    --answer-blue: #1a3a6e;
+    --answer-border: #4a7fc1;
+    --answer-hover: #2a5a9e;
+    --correct: #1a7a1a;
+    --correct-light: #2ecc40;
+    --wrong: #8b0000;
+    --wrong-light: #e74c3c;
+    --timer-ok: #4a7fc1;
+    --timer-warn: #e67e22;
+    --timer-danger: #e74c3c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--navy);
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---------- STARFIELD ---------- */
+  #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+  /* ---------- SCREENS ---------- */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: flex; }
+
+  /* ============================================================
+     INTRO
+  ============================================================ */
+  #intro-screen {
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .intro-logo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .intro-logo-main {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(28px, 5.5vw, 54px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    letter-spacing: 3px; line-height: 1.1;
+  }
+  .intro-logo-sub {
+    font-size: clamp(14px, 2.5vw, 20px); color: #90b8e0; letter-spacing: 4px; font-weight: 400;
+  }
+
+  .intro-seder { font-size: 96px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 28px rgba(245,197,24,0.45)); }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+
+  .intro-top-label { font-size: clamp(15px,2.5vw,21px); color: #a0c8f0; font-weight: 400; letter-spacing: 1px; }
+  .intro-top-prize {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    background: linear-gradient(135deg, rgba(245,197,24,0.12), rgba(245,197,24,0.04));
+    border: 2px solid var(--gold); border-radius: 16px;
+    padding: 14px 36px;
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(18px, 3.5vw, 30px);
+    font-weight: 900;
+    background-size: 200% auto;
+    animation: shimmer-gold 2.5s linear infinite;
+    box-shadow: 0 0 30px rgba(245,197,24,0.15);
+  }
+  @keyframes shimmer-gold {
+    0%   { box-shadow: 0 0 20px rgba(245,197,24,0.1); }
+    50%  { box-shadow: 0 0 45px rgba(245,197,24,0.3); }
+    100% { box-shadow: 0 0 20px rgba(245,197,24,0.1); }
+  }
+  .intro-top-prize .prize-icon-big { font-size: 36px; }
+  .intro-top-prize .prize-text { color: var(--gold-light); }
+
+  .intro-rules {
+    display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+  }
+  .intro-rule {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 14px 20px; min-width: 100px;
+  }
+  .intro-rule .rule-icon { font-size: 28px; }
+  .intro-rule .rule-text { font-size: 13px; color: #90b0d0; font-weight: 700; text-align: center; line-height: 1.4; }
+
+  .btn-start {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+    color: var(--navy); border: none; border-radius: 60px;
+    padding: 20px 72px; font-size: 26px; font-weight: 900;
+    font-family: 'Heebo', sans-serif; cursor: pointer;
+    box-shadow: 0 0 40px rgba(245,197,24,0.5), 0 6px 24px rgba(0,0,0,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-start:hover { transform: scale(1.06); box-shadow: 0 0 60px rgba(245,197,24,0.7), 0 8px 32px rgba(0,0,0,0.6); }
+
+  /* ============================================================
+     GAME — two-column layout
+  ============================================================ */
+  #game-screen {
+    min-height: 100vh;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  /* --- LEFT: main play area --- */
+  .game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px 18px 18px;
+    min-width: 0;
+  }
+
+  /* header */
+  .game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(245,197,24,0.2); padding-bottom: 12px; flex-shrink: 0;
+  }
+  .game-brand {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(14px, 2vw, 20px); font-weight: 900;
+    color: var(--gold); letter-spacing: 1px;
+  }
+  .game-header-right { display: flex; align-items: center; gap: 10px; }
+  .q-badge {
+    background: var(--navy-light); border: 2px solid var(--gold); border-radius: 20px;
+    padding: 4px 16px; font-size: 14px; font-weight: 700; color: var(--gold);
+  }
+  .btn-walkaway {
+    background: transparent; border: 2px solid rgba(231,76,60,0.4); color: rgba(255,130,130,0.7);
+    border-radius: 20px; padding: 5px 16px; font-size: 12px; font-weight: 700;
+    font-family: 'Heebo', sans-serif; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-walkaway:hover { border-color: #e74c3c; color: #e74c3c; background: rgba(231,76,60,0.08); }
+
+  /* progress */
+  .prog-wrap { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); border-radius: 3px; transition: width 0.5s ease-out; }
+
+  /* timer strip */
+  .timer-strip {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(10,25,48,0.8);
+    border: 2px solid rgba(74,127,193,0.35);
+    border-radius: 16px; padding: 10px 18px;
+    flex-shrink: 0; transition: border-color 0.3s;
+  }
+  .timer-strip.warn  { border-color: rgba(230,126,34,0.65); }
+  .timer-strip.danger { border-color: rgba(231,76,60,0.75); }
+
+  .timer-ring { position: relative; width: 60px; height: 60px; flex-shrink: 0; }
+  .ring-svg { width: 60px; height: 60px; transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
+  .ring-fill  { fill: none; stroke-width: 5; stroke-linecap: round;
+                stroke-dasharray: 144.51; stroke-dashoffset: 0;
+                transition: stroke-dashoffset 0.9s linear, stroke 0.3s; }
+  .ring-num {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; font-family: 'Frank Ruhl Libre', serif;
+    transition: color 0.3s;
+  }
+
+  .timer-info { flex: 1; }
+  .timer-who-label { font-size: 11px; color: #5080a0; letter-spacing: 1px; margin-bottom: 3px; }
+  .timer-who-name  { font-size: clamp(16px,2.5vw,22px); font-weight: 900; color: #fff; line-height: 1.2; }
+  .timer-bar-bg    { width: 100%; height: 7px; background: rgba(255,255,255,0.09); border-radius: 4px; overflow: hidden; margin-top: 7px; }
+  .timer-bar-fill  { height: 100%; border-radius: 4px; transition: width 0.9s linear, background 0.3s; }
+
+  /* lifelines */
+  .lifelines {
+    display: flex; gap: 12px; flex-shrink: 0;
+  }
+  .ll-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, var(--navy-light), var(--navy-bright));
+    border: 2px solid var(--gold); border-radius: 14px;
+    padding: 11px 10px; cursor: pointer; transition: all 0.2s;
+    font-family: 'Heebo', sans-serif;
+  }
+  .ll-btn:hover:not(:disabled) { box-shadow: 0 0 22px rgba(245,197,24,0.4); transform: translateY(-3px); background: linear-gradient(135deg,var(--navy-bright),#1f4070); }
+  .ll-btn:disabled { opacity: 0.22; cursor: not-allowed; border-color: #445; filter: grayscale(70%); transform: none; }
+  .ll-icon  { font-size: 26px; }
+  .ll-label { font-size: 11px; font-weight: 700; color: var(--gold); text-align: center; line-height: 1.3; }
+
+  /* current prize */
+  .cur-prize { text-align: center; flex-shrink: 0; }
+  .cur-prize-label { font-size: 11px; color: #7090b0; letter-spacing: 2px; }
+  .cur-prize-val {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(17px,2.8vw,26px); font-weight: 900;
+    background: linear-gradient(90deg, var(--gold-light), var(--gold), var(--gold-dark));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    background-size: 200% auto; animation: shimmer 2s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:0% center} 100%{background-position:200% center} }
+
+  /* question box */
+  .q-box {
+    background: linear-gradient(135deg, rgba(26,56,100,0.95), rgba(10,24,52,0.98));
+    border: 2.5px solid var(--gold); border-radius: 18px;
+    padding: 24px 30px; text-align: center;
+    font-size: clamp(17px, 2.8vw, 24px); font-weight: 700; line-height: 1.55;
+    box-shadow: 0 0 40px rgba(245,197,24,0.12), inset 0 0 50px rgba(0,0,0,0.2);
+    min-height: 96px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative; overflow: hidden;
+  }
+  .q-box::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(45deg, transparent 49%, rgba(245,197,24,0.04) 50%, transparent 51%);
+    pointer-events: none;
+  }
+  .q-box.reveal { animation: q-in 0.45s cubic-bezier(.4,0,.2,1); }
+  @keyframes q-in { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+
+  /* answers */
+  .answers {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; flex-shrink: 0;
+  }
+  .ans-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #18386a, #0e1e3c);
+    border: 2px solid #4a7fc1; border-radius: 50px;
+    padding: 14px 20px; cursor: pointer;
+    font-size: clamp(14px, 2.2vw, 18px); font-weight: 700;
+    font-family: 'Heebo', sans-serif; color: white; text-align: right;
+    transition: all 0.22s; word-break: break-word;
+    position: relative; overflow: hidden;
+  }
+  .ans-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03)); pointer-events:none; }
+  .ans-btn:hover:not(:disabled):not(.elim) { background: linear-gradient(135deg,#2a5a9e,#1a3a6e); border-color: var(--gold); box-shadow: 0 0 22px rgba(245,197,24,0.28); transform: scale(1.025); }
+  .ans-btn:disabled { cursor: not-allowed; }
+  .ans-btn .ltr {
+    background: linear-gradient(135deg, #4a7fc1, #1a3a6e); border: 2px solid #4a7fc1;
+    border-radius: 50%; width: 34px; height: 34px; min-width: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 900; color: var(--gold);
+  }
+  .ans-btn.selected { background: linear-gradient(135deg,#c9930a,#f5c518); border-color: var(--gold-light); color: var(--navy); animation: sel-pulse 0.45s; }
+  .ans-btn.selected .ltr { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+  .ans-btn.correct  { background: linear-gradient(135deg,#1a7a1a,#2ecc40); border-color: #2ecc40; color: #fff; animation: correct-glow 0.5s; }
+  .ans-btn.correct .ltr  { background: #1a7a1a; border-color: #2ecc40; color: #fff; }
+  .ans-btn.wrong    { background: linear-gradient(135deg,#8b0000,#e74c3c); border-color: #e74c3c; color: #fff; }
+  .ans-btn.wrong .ltr    { background: #8b0000; border-color: #e74c3c; color: #fff; }
+  .ans-btn.elim     { opacity: 0.1; pointer-events: none; }
+  @keyframes sel-pulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  @keyframes correct-glow { 0%,100%{box-shadow:0 0 20px rgba(46,204,64,0.5)} 50%{box-shadow:0 0 55px rgba(46,204,64,0.95)} }
+
+  /* --- RIGHT: prize ladder sidebar --- */
+  .prize-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba(5, 14, 28, 0.85);
+    border-right: 1px solid rgba(245,197,24,0.15);  /* RTL: this is left side visually */
+    padding: 18px 0 18px 0;
+    overflow-y: auto;
+    position: relative;
+  }
+  .prize-sidebar::before {
+    content: '';
+    position: absolute; top: 0; bottom: 0; right: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(245,197,24,0.3) 20%, rgba(245,197,24,0.3) 80%, transparent);
+  }
+
+  .sidebar-title {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 13px; font-weight: 700; color: rgba(245,197,24,0.6);
+    text-align: center; letter-spacing: 2px;
+    padding: 0 12px 12px 12px;
+    border-bottom: 1px solid rgba(245,197,24,0.12);
+    margin-bottom: 6px; flex-shrink: 0;
+  }
+
+  .ladder-rows { display: flex; flex-direction: column; }
+
+  .ladder-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 14px;
+    cursor: default;
+    transition: background 0.25s, transform 0.25s;
+    border-right: 3px solid transparent;
+  }
+  .ladder-row .row-num   { font-size: 10px; font-weight: 700; color: #3a5878; min-width: 16px; text-align: left; }
+  .ladder-row .row-icon  { font-size: 15px; flex-shrink: 0; }
+  .ladder-row .row-label { font-size: 11px; color: #5a7e9c; font-weight: 600; line-height: 1.3; }
+
+  .ladder-row.passed {
+    background: rgba(20,60,20,0.3);
+  }
+  .ladder-row.passed .row-label { color: #4a9a5a; }
+  .ladder-row.passed .row-num   { color: #3a7a3a; }
+
+  .ladder-row.current {
+    background: linear-gradient(90deg, rgba(245,197,24,0.18), rgba(245,197,24,0.05));
+    border-right-color: var(--gold);
+    transform: scaleX(1.02); transform-origin: right;
+  }
+  .ladder-row.current .row-label { color: var(--gold); font-size: 12px; font-weight: 900; }
+  .ladder-row.current .row-num   { color: var(--gold); }
+  .ladder-row.current .row-icon  { font-size: 17px; }
+
+  /* ============================================================
+     OVERLAYS / MODALS
+  ============================================================ */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88); z-index: 200;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .overlay.active { display: flex; }
+
+  .modal {
+    background: linear-gradient(155deg, #152b50, #0d1f3c);
+    border: 3px solid var(--gold); border-radius: 22px;
+    padding: 32px; max-width: 500px; width: 100%;
+    text-align: center; box-shadow: 0 0 70px rgba(245,197,24,0.28);
+    animation: modal-pop 0.32s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes modal-pop { from{transform:scale(0.68);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal h2  { font-family: 'Frank Ruhl Libre', serif; font-size: 26px; color: var(--gold); margin-bottom: 14px; }
+  .modal p   { font-size: 17px; line-height: 1.7; color: #cce0ff; margin-bottom: 18px; }
+  .modal-btn {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+    color: var(--navy); border: none; border-radius: 32px;
+    padding: 12px 38px; font-size: 18px; font-weight: 900;
+    font-family: 'Heebo', sans-serif; cursor: pointer; transition: transform 0.2s;
+  }
+  .modal-btn:hover { transform: scale(1.06); }
+
+  /* poll */
+  .poll-chart { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .poll-row   { display: flex; align-items: center; gap: 10px; }
+  .poll-ltr   { font-weight: 900; color: var(--gold); min-width: 22px; font-size: 16px; }
+  .poll-bg    { flex: 1; height: 28px; background: rgba(255,255,255,0.07); border-radius: 8px; overflow: hidden; }
+  .poll-fill  { height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 9px; font-size: 13px; font-weight: 900; color: white; transition: width 1.1s ease-out; width: 0%; }
+  .poll-fill.hi { background: linear-gradient(90deg,#1a7a1a,#5ade6a); }
+  .poll-fill.lo { background: linear-gradient(90deg,#4a7fc1,#5a9ff5); }
+
+  /* friend */
+  .friend-emo   { font-size: 60px; margin-bottom: 8px; }
+  .friend-who   { font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+  .friend-ans   { font-size: 22px; font-weight: 900; color: #fff; }
+  .friend-conf  { font-size: 14px; color: #7090b0; margin-top: 7px; }
+
+  /* timeout modal */
+  #timeout-overlay .modal { border-color: var(--timer-danger); box-shadow: 0 0 70px rgba(231,76,60,0.35); }
+
+  /* correct modal special */
+  #correct-overlay .modal { border-color: #2ecc40; box-shadow: 0 0 70px rgba(46,204,64,0.2); }
+
+  /* ============================================================
+     END SCREENS
+  ============================================================ */
+  #win-screen, #lose-screen {
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 26px; padding: 40px 20px; text-align: center;
+  }
+  .end-emo   { font-size: 110px; animation: float 2.2s ease-in-out infinite; }
+  .end-title { font-family: 'Frank Ruhl Libre', serif; font-size: clamp(32px,6vw,58px); font-weight: 900; }
+  .win-title {
+    background: linear-gradient(90deg, var(--gold-light), var(--gold), var(--gold-dark));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    background-size: 200% auto; animation: shimmer 1.4s linear infinite;
+  }
+  .lose-title { color: #e74c3c; }
+  .end-prize  { font-size: clamp(18px,3.5vw,28px); color: var(--gold); font-weight: 700; }
+  .end-msg    { font-size: 17px; color: #90b0d0; line-height: 1.7; max-width: 520px; }
+  .btn-restart {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+    color: var(--navy); border: none; border-radius: 56px;
+    padding: 16px 52px; font-size: 22px; font-weight: 900;
+    font-family: 'Heebo', sans-serif; cursor: pointer;
+    box-shadow: 0 0 32px rgba(245,197,24,0.5); transition: transform 0.2s;
+  }
+  .btn-restart:hover { transform: scale(1.05); }
+
+  /* fireworks */
+  .fw { position: fixed; pointer-events: none; z-index: 300; animation: fw-out 1.6s ease-out forwards; font-size: 26px; }
+  @keyframes fw-out { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-120px) scale(0.3)} }
+
+  /* ============================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 720px) {
+    #game-screen { flex-direction: column; }
+    .prize-sidebar { width: 100%; border-right: none; border-top: 1px solid rgba(245,197,24,0.15); max-height: 140px; }
+    .ladder-rows { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding: 6px 10px; gap: 6px; }
+    .ladder-row  { flex-direction: column; padding: 6px 10px; border-right: none; border-bottom: 3px solid transparent; min-width: 80px; text-align: center; }
+    .ladder-row.current { border-bottom-color: var(--gold); transform: none; }
+    .answers { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<!-- =============== INTRO =============== -->
+<div id="intro-screen" class="screen active">
+  <div class="intro-logo">
+    <div class="intro-logo-main">מי רוצה להיות מיליונר?</div>
+    <div class="intro-logo-sub">✨ גרסת פסח מיוחדת לכיתה ד ✨</div>
+  </div>
+
+  <div class="intro-seder">🍷</div>
+
+  <div class="intro-top-label">הפרס הגדול:</div>
+  <div class="intro-top-prize">
+    <span class="prize-icon-big" id="top-icon">⭐</span>
+    <span class="prize-text" id="top-label">טוען...</span>
+  </div>
+
+  <div class="intro-rules">
+    <div class="intro-rule"><span class="rule-icon">❓</span><span class="rule-text">20 שאלות<br>על פסח</span></div>
+    <div class="intro-rule"><span class="rule-icon">⏱️</span><span class="rule-text">דקה אחת<br>לכל שאלה</span></div>
+    <div class="intro-rule"><span class="rule-icon">🆘</span><span class="rule-text">3 כפתורי<br>הצלה</span></div>
+    <div class="intro-rule"><span class="rule-icon">🏆</span><span class="rule-text">הגיעו לפרס<br>הגדול!</span></div>
+  </div>
+
+  <button class="btn-start" onclick="startGame()">▶ התחילו לשחק</button>
+</div>
+
+<!-- =============== GAME =============== -->
+<div id="game-screen" class="screen">
+
+  <!-- LEFT: main play area -->
+  <div class="game-main">
+
+    <!-- header -->
+    <div class="game-header">
+      <div class="game-brand">מי רוצה להיות מיליונר? 🍷</div>
+      <div class="game-header-right">
+        <button class="btn-walkaway" onclick="walkAway()">עזיבה 🚶</button>
+        <div class="q-badge" id="q-counter">שאלה 1 / 20</div>
+      </div>
+    </div>
+
+    <!-- progress -->
+    <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
+
+    <!-- timer -->
+    <div class="timer-strip" id="timer-strip">
+      <div class="timer-ring">
+        <svg class="ring-svg" viewBox="0 0 60 60">
+          <circle class="ring-track" cx="30" cy="30" r="23"/>
+          <circle class="ring-fill" id="ring-fill" cx="30" cy="30" r="23"/>
+        </svg>
+        <div class="ring-num" id="ring-num">60</div>
+      </div>
+      <div class="timer-info">
+        <div class="timer-who-label">תור של:</div>
+        <div class="timer-who-name" id="timer-name">—</div>
+        <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar"></div></div>
+      </div>
+    </div>
+
+    <!-- lifelines -->
+    <div class="lifelines">
+      <button class="ll-btn" id="ll-5050"   onclick="use5050()">  <span class="ll-icon">5️⃣0️⃣</span><span class="ll-label">50:50</span></button>
+      <button class="ll-btn" id="ll-friend" onclick="useFriend()"><span class="ll-icon">👩‍🏫</span><span class="ll-label">חבר.ה<br>מהחלון ליד</span></button>
+      <button class="ll-btn" id="ll-poll"   onclick="usePoll()">  <span class="ll-icon">📊</span><span class="ll-label">סקר קהל</span></button>
+    </div>
+
+    <!-- current prize -->
+    <div class="cur-prize">
+      <div class="cur-prize-label">פרס נוכחי שהרווחתם</div>
+      <div class="cur-prize-val" id="cur-prize-val">– עדיין אין פרס –</div>
+    </div>
+
+    <!-- question -->
+    <div class="q-box" id="q-text">טוען שאלה...</div>
+
+    <!-- answers -->
+    <div class="answers">
+      <button class="ans-btn" id="ans-0" onclick="pick(0)"><span class="ltr">א</span><span class="ans-t"></span></button>
+      <button class="ans-btn" id="ans-1" onclick="pick(1)"><span class="ltr">ב</span><span class="ans-t"></span></button>
+      <button class="ans-btn" id="ans-2" onclick="pick(2)"><span class="ltr">ג</span><span class="ans-t"></span></button>
+      <button class="ans-btn" id="ans-3" onclick="pick(3)"><span class="ltr">ד</span><span class="ans-t"></span></button>
+    </div>
+
+  </div><!-- /game-main -->
+
+  <!-- RIGHT: prize ladder -->
+  <div class="prize-sidebar" id="prize-sidebar">
+    <div class="sidebar-title">🏆 סולם הפרסים</div>
+    <div class="ladder-rows" id="ladder-rows"></div>
+  </div>
+
+</div><!-- /game-screen -->
+
+<!-- =============== WIN =============== -->
+<div id="win-screen" class="screen">
+  <div class="end-emo">🏆</div>
+  <div class="end-title win-title">מזל טוב! אלופי פסח!</div>
+  <div class="end-prize" id="win-prize"></div>
+  <div class="end-msg">ענו נכון על כל 20 השאלות!<br>אתם פשוט מדהימים! 🎉🥚🍷</div>
+  <button class="btn-restart" onclick="restartGame()">🔄 שחקו שוב</button>
+</div>
+
+<!-- =============== LOSE =============== -->
+<div id="lose-screen" class="screen">
+  <div class="end-emo" id="lose-emo">😢</div>
+  <div class="end-title lose-title" id="lose-title">אוי... לא נכון!</div>
+  <div class="end-prize" id="lose-prize"></div>
+  <div class="end-msg" id="lose-msg"></div>
+  <button class="btn-restart" onclick="restartGame()">🔄 שחקו שוב</button>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- wrong answer -->
+<div class="overlay" id="ov-wrong">
+  <div class="modal" style="border-color:#e74c3c;box-shadow:0 0 70px rgba(231,76,60,0.3)">
+    <div style="font-size:68px;margin-bottom:10px">❌</div>
+    <h2 style="color:#e74c3c">אוי... לא נכון!</h2>
+    <p id="ov-wrong-title" style="font-size:17px;color:var(--gold);font-weight:700;margin-bottom:6px"></p>
+    <p style="font-size:15px;color:#90b0d0;margin-bottom:18px">התור עובר לתלמיד/ה אחר/ת!</p>
+    <button class="modal-btn" style="background:linear-gradient(135deg,#8b1a1a,#e74c3c);color:#fff" onclick="wrongNextTurn()">המשיכו ➡</button>
+  </div>
+</div>
+
+<!-- pause banner (non-blocking, shown above the game) -->
+<div id="pause-banner" style="
+  display:none; position:fixed; top:0; left:0; right:0; z-index:150;
+  background:linear-gradient(135deg,#0d1f3c,#152b50);
+  border-bottom:3px solid var(--gold);
+  padding:14px 24px;
+  flex-direction:row; align-items:center; justify-content:space-between; gap:16px;
+  box-shadow:0 4px 30px rgba(0,0,0,0.5);
+  animation:banner-in 0.3s ease-out;
+">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span id="pause-icon" style="font-size:36px">⏸️</span>
+    <div>
+      <div id="pause-title" style="font-size:18px;font-weight:900;color:var(--gold);font-family:'Frank Ruhl Libre',serif"></div>
+      <div id="pause-sub"   style="font-size:13px;color:#90b0d0;margin-top:2px"></div>
+    </div>
+  </div>
+  <button onclick="resumeFromPause()" style="
+    background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+    color:var(--navy); border:none; border-radius:30px;
+    padding:10px 28px; font-size:16px; font-weight:900;
+    font-family:'Heebo',sans-serif; cursor:pointer;
+    box-shadow:0 0 16px rgba(245,197,24,0.4);
+    white-space:nowrap; flex-shrink:0;
+    transition:transform 0.15s;
+  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+    ▶ המשיכו
+  </button>
+</div>
+<style>
+@keyframes banner-in { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
+</style>
+
+<!-- correct -->
+<div class="overlay" id="ov-correct">
+  <div class="modal">
+    <div style="font-size:68px;margin-bottom:10px">✅</div>
+    <h2>נכון מאוד! כל הכבוד!</h2>
+    <p id="cor-prize" style="font-size:21px;color:var(--gold);font-weight:900;margin-bottom:6px"></p>
+    <p id="cor-next"  style="font-size:14px;color:#90b0d0;margin-bottom:16px"></p>
+    <button class="modal-btn" id="cor-btn">הבאה ➡</button>
+  </div>
+</div>
+
+<!-- timeout -->
+<div class="overlay" id="ov-timeout">
+  <div class="modal">
+    <div style="font-size:72px;margin-bottom:8px">⏰</div>
+    <h2 style="color:var(--timer-danger)">הזמן נגמר!</h2>
+    <p id="to-msg" style="font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px"></p>
+    <p style="font-size:16px;margin-bottom:18px">התור עובר לתלמיד/ה אחר/ת!</p>
+    <button class="modal-btn" style="background:linear-gradient(135deg,#8b1a1a,#e74c3c);color:#fff" onclick="handleTimeout()">המשיכו ➡</button>
+  </div>
+</div>
+
+<!-- name input -->
+<div class="overlay" id="ov-name">
+  <div class="modal" style="max-width:420px">
+    <div style="font-size:64px;margin-bottom:10px" id="name-emo">🎯</div>
+    <h2 id="name-title">מי עונה על שאלה 1?</h2>
+    <p id="name-sub" style="font-size:15px;color:#90b0d0;margin-bottom:18px">הכניסו את שם התלמיד/ה</p>
+    <input id="name-input"
+      type="text"
+      placeholder="שם התלמיד/ה..."
+      maxlength="30"
+      style="
+        width:100%; padding:14px 18px; font-size:20px; font-weight:700;
+        font-family:'Heebo',sans-serif; text-align:right;
+        background:rgba(255,255,255,0.07); border:2px solid var(--gold);
+        border-radius:12px; color:white; outline:none;
+        margin-bottom:20px; direction:rtl;
+      "
+      onkeydown="if(event.key==='Enter') confirmName()"
+    />
+    <button class="modal-btn" onclick="confirmName()" style="font-size:20px;padding:13px 42px">
+      בואו נתחיל! ▶
+    </button>
+  </div>
+</div>
+
+<!-- walkaway -->
+<div class="overlay" id="ov-walk">
+  <div class="modal">
+    <div style="font-size:58px;margin-bottom:10px">🚶</div>
+    <h2>עוזבים?</h2>
+    <p id="walk-msg"></p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="modal-btn" style="background:linear-gradient(135deg,#2a6a2a,#2ecc40);color:#fff" onclick="confirmWalk()">כן, עוזב/ת</button>
+      <button class="modal-btn" onclick="closeOv('ov-walk')">לא, ממשיך/ה!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== STARS ===== */
+const cvs = document.getElementById('stars'), cx = cvs.getContext('2d');
+let ST = [];
+function initS() {
+  cvs.width = innerWidth; cvs.height = innerHeight;
+  ST = Array.from({length:170},()=>({x:Math.random()*cvs.width,y:Math.random()*cvs.height,r:Math.random()*1.7+0.3,a:Math.random(),da:(Math.random()-.5)*.012}));
+}
+function drawS() {
+  cx.clearRect(0,0,cvs.width,cvs.height);
+  ST.forEach(s=>{
+    s.a = Math.max(.08,Math.min(1,s.a+s.da)); if(s.a<=.08||s.a>=1) s.da*=-1;
+    cx.beginPath(); cx.arc(s.x,s.y,s.r,0,Math.PI*2); cx.fillStyle=`rgba(180,215,255,${s.a})`; cx.fill();
+  });
+  requestAnimationFrame(drawS);
+}
+addEventListener('resize',initS); initS(); drawS();
+
+/* ===== DATA ===== */
+const Qs = [
+  {q:"מה אנחנו אוכלים בפסח במקום לחם?",              a:["מצה","סופגנייה","אוזן המן","תפוח בדבש"],          c:0},
+  {q:"כמה כוסות יין שותים במהלך ליל הסדר?",           a:["3 כוסות","4 כוסות","5 כוסות","2 כוסות"],            c:1},
+  {q:"מה מסמל חג הפסח?",                               a:["ניצחון במלחמה","יציאה מעבדות לחירות","התחלת החורף","סיום הלימודים"], c:1},
+  {q:"מה מחביאים במהלך הסדר כדי שהילדים ימצאו בסוף?", a:["אפיקומן","כרפס","מרור","זרוע"],                    c:0},
+  {q:"מי הוציא את בני ישראל מעבדות במצרים?",           a:["אברהם אבינו","דוד המלך","משה רבנו","פרעה"],        c:2},
+  {q:"מה מסמל המרור שאוכלים בליל הסדר?",              a:["שמחה וחירות","אהבת הטבע","מרירות העבדות","בוא האביב"], c:2},
+  {q:"איזה ים נחצה לשניים כדי שבני ישראל יעברו?",     a:["ים המלח","ים סוף","הים התיכון","הכנרת"],            c:1},
+  {q:"איך קראו למלך מצרים שסירב לשחרר את בני ישראל?",  a:["פרעה","המן הרשע","אנטיוכוס","נבוכדנאצר"],          c:0},
+  {q:"איזו מכה הייתה הראשונה מעשר המכות?",             a:["מכת צפרדע","מכת ברד","מכת חושך","מכת דם"],          c:3},
+  {q:"כמה בנים מוזכרים בהגדה של פסח?",                a:["ארבעה בנים","שלושה בנים","חמישה בנים","שנים עשר בנים"], c:0},
+  {q:"מי היה אחיו של משה רבנו שעזר לו לדבר עם פרעה?", a:["יהושע","אהרון","כלב","יתרו"],                       c:1},
+  {q:"באיזה חודש עברי חוגגים את חג הפסח?",            a:["תשרי","אדר","ניסן","סיוון"],                        c:2},
+  {q:"למי מיועדת הכוס החמישית שמוזגים בליל הסדר?",    a:["למשה רבנו","לאליהו הנביא","לאברהם אבינו","לדוד המלך"], c:1},
+  {q:"מה שמו של הקטע שבו הילד הקטן שואל ארבע שאלות?", a:["עבדים היינו","מה נשתנה","והיא שעמדה","דיינו"],       c:1},
+  {q:"איזה מהשמות הבאים אינו שמו של חג הפסח?",         a:["חג האביב","זמן חירותנו","חג מתן תורה","חג המצות"],  c:2},
+  {q:"מה הם ה'ביצה' ו'הזרוע' על קערת הסדר?",           a:["קישוטים לשולחן","זכר לקרבנות בית המקדש","ירקות מרים","אוכל לילדים"], c:1},
+  {q:"כמה שנה היו בני ישראל עבדים במצרים לפי המסורת?",  a:["100 שנה","210 שנה","400 שנה","50 שנה"],              c:2},
+  {q:"מה שמו של השיר בהגדה שמונה את בעלי החיים בסיפור אחד שאבא קנה?", a:["אחד מי יודע","דיינו","חד גדיא","אלו עשר מכות"], c:2},
+  {q:"במה טבלו בני ישראל את האיזוב וסימנו את המשקופים בליל יציאת מצרים?", a:["ביין אדום","בדם הפסח","בחרוסת","במים"], c:1},
+  {q:"איזה ירק טובלים בליל הסדר במי מלח?",             a:["מרור","כרפס","חזרת","חסה"],                           c:1},
+];
+
+const PRIZES = [
+  {icon:"🍫", label:"אלוף/ת השוקולד הדמיוני"},
+  {icon:"🍿", label:"מלך/ת הפופקורן של הכיתה"},
+  {icon:"😂", label:"נסיך/ת הצחוקים הבלתי נגמרים"},
+  {icon:"🧠", label:"שר/ת החידות הרשמי/ת"},
+  {icon:"⚡", label:"אלוף/ת המהירות במחשבה"},
+  {icon:"🦸", label:"גיבור/ת העל של הלוח"},
+  {icon:"🎁", label:"מומחה/ית ההפתעות"},
+  {icon:"🎨", label:"אלוף/ת התשובות היצירתיות"},
+  {icon:"🪄", label:"קוסם/ת הידע הגדול"},
+  {icon:"😊", label:"שגריר/ת החיוכים"},
+  {icon:"🤯", label:'אלוף/ת ה"וואו איך ידעת?!"'},
+  {icon:"🔍", label:"מאסטר/ית הרמזים"},
+  {icon:"❓", label:"נסיך/ת השאלות המבלבלות"},
+  {icon:"👀", label:"אלוף/ת הקשב והריכוז"},
+  {icon:"⭐", label:"כוכב/ת הבמה של הכיתה"},
+  {icon:"🎯", label:"אלוף/ת הניחושים המוצלחים"},
+  {icon:"🤫", label:"שומר/ת הסודות של החידון"},
+  {icon:"🌍", label:"אלוף/ת הידע הכללי"},
+  {icon:"⏱️", label:"גאון/ית הרגע האחרון"},
+  {icon:"🔥", label:'אלוף/ת ה"עוד שאלה אחת!"'},
+];
+
+/* populate intro top prize */
+const tp = PRIZES[19];
+document.getElementById('top-icon').textContent  = tp.icon;
+document.getElementById('top-label').textContent = tp.label;
+
+const LETTERS = ['א','ב','ג','ד'];
+const CIRC = 2*Math.PI*23; // 144.51
+
+const FRIENDS = [
+  {name:"יעל מהחלון",emo:"👧"},{name:"דוד מהחדר ליד",emo:"👦"},
+  {name:"נועה מהשורה הקדמית",emo:"👩"},{name:"עמיר מהספסל האחורי",emo:"🧒"},
+  {name:"שירה החברה הכי טובה",emo:"👩‍🦱"},{name:"אלי מהכיתה הסמוכה",emo:"🧑"},
+];
+
+/* ===== STATE ===== */
+let curQ=0, lifelines={}, elim=[], answering=false, timerVal=60, timerInt=null, timerOn=false;
+
+/* ===== TIMER ===== */
+function startTimer() {
+  clearInterval(timerInt); timerVal=60; timerOn=true; renderTimer();
+  timerInt = setInterval(()=>{ if(!timerOn) return; timerVal--; renderTimer(); if(timerVal<=0){clearInterval(timerInt);timerOn=false;onTimeout();} },1000);
+}
+function stopTimer() { timerOn=false; clearInterval(timerInt); }
+
+function renderTimer() {
+  const offset = CIRC*(1 - timerVal/60);
+  const rf = document.getElementById('ring-fill');
+  const rn = document.getElementById('ring-num');
+  const tb = document.getElementById('timer-bar');
+  const ts = document.getElementById('timer-strip');
+  let col;
+  if (timerVal>20){ col='var(--timer-ok)'; ts.className='timer-strip'; }
+  else if(timerVal>10){ col='var(--timer-warn)'; ts.className='timer-strip warn'; }
+  else { col='var(--timer-danger)'; ts.className='timer-strip danger'; }
+  rf.style.strokeDashoffset=offset; rf.style.stroke=col;
+  rn.textContent=timerVal; rn.style.color=col;
+  tb.style.width=(timerVal/60*100)+'%'; tb.style.background=col;
+}
+
+function onTimeout() {
+  for(let i=0;i<4;i++) document.getElementById('ans-'+i).disabled=true;
+  const nm = document.getElementById('timer-name').textContent;
+  document.getElementById('to-msg').textContent=`הזמן של ${nm} נגמר!`;
+  document.getElementById('ov-timeout').classList.add('active');
+}
+
+function handleTimeout() {
+  closeOv('ov-timeout');
+  curQ++;
+  if(curQ>=Qs.length){ endLose('⏰','נגמר הזמן!','','לא נשארו שאלות!'); return; }
+  askName('⏰', 'הזמן נגמר — תור חדש!', `מי עונה על שאלה ${curQ+1}?`, ()=>loadQ());
+}
+
+/* ===== GAME FLOW ===== */
+function startGame() {
+  curQ=0; lifelines={'5050':false,friend:false,poll:false}; elim=[]; answering=false;
+  ['ll-5050','ll-friend','ll-poll'].forEach(id=>document.getElementById(id).disabled=false);
+  showScreen('game-screen');
+  buildLadder();
+  askName('🎯', `שאלה 1 מתוך ${Qs.length}`, 'מי עונה על השאלה הראשונה?', ()=>loadQ());
+}
+
+/* ===== NAME MODAL ===== */
+let _nameCallback = null;
+function askName(emo, title, sub, cb) {
+  _nameCallback = cb;
+  document.getElementById('name-emo').textContent   = emo;
+  document.getElementById('name-title').textContent = title;
+  document.getElementById('name-sub').textContent   = sub;
+  document.getElementById('name-input').value       = '';
+  document.getElementById('ov-name').classList.add('active');
+  setTimeout(()=>document.getElementById('name-input').focus(), 320);
+}
+function confirmName() {
+  const n = document.getElementById('name-input').value.trim() || 'תלמיד/ה';
+  document.getElementById('timer-name').textContent = n;
+  closeOv('ov-name');
+  if(_nameCallback){ const cb=_nameCallback; _nameCallback=null; cb(); }
+}
+
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function buildLadder() {
+  const el=document.getElementById('ladder-rows'); el.innerHTML='';
+  /* show highest first */
+  for(let i=PRIZES.length-1;i>=0;i--){
+    const r=document.createElement('div'); r.className='ladder-row'; r.id='lr-'+i;
+    r.innerHTML=`<span class="row-num">${i+1}</span><span class="row-icon">${PRIZES[i].icon}</span><span class="row-label">${PRIZES[i].label}</span>`;
+    el.appendChild(r);
+  }
+  syncLadder();
+}
+
+function syncLadder() {
+  for(let i=0;i<PRIZES.length;i++){
+    const r=document.getElementById('lr-'+i); if(!r) continue;
+    r.classList.remove('current','passed');
+    if(i===curQ) r.classList.add('current');
+    else if(i<curQ) r.classList.add('passed');
+  }
+  const cur=document.getElementById('lr-'+curQ);
+  if(cur) cur.scrollIntoView({block:'nearest',behavior:'smooth'});
+  const v=document.getElementById('cur-prize-val');
+  v.textContent = curQ>0 ? PRIZES[curQ-1].icon+' '+PRIZES[curQ-1].label : '– עדיין אין פרס –';
+  document.getElementById('prog-fill').style.width=(curQ/PRIZES.length*100)+'%';
+}
+
+function loadQ() {
+  elim=[]; answering=false;
+  document.getElementById('pause-banner').style.display='none';
+  // reset all lifelines for this turn
+  lifelines={'5050':false,friend:false,poll:false};
+  ['ll-5050','ll-friend','ll-poll'].forEach(id=>document.getElementById(id).disabled=false);
+  const q=Qs[curQ];
+  document.getElementById('q-counter').textContent=`שאלה ${curQ+1} / ${Qs.length}`;
+  const qb=document.getElementById('q-text');
+  qb.textContent=q.q; qb.classList.remove('reveal'); void qb.offsetWidth; qb.classList.add('reveal');
+  for(let i=0;i<4;i++){
+    const b=document.getElementById('ans-'+i);
+    b.classList.remove('selected','correct','wrong','elim'); b.disabled=false;
+    b.querySelector('.ans-t').textContent=q.a[i];
+  }
+  syncLadder(); startTimer();
+}
+
+function pick(idx) {
+  if(answering||elim.includes(idx)) return;
+  stopTimer();
+  document.getElementById('pause-banner').style.display='none';
+  answering=true;
+  for(let i=0;i<4;i++) document.getElementById('ans-'+i).disabled=true;
+  document.getElementById('ans-'+idx).classList.add('selected');
+  setTimeout(()=>{
+    const c=Qs[curQ].c;
+    document.getElementById('ans-'+c).classList.add('correct');
+    if(idx!==c){ document.getElementById('ans-'+idx).classList.add('wrong'); setTimeout(()=>showWrong(c),1300); }
+    else { setTimeout(showCorrect,1300); }
+  },1900);
+}
+
+function showCorrect() {
+  const p=PRIZES[curQ];
+  document.getElementById('cor-prize').textContent=`הרווחתם: ${p.icon} ${p.label}!`;
+  const isLast=curQ===PRIZES.length-1;
+  document.getElementById('cor-next').textContent=isLast?'🎊 הגעתם לפרס הגדול!':`ממשיכים לשאלה ${curQ+2}...`;
+  document.getElementById('cor-btn').onclick=()=>{
+    closeOv('ov-correct');
+    if(isLast){
+      document.getElementById('win-prize').textContent=`${p.icon} ${p.label}`;
+      launchFW(); showScreen('win-screen');
+    } else {
+      curQ++;
+      askName('🌟', `שאלה ${curQ+1} מתוך ${Qs.length}`, 'מי עונה על השאלה הבאה?', ()=>loadQ());
+    }
+  };
+  document.getElementById('ov-correct').classList.add('active');
+}
+
+function showWrong(correctIdx) {
+  document.getElementById('ov-wrong-title').textContent =
+    `התשובה הנכונה היתה: ${LETTERS[correctIdx]}. ${Qs[curQ].a[correctIdx]}`;
+  document.getElementById('ov-wrong').classList.add('active');
+}
+
+function wrongNextTurn() {
+  closeOv('ov-wrong');
+  curQ++;
+  if(curQ >= Qs.length){
+    endLose('🏁','סיום החידון!',
+      curQ>1?`${PRIZES[curQ-2].icon} ${PRIZES[curQ-2].label}`:'',
+      'גמרנו את כל השאלות! כל הכבוד לכולם! 🎉');
+    return;
+  }
+  askName('😅', `שאלה ${curQ+1} מתוך ${Qs.length}`, 'מי עונה על השאלה הבאה?', ()=>loadQ());
+}
+
+function endLose(emo,title,prize,msg) {
+  stopTimer();
+  document.getElementById('lose-emo').textContent=emo;
+  document.getElementById('lose-title').textContent=title;
+  document.getElementById('lose-prize').textContent=prize?`יצאתם עם: ${prize}`:'';
+  document.getElementById('lose-msg').textContent=msg;
+  showScreen('lose-screen');
+}
+
+function walkAway() {
+  stopTimer();
+  const lbl=curQ>0?`${PRIZES[curQ-1].icon} ${PRIZES[curQ-1].label}`:'עדיין ללא פרס';
+  document.getElementById('walk-msg').textContent=`בטוח שאתם רוצים לעזוב עם: ${lbl}?`;
+  document.getElementById('ov-walk').classList.add('active');
+}
+function confirmWalk() {
+  closeOv('ov-walk');
+  const lbl=curQ>0?`${PRIZES[curQ-1].icon} ${PRIZES[curQ-1].label}`:'ללא פרס';
+  endLose('🤝','עזבתם בשלום!',lbl,'בחרתם לעצור. אולי בפעם הבאה תגיעו עוד רחוק יותר!');
+}
+
+/* ===== LIFELINES ===== */
+function use5050() {
+  if(lifelines['5050']||answering) return;
+  lifelines['5050']=true; document.getElementById('ll-5050').disabled=true;
+  const c=Qs[curQ].c, w=[0,1,2,3].filter(i=>i!==c&&!elim.includes(i));
+  w.sort(()=>Math.random()-.5).slice(0,2).forEach(i=>{ elim.push(i); document.getElementById('ans-'+i).classList.add('elim'); });
+}
+
+function useFriend() {
+  if(lifelines.friend||answering) return;
+  lifelines.friend=true; document.getElementById('ll-friend').disabled=true;
+  stopTimer();
+  showPauseBanner('👩‍🏫','שאלו חבר.ה מהחלון ליד','השעון עצר — כשחוזרים לחצו המשך');
+}
+
+function usePoll() {
+  if(lifelines.poll||answering) return;
+  lifelines.poll=true; document.getElementById('ll-poll').disabled=true;
+  stopTimer();
+  showPauseBanner('📊','קיימו סקר ידיים עם הכיתה','השעון עצר — כשגומרים לחצו המשך');
+}
+
+function showPauseBanner(icon, title, sub) {
+  document.getElementById('pause-icon').textContent  = icon;
+  document.getElementById('pause-title').textContent = title;
+  document.getElementById('pause-sub').textContent   = sub;
+  document.getElementById('pause-banner').style.display = 'flex';
+}
+
+function resumeFromPause() {
+  document.getElementById('pause-banner').style.display = 'none';
+  // resume timer from where it stopped (timerVal already holds remaining seconds)
+  timerOn = true;
+  timerInt = setInterval(()=>{
+    if(!timerOn) return;
+    timerVal--; renderTimer();
+    if(timerVal<=0){ clearInterval(timerInt); timerOn=false; onTimeout(); }
+  },1000);
+}
+
+function resumeFromLifeline(ovId) { closeOv(ovId); resumeFromPause(); }
+
+function closeOv(id) { document.getElementById(id).classList.remove('active'); }
+function restartGame() { stopTimer(); startGame(); }
+
+function launchFW() {
+  const em=['🎉','✨','🌟','💫','🥳','🏆','🎊','⭐','🍷','🥚','🎈','😂','🍿','🍫','🪄'];
+  for(let i=0;i<32;i++) setTimeout(()=>{
+    const el=document.createElement('div'); el.className='fw';
+    el.textContent=em[Math.floor(Math.random()*em.length)];
+    el.style.left=Math.random()*96+'vw'; el.style.top=(Math.random()*76+10)+'vh';
+    document.body.appendChild(el); setTimeout(()=>el.remove(),1700);
+  },i*52);
+}
+
+</script>
+</body>
+</html>
