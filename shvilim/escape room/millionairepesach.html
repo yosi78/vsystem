@@ -274,12 +274,12 @@
 
   /* --- RIGHT: prize ladder sidebar --- */
   .prize-sidebar {
-    width: 220px;
+    width: 290px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     background: rgba(5, 14, 28, 0.85);
-    border-right: 1px solid rgba(245,197,24,0.15);  /* RTL: this is left side visually */
+    border-right: 1px solid rgba(245,197,24,0.15);
     padding: 18px 0 18px 0;
     overflow-y: auto;
     position: relative;
@@ -293,25 +293,25 @@
 
   .sidebar-title {
     font-family: 'Frank Ruhl Libre', serif;
-    font-size: 13px; font-weight: 700; color: rgba(245,197,24,0.6);
+    font-size: 15px; font-weight: 700; color: rgba(245,197,24,0.7);
     text-align: center; letter-spacing: 2px;
     padding: 0 12px 12px 12px;
     border-bottom: 1px solid rgba(245,197,24,0.12);
-    margin-bottom: 6px; flex-shrink: 0;
+    margin-bottom: 4px; flex-shrink: 0;
   }
 
   .ladder-rows { display: flex; flex-direction: column; }
 
   .ladder-row {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 14px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px;
     cursor: default;
     transition: background 0.25s, transform 0.25s;
     border-right: 3px solid transparent;
   }
-  .ladder-row .row-num   { font-size: 10px; font-weight: 700; color: #3a5878; min-width: 16px; text-align: left; }
-  .ladder-row .row-icon  { font-size: 15px; flex-shrink: 0; }
-  .ladder-row .row-label { font-size: 11px; color: #5a7e9c; font-weight: 600; line-height: 1.3; }
+  .ladder-row .row-num   { font-size: 12px; font-weight: 700; color: #3a5878; min-width: 20px; text-align: left; }
+  .ladder-row .row-icon  { font-size: 18px; flex-shrink: 0; }
+  .ladder-row .row-label { font-size: 13px; color: #7a9cbc; font-weight: 600; line-height: 1.3; }
 
   .ladder-row.passed {
     background: rgba(20,60,20,0.3);
@@ -324,9 +324,9 @@
     border-right-color: var(--gold);
     transform: scaleX(1.02); transform-origin: right;
   }
-  .ladder-row.current .row-label { color: var(--gold); font-size: 12px; font-weight: 900; }
-  .ladder-row.current .row-num   { color: var(--gold); }
-  .ladder-row.current .row-icon  { font-size: 17px; }
+  .ladder-row.current .row-label { color: var(--gold); font-size: 15px; font-weight: 900; }
+  .ladder-row.current .row-num   { color: var(--gold); font-size: 13px; }
+  .ladder-row.current .row-icon  { font-size: 20px; }
 
   /* ============================================================
      OVERLAYS / MODALS
