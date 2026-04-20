@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>מגן - ניווט למקלט</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Status Bar -->
+    <div id="status-bar">
+        <div class="status-item" id="gps-status">
+            <span class="dot" id="gps-dot"></span>
+            <span id="gps-text">מחפש מיקום...</span>
+        </div>
+        <div class="status-item" id="alert-status">
+            <span id="alert-icon">🛡️</span>
+            <span id="alert-text">מחובר לצופר</span>
+        </div>
+        <div class="status-item" id="conn-status">
+            <span class="dot" id="conn-dot"></span>
+            <span id="conn-text">מתחבר...</span>
+        </div>
+    </div>
+
+    <!-- API Key Warning -->
+    <div id="api-warning">
+        ⚠️ יש להגדיר <strong>GOOGLE_MAPS_API_KEY</strong> בקובץ <code>app.js</code> שורה 5
+        <button onclick="this.parentElement.style.display='none'">✕</button>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Alert Overlay -->
+    <div id="alert-overlay" class="hidden">
+        <div id="alert-header">
+            <div id="siren-icon">🚨</div>
+            <div id="alert-title">אזעקה!</div>
+            <div id="alert-areas-text"></div>
+        </div>
+
+        <div id="shelter-panel">
+            <div id="shelter-searching">
+                <div class="spinner"></div>
+                <span>מחפש מקלט קרוב...</span>
+            </div>
+            <div id="shelter-result" class="hidden">
+                <div id="shelter-name-text">מקלט ציבורי</div>
+                <div id="shelter-meta">
+                    <span id="shelter-dist">—</span>
+                    <span id="shelter-walk">—</span>
+                </div>
+            </div>
+            <div id="shelter-none" class="hidden">
+                ⚠️ לא נמצא מקלט קרוב — כנס למבנה הקרוב!
+            </div>
+        </div>
+
+        <div id="action-row">
+            <button id="btn-navigate" class="btn-main">
+                🗺️ נווט למקלט
+            </button>
+            <button id="btn-gmaps" class="btn-sub">
+                פתח ב־Google Maps
+            </button>
+        </div>
+        <button id="btn-dismiss">סגור ✕</button>
+    </div>
+
+    <!-- Google Maps JS API — replace YOUR_KEY -->
+    <script src="app.js"></script>
+    <script
+        async
+        defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places,geometry&callback=initMap&language=he&region=IL">
+    </script>
+
+</body>
+</html>
