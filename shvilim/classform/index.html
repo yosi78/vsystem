@@ -125,6 +125,42 @@
 
     .note { text-align: center; font-size: .75rem; color: #94a3b8; margin-top: 8px; padding-bottom: 16px; }
     @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+
+    /* ── Autocomplete dropdown ── */
+    .ac-wrap {
+      position: relative; display: flex;
+      border: 1px solid #cbd5e1; border-radius: 10px;
+      overflow: hidden; background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .ac-wrap:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+    .ac-wrap.has-error { border-color: #f87171 !important; background: #fff5f5; }
+    .ac-input {
+      flex: 1; min-width: 0;
+      padding: 12px 16px; border: none; outline: none;
+      font-size: 1rem; font-family: inherit; background: transparent; color: inherit;
+    }
+    .ac-btn {
+      flex-shrink: 0; padding: 0 16px;
+      background: #f1f5f9; border: none; border-right: 1px solid #e2e8f0;
+      cursor: pointer; color: #64748b; font-size: 1.1rem;
+      transition: background .15s, color .15s;
+    }
+    .ac-btn:hover { background: #dbeafe; color: #2563eb; }
+    .ac-drop {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.1);
+      max-height: 220px; overflow-y: auto; z-index: 999; display: none;
+    }
+    .ac-drop.open { display: block; }
+    .ac-item {
+      padding: 10px 16px; cursor: pointer; font-size: .95rem;
+      border-bottom: 1px solid #f8fafc; transition: background .1s;
+    }
+    .ac-item:hover, .ac-item.hi { background: #eff6ff; color: #1e40af; }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-empty { padding: 12px 16px; color: #94a3b8; font-size: .875rem; }
   </style>
 </head>
 <body>
@@ -197,26 +233,36 @@
       </div>
     </div>
 
-    <datalist id="students-list"></datalist>
-
     <div class="card">
       <h2>בקשות חברים לכיתה</h2>
       <div class="field">
         <label for="r1">בקשה <span class="req">*</span></label>
-        <input id="r1" type="text" list="students-list" placeholder="התחל/י להקליד שם..." autocomplete="off" />
+        <div class="ac-wrap" id="ac-r1">
+          <input id="r1" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
+          <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
+        </div>
         <div class="err" id="e-r1">בקשה ראשונה היא שדה חובה</div>
       </div>
       <div class="field">
         <label for="r2">בקשה <span class="optional">(לא חובה)</span></label>
-        <input id="r2" type="text" list="students-list" placeholder="התחל/י להקליד שם..." autocomplete="off" />
+        <div class="ac-wrap" id="ac-r2">
+          <input id="r2" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
+          <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
+        </div>
       </div>
       <div class="field">
         <label for="r3">בקשה <span class="optional">(לא חובה)</span></label>
-        <input id="r3" type="text" list="students-list" placeholder="התחל/י להקליד שם..." autocomplete="off" />
+        <div class="ac-wrap" id="ac-r3">
+          <input id="r3" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
+          <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
+        </div>
       </div>
       <div class="field">
         <label for="r4">בקשה <span class="optional">(לא חובה)</span></label>
-        <input id="r4" type="text" list="students-list" placeholder="התחל/י להקליד שם..." autocomplete="off" />
+        <div class="ac-wrap" id="ac-r4">
+          <input id="r4" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
+          <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
+        </div>
       </div>
       <div class="field">
         <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="optional">(לא חובה)</span></label>
@@ -254,7 +300,7 @@
 
     <button type="submit" id="btn" onclick="submitForm()">שלח/י טופס</button>
     <p class="note">שדות המסומנים ב-<span style="color:#ef4444">*</span> הם חובה</p>
-    <p class="note" style="margin-top:4px;color:#cbd5e1">v1.1</p>
+    <p class="note" style="margin-top:4px;color:#cbd5e1">v1.2</p>
 
   </div><!-- /form-wrap -->
 </div><!-- /container -->
@@ -266,22 +312,84 @@
   const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwEbmy5ig5JrxeLiu0ipuxa2lC8pVPeEg9wvcPNdvjGIYyHP1qfMwiMMTZoBl4fBolxyw/exec';
   // ════════════════════════════════════════════════════
 
-  // טעינת רשימת תלמידים לדרופדאון
+  let students = [];
+
+  function initAutocomplete(id) {
+    const input = document.getElementById(id);
+    const wrap  = document.getElementById('ac-' + id);
+    const btn   = wrap.querySelector('.ac-btn');
+    const drop  = document.createElement('div');
+    drop.className = 'ac-drop';
+    wrap.appendChild(drop);
+    let activeIdx = -1;
+
+    function render(filter) {
+      const q = filter.toLowerCase();
+      const list = q ? students.filter(n => n.toLowerCase().includes(q)) : students;
+      activeIdx = -1;
+      if (!list.length) {
+        drop.innerHTML = '<div class="ac-empty">לא נמצאו תלמידים</div>';
+      } else {
+        drop.innerHTML = list.map(n => {
+          const hl = q
+            ? n.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),
+                m => `<mark style="background:#dbeafe;border-radius:2px;padding:0 1px">${m}</mark>`)
+            : n;
+          return `<div class="ac-item" data-val="${n}">${hl}</div>`;
+        }).join('');
+        drop.querySelectorAll('.ac-item').forEach(el => {
+          el.addEventListener('mousedown', e => { e.preventDefault(); pick(el.dataset.val); });
+        });
+      }
+      drop.classList.add('open');
+    }
+
+    function pick(val) {
+      input.value = val;
+      drop.classList.remove('open');
+      const errEl = document.getElementById('e-' + id);
+      if (errEl) errEl.classList.remove('show');
+      wrap.classList.remove('has-error');
+    }
+
+    function close() { drop.classList.remove('open'); activeIdx = -1; }
+
+    input.addEventListener('input',  () => render(input.value.trim()));
+    input.addEventListener('focus',  () => render(input.value.trim()));
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      drop.classList.contains('open') ? close() : (input.focus(), render(input.value.trim()));
+    });
+    input.addEventListener('keydown', e => {
+      const items = [...drop.querySelectorAll('.ac-item')];
+      if (!drop.classList.contains('open') || !items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx+1) % items.length; }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = (activeIdx-1+items.length) % items.length; }
+      else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); pick(items[activeIdx].dataset.val); return; }
+      else if (e.key === 'Escape') { close(); return; }
+      else return;
+      items.forEach((it,i) => it.classList.toggle('hi', i===activeIdx));
+      items[activeIdx]?.scrollIntoView({ block:'nearest' });
+    });
+    document.addEventListener('click', e => { if (!wrap.contains(e.target)) close(); });
+  }
+
   fetch('students.json')
     .then(r => r.json())
-    .then(names => {
-      const dl = document.getElementById('students-list');
-      names.forEach(n => { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
-    })
-    .catch(() => {});
+    .then(names => { students = names; ['r1','r2','r3','r4'].forEach(initAutocomplete); })
+    .catch(() => { ['r1','r2','r3','r4'].forEach(initAutocomplete); });
 
   function v(id)  { return document.getElementById(id).value.trim(); }
   function cb(id) { return document.getElementById(id).checked; }
 
   function mark(inputId, errId, bad) {
-    document.getElementById(errId).classList.toggle('show', bad);
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.classList.toggle('show', bad);
     const el = document.getElementById(inputId);
-    if (el) el.classList.toggle('has-error', bad);
+    if (el) {
+      const target = el.closest('.ac-wrap') || el;
+      target.classList.toggle('has-error', bad);
+    }
     return bad;
   }
 
