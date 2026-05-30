@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>שיבוץ לכיתה ד׳ — טופס בקשת חברים</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #eff6ff, #eef2ff);
+      min-height: 100vh;
+      padding: 32px 16px;
+      color: #1e293b;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 { font-size: 1.6rem; color: #1e3a8a; font-weight: 800; }
+    .header p  { color: #2563eb; font-weight: 600; margin-top: 4px; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 16px;
+    }
+
+    label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: 6px; }
+    .optional { font-weight: 400; font-size: .75rem; color: #94a3b8; margin-right: 4px; }
+    .req { color: #ef4444; margin-right: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+      transition: border .15s, box-shadow .15s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    textarea { resize: vertical; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+
+    .radio-group { display: flex; gap: 24px; margin-top: 4px; }
+    .radio-group label {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 500; cursor: pointer; margin-bottom: 0;
+    }
+    input[type="radio"] { width: 18px; height: 18px; accent-color: #2563eb; }
+
+    .info-box {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      line-height: 1.85;
+      font-size: .875rem;
+    }
+    .info-blue   { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .info-yellow { background: #fffbeb; border: 1px solid #fde68a; }
+
+    .checkbox-row {
+      display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+    }
+    .checkbox-row input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: #2563eb; }
+    .checkbox-row span  { font-size: .875rem; font-weight: 600; }
+
+    .err { color: #dc2626; font-size: .8rem; margin-top: 5px; display: none; }
+    .err.show { display: block; }
+    .has-error { border-color: #f87171 !important; background: #fff5f5 !important; }
+
+    #send-error {
+      display: none;
+      background: #fef2f2; border: 1px solid #fca5a5;
+      border-radius: 12px; padding: 14px 18px;
+      color: #b91c1c; font-size: .9rem; margin-bottom: 12px;
+    }
+
+    #thank-you {
+      display: none;
+      background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 16px; padding: 48px 32px;
+      text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    #thank-you .icon { font-size: 3.5rem; margin-bottom: 16px; }
+    #thank-you h2 { font-size: 1.4rem; color: #15803d; margin-bottom: 8px; }
+    #thank-you p  { color: #475569; line-height: 1.7; }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 16px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37,99,235,.35);
+      transition: background .15s, transform .1s;
+    }
+    button[type="submit"]:hover   { background: #1d4ed8; }
+    button[type="submit"]:active  { transform: scale(.98); }
+    button[type="submit"]:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    .note { text-align: center; font-size: .75rem; color: #94a3b8; margin-top: 8px; padding-bottom: 16px; }
+    @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>🏫 שיבוץ לכיתה ד׳</h1>
+    <p>טופס בקשת חברים לכיתה</p>
+  </div>
+
+  <!-- הודעת תודה — מוצגת לאחר שליחה -->
+  <div id="thank-you">
+    <div class="icon">🎉</div>
+    <h2>הטופס נשלח בהצלחה!</h2>
+    <p>תודה רבה על מילוי הטופס.<br>הבקשה שלך התקבלה ותילקח בחשבון בתהליך השיבוץ.</p>
+  </div>
+
+  <!-- הטופס -->
+  <div id="form-wrap">
+
+    <div class="card">
+      <div class="field">
+        <label for="email">כתובת אימייל <span class="req">*</span></label>
+        <input id="email" type="email" dir="ltr" autocomplete="email" placeholder="your@email.com" />
+        <div class="err" id="e-email">כתובת אימייל אינה תקינה</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="info-box info-blue">
+        סוף הוא תמיד התחלה... אנחנו נערכים לקראת המעבר המרגש שלכן.ם לכיתה ד'.
+        אנא כתבו שמות של ארבעה חברות.ים, שאיתם.ן את/ה מבקש/ת להיות בכיתה ואנו נעשה את המיטב להיענות לבקשה אחת שלכן.ם
+        (סדר כתיבת שמות החברים אינו משמעותי). חשוב לזכור כי מלאכת השיבוץ היא מלאכה מורכבת הכוללת התייחסות למגוון רחב של צרכים
+        ובחירת החברות.ים הוא אחד ממרכיביה. אנחנו נעשה כל שביכולתנו על מנת ליצור שלוש קבוצות נעימות, מגוונות, ונפלאות עבורכן.ם לשנה הבאה.
+        לתשומת הלב — התאמת החונכת לקבוצה תיעשה על פי שיקולי הצוות החינוכי. בהצלחה : )
+      </div>
+      <label class="checkbox-row">
+        <input id="read_intro" type="checkbox" />
+        <span>קראתי את הדברים</span>
+      </label>
+      <div class="err" id="e-read_intro">יש לסמן שקראת את הדברים לפני המשך</div>
+    </div>
+
+    <div class="card">
+      <h2>פרטי הילד.ה</h2>
+      <div class="row2">
+        <div class="field">
+          <label for="first">שם פרטי <span class="req">*</span></label>
+          <input id="first" type="text" autocomplete="off" />
+          <div class="err" id="e-first">שדה חובה</div>
+        </div>
+        <div class="field">
+          <label for="last">שם משפחה <span class="req">*</span></label>
+          <input id="last" type="text" autocomplete="off" />
+          <div class="err" id="e-last">שדה חובה</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>מין <span class="req">*</span></label>
+        <div class="radio-group">
+          <label><input type="radio" name="gender" value="זכר" /> זכר</label>
+          <label><input type="radio" name="gender" value="נקבה" /> נקבה</label>
+        </div>
+        <div class="err" id="e-gender">יש לבחור מין</div>
+      </div>
+      <div class="field">
+        <label for="teacher">כיום אני לומד.ת בכיתה של (שם המחנכת הנוכחית) <span class="req">*</span></label>
+        <input id="teacher" type="text" placeholder="שם המחנכת" />
+        <div class="err" id="e-teacher">שדה חובה</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>בקשות חברים לכיתה</h2>
+      <div class="field">
+        <label for="r1">בקשה 1 — שם ושם משפחה <span class="req">*</span></label>
+        <input id="r1" type="text" placeholder="שם פרטי ושם משפחה של חבר/ה" />
+        <div class="err" id="e-r1">בקשה ראשונה היא שדה חובה</div>
+      </div>
+      <div class="field">
+        <label for="r2">בקשה 2 — שם ושם משפחה <span class="optional">(לא חובה)</span></label>
+        <input id="r2" type="text" placeholder="אופציונלי" />
+      </div>
+      <div class="field">
+        <label for="r3">בקשה 3 — שם ושם משפחה <span class="optional">(לא חובה)</span></label>
+        <input id="r3" type="text" placeholder="אופציונלי" />
+      </div>
+      <div class="field">
+        <label for="r4">בקשה 4 — שם ושם משפחה <span class="optional">(לא חובה)</span></label>
+        <input id="r4" type="text" placeholder="אופציונלי" />
+      </div>
+      <div class="field">
+        <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="optional">(לא חובה)</span></label>
+        <textarea id="notes" rows="4" placeholder="כתוב/י כאן כל מידע נוסף..."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>פרטי ההורה ממלא/ת הטופס</h2>
+      <div class="field">
+        <label for="pname">שם ההורה <span class="req">*</span></label>
+        <input id="pname" type="text" autocomplete="name" />
+        <div class="err" id="e-pname">שדה חובה</div>
+      </div>
+      <div class="field">
+        <label for="phone">טלפון ההורה <span class="req">*</span></label>
+        <input id="phone" type="tel" dir="ltr" autocomplete="tel" inputmode="tel" placeholder="0541234567" />
+        <div class="err" id="e-phone">מספר טלפון אינו תקין (לדוגמה: 0541234567)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="info-box info-yellow">
+        במידה ויש לכם התלבטות, שאלה, מחשבה, זה הזמן ליצור קשר עם אורית יועצת ד-ו.
+        לא נוכל להתייחס לפניות בחודשי הקיץ.
+      </div>
+      <label class="checkbox-row">
+        <input id="read_outro" type="checkbox" />
+        <span>קראתי את הדברים</span>
+      </label>
+      <div class="err" id="e-read_outro">יש לסמן שקראת את הדברים לפני שליחה</div>
+    </div>
+
+    <div id="send-error">⚠️ שגיאה בשליחת הטופס. אנא נסה/י שוב.</div>
+
+    <button type="submit" id="btn" onclick="submitForm()">שלח/י טופס</button>
+    <p class="note">שדות המסומנים ב-<span style="color:#ef4444">*</span> הם חובה</p>
+
+  </div><!-- /form-wrap -->
+</div><!-- /container -->
+
+<script>
+  // ════════════════════════════════════════════════════
+  //  שנה רק את השורה הזו — הדבק כאן את ה-URL מ-Google
+  // ════════════════════════════════════════════════════
+  const GOOGLE_URL = https://script.google.com/macros/s/AKfycbwEbmy5ig5JrxeLiu0ipuxa2lC8pVPeEg9wvcPNdvjGIYyHP1qfMwiMMTZoBl4fBolxyw/exec;
+  // ════════════════════════════════════════════════════
+
+  function v(id)  { return document.getElementById(id).value.trim(); }
+  function cb(id) { return document.getElementById(id).checked; }
+
+  function mark(inputId, errId, bad) {
+    document.getElementById(errId).classList.toggle('show', bad);
+    const el = document.getElementById(inputId);
+    if (el) el.classList.toggle('has-error', bad);
+    return bad;
+  }
+
+  function validate() {
+    const phone = v('phone').replace(/[\s\-(). ]/g, '');
+    let fail = false;
+    fail = mark('email',      'e-email',      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email')))  || fail;
+    fail = mark('read_intro', 'e-read_intro', !cb('read_intro'))  || fail;
+    fail = mark('first',      'e-first',      !v('first'))        || fail;
+    fail = mark('last',       'e-last',       !v('last'))         || fail;
+    fail = mark('teacher',    'e-teacher',    !v('teacher'))      || fail;
+    fail = mark('r1',         'e-r1',         !v('r1'))           || fail;
+    fail = mark('pname',      'e-pname',      !v('pname'))        || fail;
+    fail = mark('phone',      'e-phone',      !/^(05\d{8}|0[2-9]\d{7})$/.test(phone)) || fail;
+    fail = mark('read_outro', 'e-read_outro', !cb('read_outro'))  || fail;
+
+    const noGender = !document.querySelector('input[name="gender"]:checked');
+    document.getElementById('e-gender').classList.toggle('show', noGender);
+    if (noGender) fail = true;
+
+    return !fail;
+  }
+
+  async function submitForm() {
+    if (!validate()) {
+      document.querySelector('.err.show')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    btn.textContent = 'שולח...';
+    document.getElementById('send-error').style.display = 'none';
+
+    const data = {
+      email:     v('email'),
+      שם_פרטי:   v('first'),
+      שם_משפחה:  v('last'),
+      מין:       document.querySelector('input[name="gender"]:checked')?.value || '',
+      מחנכת:     v('teacher'),
+      בקשה_1:    v('r1'),
+      בקשה_2:    v('r2'),
+      בקשה_3:    v('r3'),
+      בקשה_4:    v('r4'),
+      הערות:     v('notes'),
+      שם_הורה:   v('pname'),
+      טלפון:     v('phone'),
+    };
+
+    try {
+      await fetch(GOOGLE_URL, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(data),
+      });
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('thank-you').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      document.getElementById('send-error').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'שלח/י טופס';
+    }
+  }
+</script>
+</body>
+</html>
