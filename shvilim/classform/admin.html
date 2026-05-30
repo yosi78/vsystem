@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דף מנהל — רשימת תלמידים</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      padding: 32px 16px;
+      color: #1e293b;
+    }
+    .container { max-width: 680px; margin: 0 auto; }
+
+    h1 { font-size: 1.5rem; color: #1e3a8a; font-weight: 800; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: .9rem; margin-bottom: 24px; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; color: #334155; }
+
+    /* אזור גרירה */
+    #drop-zone {
+      border: 2px dashed #93c5fd;
+      border-radius: 12px;
+      padding: 36px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      background: #eff6ff;
+    }
+    #drop-zone:hover, #drop-zone.drag-over { background: #dbeafe; border-color: #3b82f6; }
+    #drop-zone .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    #drop-zone p { color: #2563eb; font-weight: 600; margin-bottom: 4px; }
+    #drop-zone small { color: #64748b; font-size: .8rem; }
+    #file-input { display: none; }
+
+    /* רשימת שמות */
+    #names-container { max-height: 320px; overflow-y: auto; margin-bottom: 14px; }
+    .name-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-radius: 8px; font-size: .9rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .name-row:hover { background: #f8fafc; }
+    .name-row button {
+      background: none; border: none; cursor: pointer;
+      color: #94a3b8; font-size: 1rem; padding: 2px 6px; border-radius: 4px;
+    }
+    .name-row button:hover { color: #ef4444; background: #fff1f2; }
+
+    /* הוספה ידנית */
+    .add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .add-row input {
+      flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1;
+      border-radius: 10px; font-size: .95rem; font-family: inherit;
+    }
+    .add-row input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+    .add-row button {
+      padding: 10px 18px; background: #2563eb; color: #fff;
+      border: none; border-radius: 10px; font-size: .95rem;
+      font-weight: 600; cursor: pointer;
+    }
+    .add-row button:hover { background: #1d4ed8; }
+
+    /* כפתור הורדה */
+    #download-btn {
+      width: 100%; padding: 15px; background: #16a34a; color: #fff;
+      font-size: 1.05rem; font-weight: 700; border: none; border-radius: 12px;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(22,163,74,.3);
+      transition: background .15s;
+    }
+    #download-btn:hover { background: #15803d; }
+    #download-btn:disabled { background: #86efac; cursor: not-allowed; }
+
+    .count-badge {
+      display: inline-block; background: #dbeafe; color: #1e40af;
+      font-size: .78rem; font-weight: 700; padding: 2px 10px;
+      border-radius: 20px; margin-right: 8px;
+    }
+
+    .info-box {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 14px 18px;
+      font-size: .85rem; line-height: 1.8; color: #78350f;
+    }
+    .info-box strong { display: block; margin-bottom: 4px; color: #92400e; }
+
+    #section-list { display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🔧 דף מנהל</h1>
+  <p class="subtitle">ניהול רשימת התלמידים לדרופדאון בטופס</p>
+
+  <!-- העלאת קובץ -->
+  <div class="card">
+    <h2>1. העלה קובץ תלמידים</h2>
+    <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📂</div>
+      <p>לחץ להעלאת קובץ או גרור לכאן</p>
+      <small>CSV או Excel (.csv / .xlsx / .xls)</small>
+    </div>
+    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" />
+
+    <div class="info-box" style="margin-top:14px">
+      <strong>מבנה הקובץ הנדרש:</strong>
+      שתי עמודות: <strong>שם פרטי</strong> בעמודה א׳ ו<strong>שם משפחה</strong> בעמודה ב׳ — יאוחדו אוטומטית.
+      עמודה אחת של שם מלא — ישמש כמו שהוא.
+      שורת כותרות (header) תידלג אוטומטית אם קיימת.
+    </div>
+  </div>
+
+  <!-- רשימת שמות -->
+  <div id="section-list">
+    <div class="card">
+      <h2>
+        2. עריכת הרשימה
+        <span class="count-badge" id="count-badge">0 תלמידים</span>
+      </h2>
+      <div id="names-container"></div>
+      <div class="add-row">
+        <input type="text" id="new-name" placeholder="הוסף שם ידנית..." />
+        <button onclick="addName()">+ הוסף</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. הורד וְהעלה ל-GitHub</h2>
+      <button id="download-btn" onclick="downloadJSON()">⬇ הורד students.json</button>
+      <div class="info-box" style="margin-top:14px">
+        <strong>הוראות לאחר ההורדה:</strong>
+        1. היכנס ל-GitHub → Repository שלך<br>
+        2. לחץ "Add file" → "Upload files"<br>
+        3. העלה את <strong>students.json</strong> לאותה תיקייה כמו index.html<br>
+        4. לחץ "Commit changes" — הרשימה מיד פעילה בטופס
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let names = [];
+
+  // טעינת קובץ קיים מהשרת (אם יש)
+  fetch('students.json')
+    .then(r => r.json())
+    .then(data => { names = data; renderList(); })
+    .catch(() => {});
+
+  // גרירה
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      if (!rows.length) return;
+
+      const numCols = Math.max(...rows.map(r => r.length));
+      const parsed = [];
+
+      rows.forEach((row, i) => {
+        if (!row || !row[0]) return;
+        const c0 = String(row[0]).trim();
+        const c1 = numCols >= 2 ? String(row[1] || '').trim() : '';
+
+        // דלג על שורת כותרות
+        if (i === 0 && /שם|name|first|last/i.test(c0)) return;
+
+        const full = numCols >= 2 && c1 ? c0 + ' ' + c1 : c0;
+        if (full.trim()) parsed.push(full.trim());
+      });
+
+      names = [...new Set(parsed)].sort((a, b) => a.localeCompare(b, 'he'));
+      renderList();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function renderList() {
+    const container = document.getElementById('names-container');
+    document.getElementById('section-list').style.display = 'block';
+    document.getElementById('count-badge').textContent = names.length + ' תלמידים';
+
+    container.innerHTML = names.length
+      ? names.map((n, i) => `
+          <div class="name-row">
+            <span>${n}</span>
+            <button onclick="removeName(${i})" title="הסר">✕</button>
+          </div>`).join('')
+      : '<p style="color:#94a3b8;font-size:.85rem;padding:8px">הרשימה ריקה</p>';
+  }
+
+  function removeName(i) {
+    names.splice(i, 1);
+    renderList();
+  }
+
+  function addName() {
+    const input = document.getElementById('new-name');
+    const val = input.value.trim();
+    if (!val) return;
+    if (!names.includes(val)) {
+      names.push(val);
+      names.sort((a, b) => a.localeCompare(b, 'he'));
+    }
+    input.value = '';
+    renderList();
+    document.getElementById('section-list').style.display = 'block';
+  }
+
+  document.getElementById('new-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addName();
+  });
+
+  function downloadJSON() {
+    const blob = new Blob([JSON.stringify(names, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'students.json';
+    a.click();
+  }
+</script>
+</body>
+</html>
