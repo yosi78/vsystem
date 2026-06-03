@@ -734,6 +734,136 @@
     }
 
     /* ═══════════════════════════════════════════
+       SHARED: NEW TICKET FORM
+    ═══════════════════════════════════════════ */
+    function NewTicketForm() {
+      const { dispatch } = useStore();
+      const [desc, setDesc]         = useState('');
+      const [location, setLocation] = useState('');
+      const [image, setImage]       = useState(null);
+      const [preview, setPreview]   = useState(null);
+      const [done, setDone]         = useState(false);
+      const [uploading, setUp]      = useState(false);
+      const [saving,   setSaving]   = useState(false);
+      const [saveErr,  setSaveErr]  = useState('');
+      const [errs, setErrs]         = useState({});
+
+      const handleImg = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUp(true);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const c = await compressImg(reader.result);
+          setImage(c); setPreview(c); setUp(false);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const submit = async () => {
+        const e = {};
+        if (!desc.trim())     e.desc = 'נא לתאר את הבעיה';
+        if (!location.trim()) e.loc  = 'נא להזין מיקום';
+        setErrs(e);
+        if (Object.keys(e).length) return;
+        setSaving(true); setSaveErr('');
+        try {
+          await dispatch({ type: 'ADD_TICKET', payload: { description: desc.trim(), location: location.trim(), image } });
+          setDone(true);
+        } catch(err) {
+          setSaveErr(
+            err.code === 'PERMISSION_DENIED'
+              ? '⛔ שגיאה: אין הרשאות כתיבה לבסיס הנתונים.'
+              : '❌ שגיאה בשמירת הקריאה — בדוק חיבור לאינטרנט ונסה שוב. (' + (err.message || err.code || '') + ')'
+          );
+        } finally { setSaving(false); }
+      };
+
+      const reset = () => {
+        setDesc(''); setLocation(''); setImage(null); setPreview(null);
+        setErrs({}); setDone(false); setSaveErr('');
+      };
+
+      if (done) return (
+        <div className="card p-8 text-center">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-xl font-bold text-green-700 mb-2">הדיווח התקבל!</h2>
+          <p className="text-gray-500 text-sm mb-6">הקריאה נרשמה במערכת</p>
+          <button onClick={reset} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-base transition-colors">
+            📋 פתח קריאה נוספת
+          </button>
+        </div>
+      );
+
+      return (
+        <div className="card p-5 space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">תיאור הבעיה <span className="text-red-500">*</span></label>
+            <textarea
+              value={desc}
+              onChange={e => { setDesc(e.target.value); setErrs(p => ({...p, desc: ''})); }}
+              placeholder="תאר את הבעיה (למשל: ברז דולף, נורה שרופה, מזגן לא עובד, דלת שבורה...)"
+              rows={4}
+              className={`w-full border-2 rounded-xl px-4 py-3 resize-none focus:outline-none transition-colors ${
+                errs.desc ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+              }`}
+            />
+            {errs.desc && <p className="text-red-500 text-xs mt-1">{errs.desc}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">מיקום <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={location}
+              onChange={e => { setLocation(e.target.value); setErrs(p => ({...p, loc: ''})); }}
+              placeholder="למשל: בניין א׳ קומה 2 כיתה 204, חדר מורים, אולם ספורט..."
+              className={`w-full border-2 rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+                errs.loc ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+              }`}
+            />
+            {errs.loc && <p className="text-red-500 text-xs mt-1">{errs.loc}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              צילום תקלה <span className="text-gray-400 font-normal">(אופציונלי)</span>
+            </label>
+            {preview ? (
+              <div className="relative">
+                <img src={preview} alt="תמונת תקלה" className="w-full h-44 object-cover rounded-xl" />
+                <button
+                  onClick={() => { setImage(null); setPreview(null); }}
+                  className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-base shadow transition-colors"
+                >×</button>
+              </div>
+            ) : (
+              <label className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+              }`}>
+                <span className="text-3xl mb-1">{uploading ? '⏳' : '📷'}</span>
+                <span className="text-gray-500 text-sm">{uploading ? 'מעלה תמונה...' : 'לחץ לצילום או בחירת תמונה'}</span>
+                <input type="file" accept="image/*" capture="environment" onChange={handleImg} className="hidden" disabled={uploading} />
+              </label>
+            )}
+          </div>
+          {saveErr && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">{saveErr}</div>
+          )}
+          <button
+            onClick={submit}
+            disabled={saving || uploading}
+            className={`w-full font-bold py-4 rounded-xl text-lg shadow-md transition-colors flex items-center justify-center gap-2 ${
+              saving || uploading
+                ? 'bg-blue-300 cursor-not-allowed text-white'
+                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
+            }`}
+          >
+            {saving ? <><span className="spin text-xl">⏳</span> שומר קריאה...</> : <>📤 שלח דיווח</>}
+          </button>
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════
        TEACHER VIEW
     ═══════════════════════════════════════════ */
     function TeacherView() {
@@ -1439,7 +1569,7 @@
 
     function ManagerView() {
       const { state }             = useStore();
-      const [mainTab, setMainTab] = useState('tickets'); // 'tickets' | 'reports' | 'settings'
+      const [mainTab, setMainTab] = useState('tickets'); // 'tickets' | 'reports' | 'archive' | 'settings' | 'new'
       const [tab,    setTab]      = useState('open');
       const [priF,   setPriF]     = useState('all');
       const [search, setSearch]   = useState('');
@@ -1474,20 +1604,20 @@
 
           {/* ניווט ראשי */}
           <div className="max-w-2xl mx-auto px-4 pt-4">
-            <div className="flex gap-2 mb-4 card p-1.5">
+            <div className="flex flex-wrap gap-2 mb-4 card p-1.5">
               <button
                 onClick={() => setMainTab('tickets')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                   mainTab === 'tickets'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <span>📋</span> ניהול קריאות
+                <span>📋</span> קריאות
               </button>
               <button
                 onClick={() => setMainTab('reports')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                   mainTab === 'reports'
                     ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -1497,7 +1627,7 @@
               </button>
               <button
                 onClick={() => setMainTab('archive')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                   mainTab === 'archive'
                     ? 'bg-slate-600 text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -1507,7 +1637,7 @@
               </button>
               <button
                 onClick={() => setMainTab('settings')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                   mainTab === 'settings'
                     ? 'bg-green-600 text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -1515,11 +1645,25 @@
               >
                 <span>🔔</span> הגדרות
               </button>
+              <button
+                onClick={() => setMainTab('new')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  mainTab === 'new'
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>➕</span> קריאה חדשה
+              </button>
             </div>
           </div>
 
           {/* תוכן ראשי */}
-          {mainTab === 'settings' ? <SettingsPanel /> : mainTab === 'archive' ? <ArchiveView /> : mainTab === 'reports' ? <ReportView /> : (
+          {mainTab === 'new' ? (
+            <div className="max-w-2xl mx-auto px-4 pb-4">
+              <NewTicketForm />
+            </div>
+          ) : mainTab === 'settings' ? <SettingsPanel /> : mainTab === 'archive' ? <ArchiveView /> : mainTab === 'reports' ? <ReportView /> : (
             <div className="max-w-2xl mx-auto px-4 pb-4">
 
               {/* Stats */}
@@ -1604,6 +1748,7 @@
     ═══════════════════════════════════════════ */
     function CaretakerView() {
       const { state } = useStore();
+      const [view, setView]             = useState('tasks'); // 'tasks' | 'new'
       const [showClosed, setShowClosed] = useState(false);
 
       const sortByPri = arr => [...arr].sort((a, b) => {
@@ -1623,46 +1768,76 @@
       return (
         <div className="min-h-screen app-bg">
           <Header title="משימות — אב הבית" />
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[
-                { val: open.length,   label: 'פתוחות', color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-100', icon: '📋' },
-                { val: urgentCount,   label: 'דחוף',   color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-red-100',    icon: '🚨' },
-                { val: doneCount,     label: 'בוצע',   color: 'text-emerald-600',bg: 'bg-emerald-50', border: 'border-emerald-100',icon: '✅' },
-              ].map(s => (
-                <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-3 shadow-sm text-center`}>
-                  <span className="text-xl">{s.icon}</span>
-                  <p className={`text-2xl font-extrabold ${s.color} mt-1`}>{s.val}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
-                </div>
-              ))}
+          <div className="max-w-2xl mx-auto px-4 pt-4">
+            <div className="flex gap-2 mb-4 card p-1.5">
+              <button
+                onClick={() => setView('tasks')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  view === 'tasks'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>🔧</span> משימות
+              </button>
+              <button
+                onClick={() => setView('new')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  view === 'new'
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>➕</span> קריאה חדשה
+              </button>
             </div>
-            {urgentCount > 0 && (
-              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mb-4 text-sm text-red-800 font-bold">
-                🚨 יש {urgentCount} תקלה/ות דחופה/ות — יש לטפל בהן בהקדם!
-              </div>
-            )}
-            {open.length === 0 ? (
-              <div className="bg-white rounded-xl p-10 text-center text-gray-400 mb-4">
-                <p className="text-4xl mb-2">🎉</p>
-                <p className="font-bold text-gray-600">כל המשימות הושלמו!</p>
-                <p className="text-sm mt-1">אין קריאות פתוחות כרגע</p>
-              </div>
-            ) : (
-              open.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)
-            )}
-            {closed.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowClosed(!showClosed)}
-                  className="w-full card p-3 text-sm text-gray-600 font-semibold flex items-center justify-center gap-2 mb-3 hover:bg-slate-50 transition-colors"
-                >
-                  {showClosed ? '▲' : '▼'} קריאות שנסגרו ({closed.length})
-                </button>
-                {showClosed && closed.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)}
-              </div>
-            )}
           </div>
+          {view === 'new' ? (
+            <div className="max-w-2xl mx-auto px-4 pb-4">
+              <NewTicketForm />
+            </div>
+          ) : (
+            <div className="max-w-2xl mx-auto px-4 py-4">
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[
+                  { val: open.length,   label: 'פתוחות', color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-100', icon: '📋' },
+                  { val: urgentCount,   label: 'דחוף',   color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-red-100',    icon: '🚨' },
+                  { val: doneCount,     label: 'בוצע',   color: 'text-emerald-600',bg: 'bg-emerald-50', border: 'border-emerald-100',icon: '✅' },
+                ].map(s => (
+                  <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-3 shadow-sm text-center`}>
+                    <span className="text-xl">{s.icon}</span>
+                    <p className={`text-2xl font-extrabold ${s.color} mt-1`}>{s.val}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              {urgentCount > 0 && (
+                <div className="bg-red-50 border border-red-300 rounded-xl p-3 mb-4 text-sm text-red-800 font-bold">
+                  🚨 יש {urgentCount} תקלה/ות דחופה/ות — יש לטפל בהן בהקדם!
+                </div>
+              )}
+              {open.length === 0 ? (
+                <div className="bg-white rounded-xl p-10 text-center text-gray-400 mb-4">
+                  <p className="text-4xl mb-2">🎉</p>
+                  <p className="font-bold text-gray-600">כל המשימות הושלמו!</p>
+                  <p className="text-sm mt-1">אין קריאות פתוחות כרגע</p>
+                </div>
+              ) : (
+                open.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)
+              )}
+              {closed.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowClosed(!showClosed)}
+                    className="w-full card p-3 text-sm text-gray-600 font-semibold flex items-center justify-center gap-2 mb-3 hover:bg-slate-50 transition-colors"
+                  >
+                    {showClosed ? '▲' : '▼'} קריאות שנסגרו ({closed.length})
+                  </button>
+                  {showClosed && closed.map(t => <TicketCard key={t.id} ticket={t} mode="caretaker" />)}
+                </div>
+              )}
+            </div>
+          )}
           <div className="max-w-2xl mx-auto w-full">
             <Footer />
           </div>
@@ -1719,7 +1894,7 @@
               <div className="text-6xl mb-3">🏫</div>
               <h1 className="text-2xl font-extrabold text-white mb-1">מערכת ניהול תקלות</h1>
               <p className="text-blue-200 text-base">בית הספר "שבילים"</p>
-              <p className="text-blue-300/60 text-xs mt-1">גרסה 0.3</p>
+              <p className="text-blue-300/60 text-xs mt-1">גרסה 0.4</p>
             </div>
 
             {/* גוף הטופס */}
