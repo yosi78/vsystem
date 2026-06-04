@@ -201,7 +201,7 @@
       </div>
       <label class="checkbox-row">
         <input id="read_intro" type="checkbox" />
-        <span>קראתי את הדברים</span>
+        <span>קראתי את הדברים <span class="req">*</span></span>
       </label>
       <div class="err" id="e-read_intro">יש לסמן שקראת את הדברים לפני המשך</div>
     </div>
@@ -246,18 +246,20 @@
         <div class="err" id="e-r1">בקשה ראשונה היא שדה חובה</div>
       </div>
       <div class="field">
-        <label for="r2">בקשה <span class="optional">(לא חובה)</span></label>
+        <label for="r2">בקשה <span class="req">*</span></label>
         <div class="ac-wrap" id="ac-r2">
           <input id="r2" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
           <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
         </div>
+        <div class="err" id="e-r2">שדה חובה</div>
       </div>
       <div class="field">
-        <label for="r3">בקשה <span class="optional">(לא חובה)</span></label>
+        <label for="r3">בקשה <span class="req">*</span></label>
         <div class="ac-wrap" id="ac-r3">
           <input id="r3" type="text" class="ac-input" placeholder="הקלד/י שם לחיפוש..." autocomplete="off" />
           <button type="button" class="ac-btn" title="פתח רשימה">▾</button>
         </div>
+        <div class="err" id="e-r3">שדה חובה</div>
       </div>
       <div class="field">
         <label for="r4">בקשה <span class="optional">(לא חובה)</span></label>
@@ -267,8 +269,9 @@
         </div>
       </div>
       <div class="field">
-        <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="optional">(לא חובה)</span></label>
+        <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="req">*</span></label>
         <textarea id="notes" rows="4" placeholder="כתוב/י כאן כל מידע נוסף..."></textarea>
+        <div class="err" id="e-notes">שדה חובה</div>
       </div>
     </div>
 
@@ -293,7 +296,7 @@
       </div>
       <label class="checkbox-row">
         <input id="read_outro" type="checkbox" />
-        <span>קראתי את הדברים</span>
+        <span>קראתי את הדברים <span class="req">*</span></span>
       </label>
       <div class="err" id="e-read_outro">יש לסמן שקראת את הדברים לפני שליחה</div>
     </div>
@@ -302,7 +305,7 @@
 
     <button type="submit" id="btn" onclick="submitForm()">שלח/י טופס</button>
     <p class="note">שדות המסומנים ב-<span style="color:#ef4444">*</span> הם חובה</p>
-    <p class="note" style="margin-top:4px;color:#cbd5e1">v1.4</p>
+    <p class="note" style="margin-top:4px;color:#cbd5e1">v1.5</p>
 
   </div><!-- /form-wrap -->
 </div><!-- /container -->
@@ -404,6 +407,9 @@
     fail = mark('last',       'e-last',       !v('last'))         || fail;
     fail = mark('teacher',    'e-teacher',    !v('teacher'))      || fail;
     fail = mark('r1',         'e-r1',         !v('r1'))           || fail;
+    fail = mark('r2',         'e-r2',         !v('r2'))           || fail;
+    fail = mark('r3',         'e-r3',         !v('r3'))           || fail;
+    fail = mark('notes',      'e-notes',      !v('notes'))        || fail;
     fail = mark('pname',      'e-pname',      !v('pname'))        || fail;
     fail = mark('phone',      'e-phone',      !/^(05\d{8}|0[2-9]\d{7})$/.test(phone)) || fail;
     fail = mark('read_outro', 'e-read_outro', !cb('read_outro'))  || fail;
