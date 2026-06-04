@@ -269,9 +269,8 @@
         </div>
       </div>
       <div class="field">
-        <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="req">*</span></label>
+        <label for="notes">משהו נוסף שחשוב לי לומר לקראת השיבוץ <span class="optional">(לא חובה)</span></label>
         <textarea id="notes" rows="4" placeholder="כתוב/י כאן כל מידע נוסף..."></textarea>
-        <div class="err" id="e-notes">שדה חובה</div>
       </div>
     </div>
 
@@ -409,7 +408,6 @@
     fail = mark('r1',         'e-r1',         !v('r1'))           || fail;
     fail = mark('r2',         'e-r2',         !v('r2'))           || fail;
     fail = mark('r3',         'e-r3',         !v('r3'))           || fail;
-    fail = mark('notes',      'e-notes',      !v('notes'))        || fail;
     fail = mark('pname',      'e-pname',      !v('pname'))        || fail;
     fail = mark('phone',      'e-phone',      !/^(05\d{8}|0[2-9]\d{7})$/.test(phone)) || fail;
     fail = mark('read_outro', 'e-read_outro', !cb('read_outro'))  || fail;
