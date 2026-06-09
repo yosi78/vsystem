@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ByteLogicx – ילדים לומדים לבנות משחקי מחשב עם יוסי אלעזר. חוג תכנות ולוגיקה וקייטנת GAME ON CAMP בבית ספר שבילים, פרדס חנה.">
+    <title>ByteLogicx | ילדים בונים משחקים</title>
+    <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+/* ════════════════════════════════════════
+   TOKENS & RESET
+════════════════════════════════════════ */
+:root{
+    --blue:#1376a1; --blue-d:#086278; --blue-l:#2ab4e8;
+    --orange:#ff6b35; --orange-d:#e55a25;
+    --green:#7BC043;  --green-d:#5a9030;
+    --dark:#0d1117;   --dark2:#161b27;  --dark3:#1e2635;
+    --white:#ffffff;  --offwhite:#f5f8ff;
+    --text-d:#e6edf3; --text-dm:#8b949e;
+    --text-l:#1c2333; --text-lm:#5a6a82;
+    --radius:18px;    --radius-sm:10px; --radius-pill:50px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+    font-family:'Alef','Segoe UI',Tahoma,sans-serif;
+    background:var(--white); color:var(--text-l);
+    line-height:1.65; overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+
+/* ════════════════════════════════════════
+   SCROLL ANIMATION SYSTEM
+════════════════════════════════════════ */
+[data-anim]{opacity:0;transform:translateY(48px);transition:opacity .7s ease,transform .7s ease}
+[data-anim].visible{opacity:1;transform:translateY(0)}
+[data-anim][data-delay="1"]{transition-delay:.1s}
+[data-anim][data-delay="2"]{transition-delay:.2s}
+[data-anim][data-delay="3"]{transition-delay:.3s}
+[data-anim][data-delay="4"]{transition-delay:.4s}
+[data-anim][data-delay="5"]{transition-delay:.5s}
+
+/* ════════════════════════════════════════
+   NAV
+════════════════════════════════════════ */
+.nav{
+    position:fixed;top:0;left:0;right:0;z-index:500;
+    padding:0 2rem;height:68px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(13,17,23,0);
+    backdrop-filter:blur(0);
+    transition:background .4s,backdrop-filter .4s,box-shadow .4s;
+}
+.nav.scrolled{
+    background:rgba(13,17,23,0.92);
+    backdrop-filter:blur(18px);
+    box-shadow:0 1px 0 rgba(255,255,255,0.07);
+}
+.nav-logo{
+    font-size:1.45rem;font-weight:700;color:var(--white);
+    display:flex;align-items:center;gap:6px;
+}
+.nav-logo .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--orange);display:inline-block;
+}
+.nav-links{display:flex;gap:0.2rem}
+.nav-links a{
+    color:rgba(255,255,255,0.75);font-size:.92rem;font-weight:600;
+    padding:8px 14px;border-radius:var(--radius-pill);
+    transition:all .25s;
+}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.nav-cta{
+    background:var(--orange);color:#fff;
+    padding:10px 22px;border-radius:var(--radius-pill);
+    font-weight:700;font-size:.9rem;
+    box-shadow:0 4px 18px rgba(255,107,53,.4);
+    transition:all .3s;
+}
+.nav-cta:hover{background:var(--orange-d);transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,107,53,.5)}
+.nav-burger{display:none;background:none;border:none;color:#fff;font-size:1.7rem;cursor:pointer}
+.nav-mobile{
+    display:none;position:fixed;top:68px;right:0;left:0;
+    background:rgba(13,17,23,0.97);backdrop-filter:blur(18px);
+    padding:1.5rem 2rem;flex-direction:column;gap:.5rem;z-index:499;
+}
+.nav-mobile a{
+    color:rgba(255,255,255,0.85);font-size:1.1rem;font-weight:600;
+    padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.07);
+}
+
+/* ════════════════════════════════════════
+   HERO
+════════════════════════════════════════ */
+.hero{
+    position:relative;min-height:100vh;
+    display:flex;align-items:center;
+    overflow:hidden;background:var(--dark);
+    padding:100px 2rem 0;
+}
+/* Animated gradient orbs */
+.orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb-1{
+    width:600px;height:600px;top:-150px;right:-150px;
+    background:radial-gradient(circle,rgba(19,118,161,.55),transparent 65%);
+    animation:floatOrb 8s ease-in-out infinite;
+}
+.orb-2{
+    width:450px;height:450px;bottom:-100px;left:5%;
+    background:radial-gradient(circle,rgba(255,107,53,.35),transparent 65%);
+    animation:floatOrb 10s ease-in-out infinite reverse;
+}
+.orb-3{
+    width:350px;height:350px;top:40%;left:35%;
+    background:radial-gradient(circle,rgba(123,192,67,.25),transparent 65%);
+    animation:floatOrb 12s ease-in-out infinite;
+    animation-delay:-4s;
+}
+@keyframes floatOrb{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(30px,-40px) scale(1.05)}
+    66%{transform:translate(-20px,30px) scale(.97)}
+}
+/* Dot grid overlay */
+.hero::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:28px 28px;pointer-events:none;z-index:0;
+}
+.hero-inner{
+    position:relative;z-index:2;
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:3rem;align-items:center;
+    max-width:1180px;margin:0 auto;width:100%;
+    padding-bottom:5rem;
+}
+.hero-text{}
+.hero-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+    color:rgba(255,255,255,.85);padding:7px 16px;border-radius:var(--radius-pill);
+    font-size:.82rem;font-weight:700;letter-spacing:.5px;
+    margin-bottom:1.6rem;backdrop-filter:blur(8px);
+}
+.hero-eyebrow .dot-pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--green);
+    animation:pulseDot 1.8s ease infinite;
+}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.hero h1{
+    font-size:clamp(2.8rem,5vw,5.2rem);font-weight:700;
+    color:var(--white);line-height:1.07;margin-bottom:1.2rem;
+}
+.hero h1 .grad{
+    background:linear-gradient(135deg,#2ab4e8,#7BC043);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+    font-size:1.15rem;color:var(--text-dm);margin-bottom:2.5rem;
+    line-height:1.75;max-width:460px;
+}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-hero-primary{
+    background:var(--orange);color:#fff;padding:14px 30px;
+    border-radius:var(--radius-pill);font-weight:700;font-size:1rem;
+    box-shadow:0 8px 28px rgba(255,107,53,.45);transition:all .3s;
+    display:inline-flex;align-items:center;gap:8px;
+}
+.btn-hero-primary:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(255,107,53,.55)}
+.btn-hero-ghost{
+    background:rgba(255,255,255,.07);color:rgba(255,255,255,.88);
+    padding:14px 28px;border-radius:var(--radius-pill);font-weight:700;font-size:1rem;
+    border:1.5px solid rgba(255,255,255,.2);backdrop-filter:blur(6px);
+    transition:all .3s;
+}
+.btn-hero-ghost:hover{background:rgba(255,255,255,.14);transform:translateY(-3px)}
+/* Hero visual */
+.hero-visual{
+    position:relative;display:flex;align-items:center;justify-content:center;
+}
+.hero-img-wrap{
+    position:relative;z-index:1;
+    border-radius:28px;overflow:hidden;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,.06),
+        0 30px 80px rgba(0,0,0,.5),
+        0 0 80px rgba(19,118,161,.25);
+}
+.hero-img-wrap img{width:100%;display:block}
+/* Floating badges on image */
+.float-badge{
+    position:absolute;z-index:3;
+    background:rgba(13,17,23,.85);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.12);border-radius:14px;
+    padding:10px 14px;display:flex;align-items:center;gap:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,.4);
+}
+.float-badge.top-right{top:-18px;left:-24px}
+.float-badge.bottom-left{bottom:-18px;right:-24px}
+.float-badge .fi{font-size:1.4rem}
+.float-badge .ft{color:#fff;font-size:.78rem;font-weight:700;line-height:1.3}
+.float-badge .fs{color:var(--text-dm);font-size:.68rem}
+/* Hero stats */
+.hero-stats{
+    grid-column:1/-1;
+    display:flex;gap:0;align-items:stretch;
+    background:rgba(255,255,255,.04);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);
+    overflow:hidden;
+}
+.hero-stat{
+    flex:1;padding:22px 28px;text-align:center;
+    border-left:1px solid rgba(255,255,255,.07);
+}
+.hero-stat:last-child{border-left:none}
+.stat-n{font-size:2.4rem;font-weight:700;color:var(--white);line-height:1}
+.stat-n .col{color:var(--orange)}
+.stat-l{font-size:.8rem;color:var(--text-dm);margin-top:5px}
+
+/* ════════════════════════════════════════
+   WAVE DIVIDER
+════════════════════════════════════════ */
+.wave{display:block;width:100%;line-height:0;overflow:hidden}
+.wave svg{display:block;width:100%}
+
+/* ════════════════════════════════════════
+   SHARED SECTION STYLES
+════════════════════════════════════════ */
+.sec{padding:6rem 2rem}
+.sec-inner{max-width:1140px;margin:0 auto}
+.sec-label{
+    display:inline-block;color:var(--blue);font-size:.78rem;
+    font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:12px;
+}
+.sec-label.light{color:var(--blue-l)}
+.sec-title{font-size:clamp(1.9rem,3.5vw,2.9rem);font-weight:700;line-height:1.2;margin-bottom:1rem}
+.sec-title.white{color:var(--white)}
+.sec-sub{font-size:1.05rem;color:var(--text-lm);max-width:580px;line-height:1.75}
+.sec-sub.white{color:var(--text-dm);max-width:580px}
+.sec-head{margin-bottom:3.5rem}
+.sec-head.center{text-align:center}
+.sec-head.center .sec-sub{margin:0 auto}
+
+/* ════════════════════════════════════════
+   SERVICES
+════════════════════════════════════════ */
+.services-sec{background:var(--offwhite)}
+.services-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.svc-card{
+    border-radius:var(--radius);overflow:hidden;
+    box-shadow:0 8px 40px rgba(0,0,0,.08);
+    transition:transform .35s,box-shadow .35s;
+    display:flex;flex-direction:column;
+}
+.svc-card:hover{transform:translateY(-10px);box-shadow:0 24px 60px rgba(0,0,0,.13)}
+.svc-top{padding:2.5rem 2.5rem 2rem;position:relative;overflow:hidden;min-height:210px}
+.svc-card.club .svc-top{background:linear-gradient(135deg,#1376a1,#086278)}
+.svc-card.camp .svc-top{background:linear-gradient(135deg,#0d1117,#1a2340)}
+.svc-top-glow{
+    position:absolute;top:-40px;left:-40px;
+    width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(rgba(255,255,255,.12),transparent 65%);
+    pointer-events:none;
+}
+.svc-badge{
+    display:inline-block;color:#fff;font-size:.75rem;font-weight:700;
+    padding:5px 14px;border-radius:var(--radius-pill);margin-bottom:14px;
+}
+.club .svc-badge{background:rgba(255,255,255,.2)}
+.camp .svc-badge{background:var(--green)}
+.svc-top h3{color:#fff;font-size:1.85rem;font-weight:700;margin-bottom:6px}
+.svc-top p{color:rgba(255,255,255,.75);font-size:.95rem;line-height:1.55}
+.svc-icon{position:absolute;bottom:-10px;left:-5px;font-size:7rem;opacity:.1;line-height:1}
+.svc-body{
+    padding:2.2rem 2.5rem;background:#fff;flex:1;
+    display:flex;flex-direction:column;justify-content:space-between;
+}
+.svc-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:2rem}
+.svc-list li{
+    display:flex;align-items:flex-start;gap:10px;
+    font-size:.95rem;color:var(--text-l);line-height:1.5;
+}
+.svc-list li .ck{color:var(--green);font-size:1rem;flex-shrink:0;margin-top:2px}
+.svc-btn{
+    display:block;text-align:center;padding:13px;border-radius:var(--radius-sm);
+    font-weight:700;font-size:.95rem;transition:all .3s;
+}
+.club .svc-btn{background:var(--blue);color:#fff}
+.club .svc-btn:hover{background:var(--blue-d)}
+.camp .svc-btn{background:var(--dark);color:#fff}
+.camp .svc-btn:hover{background:#000}
+
+/* ════════════════════════════════════════
+   WHY / FEATURES
+════════════════════════════════════════ */
+.why-sec{background:var(--white)}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem}
+.why-card{
+    padding:2.5rem 2rem;border-radius:var(--radius);
+    border:1.5px solid #e9edf5;
+    transition:all .35s;background:#fff;
+}
+.why-card:hover{
+    border-color:var(--blue);
+    box-shadow:0 12px 45px rgba(19,118,161,.12);
+    transform:translateY(-6px);
+}
+.why-ico-wrap{
+    width:70px;height:70px;border-radius:18px;
+    background:linear-gradient(135deg,rgba(19,118,161,.1),rgba(42,180,232,.1));
+    display:flex;align-items:center;justify-content:center;
+    font-size:2.2rem;margin-bottom:1.4rem;
+    transition:transform .3s;
+}
+.why-card:hover .why-ico-wrap{transform:scale(1.1) rotateZ(5deg)}
+.why-card h4{font-size:1.1rem;font-weight:700;color:var(--text-l);margin-bottom:.6rem}
+.why-card p{font-size:.9rem;color:var(--text-lm);line-height:1.7}
+
+/* ════════════════════════════════════════
+   TRANSFORMATION (dark section)
+════════════════════════════════════════ */
+.transform-sec{background:var(--dark);position:relative;overflow:hidden;padding:6rem 2rem}
+.transform-sec .orb-bg{
+    position:absolute;width:500px;height:500px;border-radius:50%;
+    background:radial-gradient(rgba(19,118,161,.3),transparent 65%);
+    top:-150px;right:-100px;pointer-events:none;filter:blur(60px);
+}
+.transform-inner{
+    max-width:940px;margin:0 auto;position:relative;z-index:1;
+    text-align:center;
+}
+.transform-inner .sec-title{color:var(--white)}
+.transform-cards{
+    display:grid;grid-template-columns:1fr 80px 1fr;
+    align-items:center;gap:1rem;margin-top:3rem;
+}
+.tr-card{
+    border-radius:var(--radius);padding:2.2rem 2rem;text-align:center;
+}
+.tr-card.passive{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.tr-card.active{background:rgba(123,192,67,.1);border:1px solid rgba(123,192,67,.3)}
+.tr-card .ico{font-size:3rem;margin-bottom:1rem}
+.tr-card h4{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:.5rem}
+.tr-card p{font-size:.88rem;color:var(--text-dm);line-height:1.6}
+.tr-arrow{
+    display:flex;align-items:center;justify-content:center;
+    font-size:2rem;color:rgba(255,255,255,.3);
+}
+.transform-note{
+    margin-top:2.5rem;color:var(--text-dm);font-size:1rem;line-height:1.8;
+}
+.transform-note strong{color:var(--green)}
+
+/* ════════════════════════════════════════
+   JOURNEY / LEVELS
+════════════════════════════════════════ */
+.journey-sec{background:var(--offwhite)}
+.journey-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:2rem;position:relative;
+}
+.journey-grid::before{
+    content:'';position:absolute;top:48px;right:16.6%;left:16.6%;
+    height:3px;background:linear-gradient(to left,#ffd700,var(--green),var(--blue));
+    z-index:0;border-radius:2px;
+}
+.jv-card{
+    background:#fff;border-radius:var(--radius);padding:2.4rem 2rem;
+    text-align:center;box-shadow:0 6px 30px rgba(0,0,0,.07);
+    position:relative;z-index:1;transition:all .35s;
+}
+.jv-card:hover{transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.12)}
+.jv-card.boss{
+    background:linear-gradient(135deg,#fff9e0,#fff3b0);
+    border:2px solid #ffd700;
+}
+.jv-num{
+    width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(135deg,var(--blue),var(--blue-l));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:.95rem;
+    margin:0 auto 1.4rem;box-shadow:0 6px 20px rgba(19,118,161,.35);
+}
+.jv-card.boss .jv-num{background:linear-gradient(135deg,#ffd700,#ffb300);box-shadow:0 6px 20px rgba(255,215,0,.4)}
+.jv-ico{font-size:2.6rem;margin-bottom:.9rem}
+.jv-card h4{font-size:1.15rem;font-weight:700;color:var(--text-l);margin-bottom:.5rem}
+.jv-card p{font-size:.87rem;color:var(--text-lm);line-height:1.6}
+
+/* ════════════════════════════════════════
+   TEACHER
+════════════════════════════════════════ */
+.teacher-sec{background:var(--white)}
+.teacher-grid{
+    display:grid;grid-template-columns:300px 1fr;gap:5rem;align-items:center;
+}
+.teacher-img-col{position:relative}
+.teacher-photo-wrap{
+    border-radius:28px;overflow:hidden;
+    box-shadow:0 24px 70px rgba(19,118,161,.2);
+    aspect-ratio:3/4;background:linear-gradient(135deg,var(--blue),var(--blue-d));
+    display:flex;align-items:center;justify-content:center;
+    font-size:6rem;color:rgba(255,255,255,.3);
+}
+.teacher-photo-wrap img{width:100%;height:100%;object-fit:cover}
+.teacher-badge{
+    position:absolute;bottom:-20px;right:-20px;
+    background:var(--orange);color:#fff;border-radius:16px;
+    padding:14px 20px;box-shadow:0 10px 30px rgba(255,107,53,.4);
+    text-align:center;
+}
+.teacher-badge .tb-n{font-size:1.8rem;font-weight:700;line-height:1}
+.teacher-badge .tb-l{font-size:.72rem;opacity:.9}
+.teacher-text h3{
+    font-size:2.4rem;font-weight:700;color:var(--text-l);margin-bottom:.4rem;
+}
+.teacher-role{
+    font-size:1rem;color:var(--blue);font-weight:700;margin-bottom:1.8rem;
+}
+.teacher-text p{
+    font-size:1rem;color:var(--text-lm);line-height:1.85;margin-bottom:1.2rem;
+}
+.teacher-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.5rem}
+.chip{
+    background:var(--offwhite);border:1.5px solid #e0e7f0;
+    color:var(--text-l);padding:7px 15px;border-radius:var(--radius-pill);
+    font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;
+}
+.teacher-stats{
+    display:flex;gap:2rem;margin-top:2.5rem;padding-top:2rem;
+    border-top:2px solid var(--offwhite);
+}
+.tstat{text-align:center}
+.tstat .n{font-size:2rem;font-weight:700;color:var(--blue)}
+.tstat .l{font-size:.78rem;color:var(--text-lm)}
+
+/* ════════════════════════════════════════
+   TESTIMONIALS
+════════════════════════════════════════ */
+.testi-sec{background:var(--dark);padding:6rem 2rem}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+.testi-card{
+    background:rgba(255,255,255,.04);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);
+    padding:2.2rem 2rem;
+    transition:all .35s;
+}
+.testi-card:hover{
+    background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);
+    transform:translateY(-6px);
+}
+.testi-stars{font-size:1.1rem;margin-bottom:1rem;color:#ffd700}
+.testi-text{
+    font-size:.97rem;color:rgba(255,255,255,.82);
+    line-height:1.8;margin-bottom:1.5rem;font-style:italic;
+}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:linear-gradient(135deg,var(--blue),var(--green));
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.2rem;
+}
+.testi-name{font-size:.88rem;font-weight:700;color:#fff}
+.testi-role{font-size:.75rem;color:var(--text-dm)}
+
+/* ════════════════════════════════════════
+   CTA SECTION
+════════════════════════════════════════ */
+.cta-sec{
+    padding:7rem 2rem;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,var(--blue-d) 0%,var(--dark) 40%,var(--dark) 60%,#1a2010 100%);
+}
+.cta-orb{
+    position:absolute;pointer-events:none;filter:blur(80px);
+}
+.cta-orb.a{
+    width:500px;height:500px;top:-150px;right:-100px;border-radius:50%;
+    background:radial-gradient(rgba(19,118,161,.5),transparent 65%);
+}
+.cta-orb.b{
+    width:380px;height:380px;bottom:-100px;left:10%;border-radius:50%;
+    background:radial-gradient(rgba(123,192,67,.35),transparent 65%);
+}
+.cta-inner{
+    max-width:760px;margin:0 auto;text-align:center;
+    position:relative;z-index:1;
+}
+.cta-inner .sec-title{color:#fff;font-size:clamp(2rem,4vw,3.2rem)}
+.cta-inner .sec-sub{color:rgba(255,255,255,.75);margin:1rem auto 3rem;max-width:500px}
+.cta-btns{
+    display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap;
+}
+.btn-cta-wa{
+    background:#25D366;color:#fff;padding:16px 34px;
+    border-radius:var(--radius-pill);font-weight:700;font-size:1.05rem;
+    box-shadow:0 8px 28px rgba(37,211,102,.4);transition:all .3s;
+    display:inline-flex;align-items:center;gap:10px;
+}
+.btn-cta-wa:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(37,211,102,.55)}
+.btn-cta-phone{
+    background:rgba(255,255,255,.1);color:#fff;padding:16px 34px;
+    border-radius:var(--radius-pill);font-weight:700;font-size:1.05rem;
+    border:1.5px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);
+    display:inline-flex;align-items:center;gap:10px;transition:all .3s;
+}
+.btn-cta-phone:hover{background:rgba(255,255,255,.18);transform:translateY(-3px)}
+.cta-note{margin-top:2rem;color:rgba(255,255,255,.5);font-size:.85rem}
+.cta-note strong{color:rgba(255,255,255,.75)}
+
+/* ════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════ */
+footer{
+    background:#090d14;padding:4rem 2rem 2.5rem;
+    border-top:1px solid rgba(255,255,255,.05);
+}
+.footer-inner{max-width:1140px;margin:0 auto}
+.footer-top{
+    display:grid;grid-template-columns:1.5fr 1fr 1fr;
+    gap:4rem;padding-bottom:3rem;
+    border-bottom:1px solid rgba(255,255,255,.06);
+}
+.footer-brand .fl{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.8rem}
+.footer-brand .fl span{color:var(--orange)}
+.footer-brand p{color:rgba(255,255,255,.45);font-size:.88rem;line-height:1.7}
+.footer-col h5{color:rgba(255,255,255,.65);font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1.2rem}
+.footer-col a{
+    display:block;color:rgba(255,255,255,.45);font-size:.88rem;
+    margin-bottom:.7rem;transition:color .2s;
+}
+.footer-col a:hover{color:rgba(255,255,255,.85)}
+.footer-bottom{
+    padding-top:2rem;display:flex;
+    justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;
+}
+.footer-bottom p{color:rgba(255,255,255,.3);font-size:.82rem}
+.footer-socials{display:flex;gap:.8rem}
+.footer-socials a{
+    width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.45);font-size:1rem;transition:all .3s;
+}
+.footer-socials a:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ════════════════════════════════════════
+   AI INTRO SECTION
+════════════════════════════════════════ */
+.ai-intro-sec{background:#fff}
+.ai-intro-text{
+    font-size:1.8rem;color:var(--text-l);line-height:2;
+    max-width:820px;margin:0 auto;text-align:center;
+}
+.ai-intro-text strong{color:var(--blue)}
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media(max-width:1024px){
+    .hero-inner{grid-template-columns:1fr}
+    .hero-visual{display:none}
+    .hero-stats{grid-column:1}
+    .teacher-grid{grid-template-columns:1fr;gap:3rem}
+    .teacher-img-col{max-width:350px}
+}
+@media(max-width:768px){
+    .nav-links{display:none}
+    .nav-burger{display:block}
+    .hero h1{font-size:2.4rem}
+    .services-grid{grid-template-columns:1fr}
+    .why-grid{grid-template-columns:1fr}
+    .journey-grid::before{display:none}
+    .journey-grid{grid-template-columns:1fr}
+    .transform-cards{grid-template-columns:1fr;max-width:380px;margin:2rem auto 0}
+    .tr-arrow{transform:rotate(90deg)}
+    .testi-grid{grid-template-columns:1fr}
+    .footer-top{grid-template-columns:1fr;gap:2rem}
+    .hero-stats{flex-direction:column}
+    .hero-stat{border-left:none;border-bottom:1px solid rgba(255,255,255,.07)}
+    .hero-stat:last-child{border:none}
+}
+@media(max-width:480px){
+    .sec{padding:4rem 1.2rem}
+    .hero{padding:100px 1.2rem 0}
+    .cta-btns{flex-direction:column;align-items:center}
+    .teacher-stats{gap:1rem;flex-wrap:wrap}
+}
+    </style>
+</head>
+<body>
+
+<!-- ══════════ NAV ══════════ -->
+<nav class="nav" id="mainNav">
+    <a href="#" class="nav-logo">Logicx<span style="color:var(--orange)">Byte</span> <span class="dot"></span></a>
+    <div class="nav-links">
+        <a href="#services">מה אנו מציעים</a>
+        <a href="#why">יתרונות</a>
+        <a href="#teacher">יוסי אלעזר</a>
+        <a href="#contact">צרו קשר</a>
+    </div>
+    <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20פרטים" class="nav-cta" target="_blank">📱 WhatsApp</a>
+    <button class="nav-burger" id="burger" aria-label="תפריט">☰</button>
+</nav>
+<div class="nav-mobile" id="mobileMenu">
+    <a href="#services" onclick="closeMobile()">מה אנו מציעים</a>
+    <a href="#why" onclick="closeMobile()">יתרונות</a>
+    <a href="#journey" onclick="closeMobile()">מסע הלמידה</a>
+    <a href="#teacher" onclick="closeMobile()">יוסי אלעזר</a>
+    <a href="#contact" onclick="closeMobile()">צרו קשר</a>
+</div>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero" id="home">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="hero-inner">
+        <div class="hero-text">
+            <div class="hero-eyebrow">
+                <span class="dot-pulse"></span>
+                ByteLogicx · Microsoft Kodu Game Lab
+            </div>
+            <h1>
+                ילדים שלא רק<br>
+                <span class="grad">משחקים – בונים.</span>
+            </h1>
+            <p class="hero-sub">
+                חוג תכנות ולוגיקה וקייטנת GAME ON CAMP 
+			<br>
+                יוסי אלעזר מוביל ילדים לבנות משחקי מחשב מאפס,
+                לחשוב כמתכנתים וליצור עולמות משלהם.
+            </p>
+            <div class="hero-btns">
+                <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20פרטים%20על%20החוג" class="btn-hero-primary" target="_blank">
+                    📱 צרו קשר עכשיו
+                </a>
+                <a href="#services" class="btn-hero-ghost">גלו עוד ↓</a>
+            </div>
+        </div>
+        <div class="hero-visual" data-anim>
+            <div class="hero-img-wrap">
+                <img src="img/04.jpg" alt="דמויות Kodu Game Lab" loading="eager">
+            </div>
+            <div class="float-badge top-right">
+                <span class="fi">🏆</span>
+                <div><div class="ft">Level Boss</div><div class="fs">משחק גמור!</div></div>
+            </div>
+            <div class="float-badge bottom-left">
+                <span class="fi">⚙️</span>
+                <div><div class="ft">Microsoft Kodu</div><div class="fs">פלטפורמה רשמית</div></div>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="stat-n" data-count="22">0<span class="col">+</span></div>
+                <div class="stat-l">שנות ניסיון בהייטק</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-n" data-count="4">0<span class="col">+</span></div>
+                <div class="stat-l">שנות הוראה</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-n">10<span class="col"></span></div>
+                <div class="stat-l">מקומות מקסימום</div>
+            </div>
+            <div class="hero-stat">
+                <div class="stat-n">3<span class="col"></span></div>
+                <div class="stat-l">ימי קייטנה אינטנסיבית</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE DOWN -->
+<div class="wave">
+    <svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:var(--dark)">
+        <path d="M0,36 C240,72 480,0 720,36 C960,72 1200,0 1440,36 L1440,72 L0,72 Z" fill="#ffffff"/>
+    </svg>
+</div>
+
+<!-- ══════════ AI INTRO ══════════ -->
+<section class="sec ai-intro-sec">
+    <div class="sec-inner">
+        <p class="ai-intro-text" data-anim>
+            היום, כשכל אחד ואחת יכולים "ליצור" בלחיצת כפתור בעזרת AI,
+            אנחנו מזמינים את הילדים לעשות את הצעד הבא.
+            אצלנו לא רק "מייצרים" –
+            אצלנו <strong>מבינים ולומדים את הלוגיקה שמאחורי הקלעים</strong>.
+            אנחנו מלמדים את הילדים לחשוב כמו מפתחים,
+            להבין את החשיבה האלגוריתמית
+            ו<strong>להשתלט על הכלים הטכנולוגיים</strong> במקום שהם ינהלו אותם.
+        </p>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:#fff"><path d="M0,30 C480,60 960,0 1440,30 L1440,60 L0,60 Z" fill="var(--offwhite)"/></svg></div>
+
+<!-- ══════════ SERVICES ══════════ -->
+<section class="sec services-sec" id="services">
+    <div class="sec-inner">
+        <div class="sec-head center">
+            <span class="sec-label" data-anim>מה אנו מציעים</span>
+            <h2 class="sec-title" data-anim data-delay="1">שני מסלולים לאותו יעד:<br>להפוך ממשתמש ליוצר</h2>
+            <p class="sec-sub" data-anim data-delay="2">בחרו את המסלול המתאים לכם — חוג שבועי מתמשך, או קייטנה אינטנסיבית של 5 ימים</p>
+        </div>
+        <div class="services-grid">
+            <div class="svc-card club" data-anim data-delay="1">
+                <div class="svc-top">
+                    <div class="svc-top-glow"></div>
+                    <div class="svc-icon">💻</div>
+                    <div class="svc-badge">📅 חוג שבועי</div>
+                    <h3>חוג תכנות ולוגיקה</h3>
+                    <p>10 מפגשים שבועיים | כיתות ד׳–ה׳ | בית ספר שבילים</p>
+                </div>
+                <div class="svc-body">
+                    <ul class="svc-list">
+                        <li><span class="ck">✓</span> בניית משחקים עם Microsoft Kodu Game Lab</li>
+                        <li><span class="ck">✓</span> חשיבה לוגית ואלגוריתמית בפועל</li>
+                        <li><span class="ck">✓</span> קבוצה של 8–10 משתתפים בלבד</li>
+                        <li><span class="ck">✓</span> ליווי אישי לכל ילד בכל שיעור</li>
+                        <li><span class="ck">✓</span> אין צורך בידע קודם או אנגלית</li>
+                        <li><span class="ck">✓</span> כל ילד בונה עולם משחק משלו</li>
+                    </ul>
+                    <a href="coding_club.html" class="svc-btn">לפרטי החוג המלאים ←</a>
+                </div>
+            </div>
+            <div class="svc-card camp" data-anim data-delay="2">
+                <div class="svc-top">
+                    <div class="svc-top-glow"></div>
+                    <div class="svc-icon">🎮</div>
+                    <div class="svc-badge">🚀 קייטנה טכנולוגית</div>
+                    <h3>GAME ON CAMP</h3>
+                    <p>5 ימי יצירה | 7.5 שעות למידה | בית ספר שבילים</p>
+                </div>
+                <div class="svc-body">
+                    <ul class="svc-list">
+                        <li><span class="ck">✓</span> Level 1: היכרות ועיצוב עולמות תלת-מימד</li>
+                        <li><span class="ck">✓</span> Level 2: תכנות, לוגיקה ותנאי ניצחון</li>
+                        <li><span class="ck">✓</span> Level Boss: פרויקט גמר — משחק שלם!</li>
+                        <li><span class="ck">✓</span> כל ילד יוצא עם משחק מקורי שלו</li>
+                        <li><span class="ck">✓</span> יוצרים. משחקים. מנצחים.</li>
+                        <li><span class="ck">✓</span> חווייה אינטנסיבית ובלתי נשכחת</li>
+                    </ul>
+                    <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20פרטים%20על%20קייטנת%20GAME%20ON" class="svc-btn" target="_blank">לפרטי הקייטנה ←</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:var(--offwhite)"><path d="M0,30 C480,60 960,0 1440,30 L1440,60 L0,60 Z" fill="#ffffff"/></svg></div>
+
+<!-- ══════════ WHY ══════════ -->
+<section class="sec why-sec" id="why">
+    <div class="sec-inner">
+        <div class="sec-head center">
+            <span class="sec-label" data-anim>למה ByteLogicx</span>
+            <h2 class="sec-title" data-anim data-delay="1">מה הילדים מפתחים אצלנו</h2>
+        </div>
+        <div class="why-grid">
+            <div class="why-card" data-anim data-delay="1">
+                <div class="why-ico-wrap">🧠</div>
+                <h4>חשיבה לוגית ואלגוריתמית</h4>
+                <p>ילדים לומדים לחשוב בצורה מסודרת ומתודית — כישורים שמועילים בכל תחום, מהמתמטיקה ועד לחיי היומיום.</p>
+            </div>
+            <div class="why-card" data-anim data-delay="2">
+                <div class="why-ico-wrap">🎮</div>
+                <h4>בניית משחקים אמיתיים</h4>
+                <p>יוצרים משחקי מחשב בתלת-מימד עם Microsoft Kodu Game Lab — לא רק לשחק, אלא לתכנן, לבנות ולהשיק.</p>
+            </div>
+            <div class="why-card" data-anim data-delay="3">
+                <div class="why-ico-wrap">🎨</div>
+                <h4>יצירתיות בלי גבולות</h4>
+                <p>כל ילד מממש רעיונות ועולמות שהמציא בעצמו — חופש יצירתי אמיתי שבנוי על כלים טכנולוגיים אמיתיים.</p>
+            </div>
+            <div class="why-card" data-anim data-delay="1">
+                <div class="why-ico-wrap">🔧</div>
+                <h4>פתרון בעיות בפועל</h4>
+                <p>מתמודדים עם אתגרים, מאתרים שגיאות ולומדים לדבג — תהליך שמפתח סבלנות, התמדה ושיטתיות.</p>
+            </div>
+            <div class="why-card" data-anim data-delay="2">
+                <div class="why-ico-wrap">💪</div>
+                <h4>ביטחון דיגיטלי</h4>
+                <p>מגלים שהם מסוגלים להבין ולשלוט בטכנולוגיה — לא רק לצרוך אותה. עוברים ממשתמש ליוצר.</p>
+            </div>
+            <div class="why-card" data-anim data-delay="3">
+                <div class="why-ico-wrap">🤝</div>
+                <h4>ליווי אישי ואינטימי</h4>
+                <p>קבוצות קטנות של 8–10 ילדים, עם מורה מנוסה שמכיר כל ילד ומתאים את הקצב אליו אישית.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:#fff"><path d="M0,0 C360,60 1080,0 1440,60 L1440,60 L0,60 Z" fill="var(--dark)"/></svg></div>
+
+<!-- ══════════ TRANSFORMATION ══════════ -->
+<section class="transform-sec">
+    <div class="orb-bg"></div>
+    <div class="transform-inner">
+        <span class="sec-label light" data-anim>הפילוסופיה שלנו</span>
+        <h2 class="sec-title" data-anim data-delay="1">הופכים זמן מסך<br>לזמן למידה אמיתי</h2>
+        <div class="transform-cards" data-anim data-delay="2">
+            <div class="tr-card passive">
+                <div class="ico">🎮</div>
+                <h4>זמן מסך פסיבי</h4>
+                <p>ילד שמגיב למה שאחרים תכנתו — אינסטינקטים ורפלקסים בלבד</p>
+            </div>
+            <div class="tr-arrow">→</div>
+            <div class="tr-card active">
+                <div class="ico">⚡</div>
+                <h4>זמן למידה אקטיבי</h4>
+                <p>ילד שמתכנן, בונה ויוצר — יוצא עם משחק מקורי שהמציא בעצמו</p>
+            </div>
+        </div>
+        <p class="transform-note" data-anim data-delay="3">
+            במקום צריכה פסיבית, אנו מעניקים לילדים כלים לחשוב כמו מפתחים.<br>
+            הם לומדים <strong>לתכנן עולמות, לפתור בעיות ולכבוש את המסך דרך יצירה.</strong>
+        </p>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:var(--dark)"><path d="M0,60 C360,0 1080,60 1440,0 L1440,60 L0,60 Z" fill="var(--offwhite)"/></svg></div>
+
+<!-- ══════════ JOURNEY ══════════ -->
+<section class="sec journey-sec" id="journey">
+    <div class="sec-inner">
+        <div class="sec-head center">
+            <span class="sec-label" data-anim>מסע הלמידה</span>
+            <h2 class="sec-title" data-anim data-delay="1">מפת הדרכים לניצחון</h2>
+            <p class="sec-sub" data-anim data-delay="2">שלושה שלבים מובנים שמובילים כל ילד ממתחיל מוחלט עד לבעל משחק מקורי משלו</p>
+        </div>
+        <div class="journey-grid">
+            <div class="jv-card" data-anim data-delay="1">
+                <div class="jv-num">Level<br>1</div>
+                <div class="jv-ico">🏗️</div>
+                <h4>היכרות ועיצוב</h4>
+                <p>בניית עולמות תלת-מימד, עיצוב סביבת משחק ויצירת השטח הבסיסי</p>
+            </div>
+            <div class="jv-card" data-anim data-delay="2">
+                <div class="jv-num">Level<br>2</div>
+                <div class="jv-ico">⚙️</div>
+                <h4>תכנות ולוגיקה</h4>
+                <p>הטמעת חוקי המשחק, אלגוריתמים של WHEN→DO ותנאי ניצחון והפסד</p>
+            </div>
+            <div class="jv-card boss" data-anim data-delay="3">
+                <div class="jv-num">Level<br>Boss</div>
+                <div class="jv-ico">🏆</div>
+                <h4>פרויקט גמר</h4>
+                <p>דיבוג, שדרוגים, גאווה — והשקת המשחק המקורי של הילד!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:var(--offwhite)"><path d="M0,30 C480,0 960,60 1440,30 L1440,60 L0,60 Z" fill="#ffffff"/></svg></div>
+
+<!-- ══════════ TEACHER ══════════ -->
+<section class="sec teacher-sec" id="teacher">
+    <div class="sec-inner">
+        <div class="teacher-grid">
+            <div class="teacher-img-col" data-anim>
+                <div class="teacher-photo-wrap">
+                    <img src="img/yosi.jpg" alt="יוסי אלעזר"
+                         onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:5rem>👨‍💻</span>'">
+                </div>
+                <div class="teacher-badge">
+                    <div class="tb-n">22+</div>
+                    <div class="tb-l">שנות הייטק</div>
+                </div>
+            </div>
+            <div class="teacher-text" data-anim data-delay="2">
+                <span class="sec-label">המדריך שלכם</span>
+                <h3>יוסי אלעזר</h3>
+                <div class="teacher-role">מורה מחנך | מפתח בדיקות תוכנה | מייסד ByteLogicx</div>
+                <p>שמי יוסי, עם ניסיון של כ־22 שנים בעולם התוכנה ובדיקות התוכנה בחברות הייטק מתחומים מגוונים.</p>
+                <p>בשנים האחרונות בחרתי לחבר בין עולם הטכנולוגיה לעולם החינוך, וכיום אני מורה מחנך בבית הספר היסודי הדמוקרטי שבילים בפרדס חנה.</p>
+                <p>השילוב בין ניסיון מקצועי עמוק לבין עבודה יומיומית עם ילדים מאפשר לי ללמד תכנות בצורה נגישה, סבלנית ומותאמת גיל, תוך יצירת חוויה בטוחה, מקצועית ומהנה.</p>
+                <div class="teacher-chips">
+                    <span class="chip">💼 22+ שנות הייטק</span>
+                    <span class="chip">🏫 בית ספר שבילים</span>
+                    <span class="chip">🎮 Microsoft Kodu</span>
+                    <span class="chip">🌱 חינוך דמוקרטי</span>
+                </div>
+                <div class="teacher-stats">
+                    <div class="tstat"><div class="n">22+</div><div class="l">שנות ניסיון בהייטק</div></div>
+                    <div class="tstat"><div class="n">4+</div><div class="l">שנות הוראה</div></div>
+                    <div class="tstat"><div class="n">10</div><div class="l">מקומות מקסימום</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:#fff"><path d="M0,0 C720,60 1440,0 1440,0 L1440,60 L0,60 Z" fill="var(--dark)"/></svg></div>
+
+<!-- ══════════ TESTIMONIALS ══════════ -->
+<section class="testi-sec" id="testimonials">
+    <div class="sec-inner">
+        <div class="sec-head center" style="margin-bottom:3rem">
+            <span class="sec-label light" data-anim>מה הורים אומרים</span>
+            <h2 class="sec-title white" data-anim data-delay="1">ביקורות מהשטח</h2>
+        </div>
+        <div class="testi-grid">
+            <div class="testi-card" data-anim data-delay="1">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-text">״הבן שלי מגיע הביתה כל שבוע עם סיפורים על המשחק שהוא בונה. הוא בן 9 ולא האמנתי שיכול ללמוד לתכנת — אבל יוסי מצא דרך!״</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">👩</div>
+                    <div><div class="testi-name">אמא מפרדס חנה</div><div class="testi-role">הורה לתלמיד ד׳</div></div>
+                </div>
+            </div>
+            <div class="testi-card" data-anim data-delay="2">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-text">״בקייטנה הבת שלי בנתה משחק שלם ב-3 ימים. היא יצאה עם כזה ביטחון ועם ידע שלא חשבנו שאפשרי לגיל הזה.״</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">👨</div>
+                    <div><div class="testi-name">אבא מחדרה</div><div class="testi-role">הורה לתלמידת ה׳</div></div>
+                </div>
+            </div>
+            <div class="testi-card" data-anim data-delay="3">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-text">״יוסי מלמד בסבלנות ובהתאמה אישית. הבן שלי עם קשיי קשב, ובחוג הוא פורח. הסביבה בטוחה ותומכת.״</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">👩</div>
+                    <div><div class="testi-name">אמא משבילים</div><div class="testi-role">הורה לתלמיד ד׳</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave"><svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="background:var(--dark)"><path d="M0,60 C720,0 1440,60 1440,60 L1440,60 L0,60 Z" fill="var(--dark)"/></svg></div>
+
+<!-- ══════════ CTA ══════════ -->
+<section class="cta-sec" id="contact">
+    <div class="cta-orb a"></div>
+    <div class="cta-orb b"></div>
+    <div class="cta-inner">
+        <span class="sec-label light" data-anim>מוכנים להתחיל?</span>
+        <h2 class="sec-title" data-anim data-delay="1">מספר המקומות מוגבל —<br>הצטרפו עכשיו</h2>
+        <p class="sec-sub white" data-anim data-delay="2">שלחו הודעה וקבלו פרטים מלאים על החוג, הקייטנה ומועדים</p>
+        <div class="cta-btns" data-anim data-delay="3">
+            <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20פרטים%20על%20ByteLogicx" class="btn-cta-wa" target="_blank">
+                📱 WhatsApp – 054-8300670
+            </a>
+            <a href="tel:0548300670" class="btn-cta-phone">
+                📞 054-8300670
+            </a>
+        </div>
+        <div class="cta-note" data-anim data-delay="4">
+            אפשר גם במייל: <strong>yosiel3@gmail.com</strong> · 
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <div class="fl">Byte<span>Logicx</span></div>
+                <p>חינוך טכנולוגי לילדים — ילדים בונים משחקים, לא רק משחקים בהם. חוג שבועי וקייטנות עם יוסי אלעזר בבית ספר שבילים.</p>
+            </div>
+            <div class="footer-col">
+                <h5>ניווט</h5>
+                <a href="#home">ראשי</a>
+                <a href="#services">מה אנו מציעים</a>
+                <a href="#why">יתרונות</a>
+                <a href="#journey">מסע הלמידה</a>
+                <a href="#teacher">יוסי אלעזר</a>
+            </div>
+            <div class="footer-col">
+                <h5>צרו קשר</h5>
+                <a href="https://wa.me/972548300670" target="_blank">📱 WhatsApp</a>
+                <a href="tel:0548300670">📞 054-8300670</a>
+                <a href="mailto:yosiel3@gmail.com">✉️ yosiel3@gmail.com</a>
+                <a href="https://www.facebook.com/profile.php?id=61586902386226" target="_blank">📘 פייסבוק ByteLogicx</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>ByteLogicx | יוסי אלעזר © 2025 · כל הזכויות שמורות</p>
+            <div class="footer-socials">
+                <a href="https://www.facebook.com/profile.php?id=61586902386226" target="_blank" title="פייסבוק">📘</a>
+                <a href="https://wa.me/972548300670" target="_blank" title="WhatsApp">📱</a>
+                <a href="mailto:yosiel3@gmail.com" title="מייל">✉️</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ── SCROLL NAV ── */
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+}, {passive:true});
+
+/* ── MOBILE MENU ── */
+const burger = document.getElementById('burger');
+const menu = document.getElementById('mobileMenu');
+let menuOpen = false;
+burger.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    menu.style.display = menuOpen ? 'flex' : 'none';
+    burger.textContent = menuOpen ? '✕' : '☰';
+});
+function closeMobile() {
+    menuOpen = false;
+    menu.style.display = 'none';
+    burger.textContent = '☰';
+}
+
+/* ── SMOOTH SCROLL ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            const offset = target.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({top: offset, behavior: 'smooth'});
+            closeMobile();
+        }
+    });
+});
+
+/* ── INTERSECTION OBSERVER (scroll animations) ── */
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+        }
+    });
+}, {threshold: 0.12, rootMargin: '0px 0px -40px 0px'});
+document.querySelectorAll('[data-anim]').forEach(el => observer.observe(el));
+
+/* ── COUNTER ANIMATION ── */
+function animateCounter(el) {
+    const target = parseInt(el.getAttribute('data-count'));
+    if (!target) return;
+    const suffix = el.querySelector('.col')?.outerHTML || '';
+    let start = 0;
+    const duration = 1800;
+    const step = timestamp => {
+        if (!start) start = timestamp;
+        const progress = Math.min((timestamp - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.innerHTML = Math.floor(ease * target) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+const statObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            animateCounter(e.target);
+            statObserver.unobserve(e.target);
+        }
+    });
+}, {threshold: 0.5});
+document.querySelectorAll('[data-count]').forEach(el => statObserver.observe(el));
+</script>
+</body>
+</html>
