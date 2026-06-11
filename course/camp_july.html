@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="GAME ON CAMP – קייטנת תכנות ולוגיקה לילדים עם יוסי אלעזר. 5 ימים אינטנסיביים, יולי 2026, פרדס חנה. לא לתכנת – ללמוד לחשוב.">
+<title>GAME ON CAMP | קייטנת תכנות ולוגיקה – יולי 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
+
+<!--
+  ⚠️ פרטים לעדכון לפני פרסום:
+  - שורה "hero-dates": תאריכים מדויקים (12–16 ביולי)
+  - section#details: שעות יום (09:00–13:00 – לאשר)
+  - section#details: מיקום מדויק (כתובת)
+  - section#details: מחשבים – מסופקים / להביא מהבית?
+  - מחיר: לעדכן או להשאיר "לפרטים וואטסאפ"
+-->
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1376a1;--blue-dark:#0a4f6e;--orange:#ff6b35;
+  --green:#7BC043;--navy:#1a1a2e;--dark:#2d3e50;
+  --text:#4a5568;--light:#f4f8fc;--wa:#25D366
+}
+html{scroll-behavior:smooth}
+body{font-family:'Alef','Segoe UI',Tahoma,sans-serif;background:#fff;color:var(--text);direction:rtl;overflow-x:hidden;line-height:1.6}
+
+/* ── STICKY BAR ── */
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.5rem 1.2rem;
+  box-shadow:0 2px 16px rgba(0,0,0,.4)
+}
+.top-logo{font-size:1rem;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap}
+.top-logo span{color:var(--orange)}
+.top-btns{display:flex;gap:0.5rem}
+.top-btn{
+  display:flex;align-items:center;gap:0.4rem;
+  padding:0.42rem 1rem;border-radius:20px;
+  text-decoration:none;font-weight:700;font-size:0.85rem;white-space:nowrap;
+  transition:all .2s
+}
+.top-btn-wa{background:var(--wa);color:#fff}
+.top-btn-wa:hover{background:#1da851;transform:translateY(-1px)}
+.top-btn-ph{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.top-btn-ph:hover{background:rgba(255,255,255,.22)}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;padding-top:52px
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:url('img/03.jpg') center 30%/cover no-repeat
+}
+.hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,rgba(10,14,34,.88) 0%,rgba(10,14,34,.82) 55%,rgba(10,14,34,.65) 100%)
+}
+.hero-inner{
+  position:relative;z-index:2;
+  text-align:center;color:#fff;
+  padding:3rem 1.5rem 5rem;max-width:860px;width:100%
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:var(--orange);color:#fff;
+  padding:0.45rem 1.4rem;border-radius:25px;
+  font-size:0.95rem;font-weight:700;margin-bottom:1.5rem;
+  animation:fadeDown .6s ease both
+}
+.hero h1{
+  font-size:3.6rem;font-weight:700;line-height:1.2;
+  margin-bottom:0.9rem;
+  animation:fadeDown .8s ease .1s both
+}
+.hero h1 .hl{color:var(--orange)}
+.hero-sub{
+  font-size:1.2rem;opacity:.9;margin-bottom:1.8rem;line-height:1.75;
+  animation:fadeUp .8s ease .25s both
+}
+.hero-dates{
+  display:inline-flex;align-items:center;gap:0.6rem;flex-wrap:wrap;justify-content:center;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(6px);
+  padding:0.65rem 1.6rem;border-radius:30px;
+  font-size:1rem;font-weight:700;margin-bottom:2rem;
+  animation:fadeUp .8s ease .35s both
+}
+.hero-dates-sep{opacity:.4}
+.hero-cta{
+  display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp .8s ease .48s both
+}
+.btn-wa{
+  background:var(--wa);color:#fff;
+  padding:1rem 2.3rem;border-radius:14px;
+  text-decoration:none;font-weight:700;font-size:1.05rem;
+  box-shadow:0 8px 28px rgba(37,211,102,.4);
+  transition:all .3s;display:inline-flex;align-items:center;gap:0.5rem
+}
+.btn-wa:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(37,211,102,.55)}
+.btn-ghost{
+  background:rgba(255,255,255,.1);color:#fff;
+  padding:1rem 2.3rem;border-radius:14px;
+  text-decoration:none;font-weight:700;font-size:1.05rem;
+  border:2px solid rgba(255,255,255,.4);
+  transition:all .3s;display:inline-flex;align-items:center;gap:0.5rem
+}
+.btn-ghost:hover{background:rgba(255,255,255,.22);transform:translateY(-3px)}
+.hero-stats{
+  display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap;
+  margin-top:3rem;
+  animation:fadeUp .8s ease .6s both
+}
+.hstat-n{font-size:2.1rem;font-weight:700;color:var(--orange);line-height:1}
+.hstat-l{font-size:0.8rem;opacity:.72;margin-top:3px}
+
+/* ── SHARED ── */
+section{padding:4.5rem 1.5rem}
+.wrap{max-width:1050px;margin:0 auto}
+.sec-badge{
+  display:inline-block;background:rgba(19,118,161,.1);color:var(--blue);
+  padding:0.28rem 0.9rem;border-radius:20px;
+  font-size:0.8rem;font-weight:700;margin-bottom:0.7rem
+}
+.sec-title{font-size:2rem;font-weight:700;color:var(--navy);margin-bottom:0.4rem;line-height:1.25}
+.sec-line{width:60px;height:4px;background:var(--orange);border-radius:2px;margin:0.5rem 0 2.2rem}
+.center{text-align:center}
+.center .sec-line{margin-left:auto;margin-right:auto}
+
+/* ── AI HOOK ── */
+.hook-bg{background:linear-gradient(135deg,var(--navy) 0%,var(--blue-dark) 100%)}
+.hook-inner{max-width:740px;margin:0 auto;text-align:center;color:#fff}
+.hook-inner .sec-badge{background:rgba(255,107,53,.2);color:var(--orange)}
+.hook-inner .sec-title{color:#fff;font-size:2.1rem}
+.hook-inner .sec-line{background:var(--orange);margin-left:auto;margin-right:auto}
+.hook-quote{
+  font-size:1.45rem;font-weight:700;line-height:1.65;
+  color:#fff;margin-bottom:1.6rem
+}
+.hook-quote em{color:var(--orange);font-style:normal}
+.hook-body{
+  font-size:1.02rem;line-height:1.9;
+  color:rgba(255,255,255,.85);
+  max-width:660px;margin:0 auto 1.8rem
+}
+.hook-tags{display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap}
+.hook-tag{
+  background:rgba(255,107,53,.2);color:var(--orange);
+  padding:0.3rem 0.9rem;border-radius:8px;font-weight:700;font-size:0.92rem
+}
+
+/* ── SOCIAL PROOF STRIP ── */
+.proof-strip{
+  background:var(--green);color:#fff;
+  padding:1.1rem 1.5rem;text-align:center;
+  font-size:1rem;font-weight:700;line-height:1.6
+}
+.proof-strip span{opacity:.85;font-weight:400}
+
+/* ── 5 DAYS ── */
+.days-bg{background:var(--light)}
+.days-grid{display:flex;flex-direction:column;gap:1rem;max-width:700px;margin:0 auto}
+.day-card{
+  display:flex;align-items:flex-start;gap:1.2rem;
+  background:#fff;border-radius:16px;padding:1.4rem 1.6rem;
+  box-shadow:0 4px 18px rgba(0,0,0,.07);
+  border-right:4px solid var(--blue);
+  transition:all .25s
+}
+.day-card:hover{transform:translateX(-5px);box-shadow:0 8px 28px rgba(0,0,0,.11)}
+.day-card.final{border-right-color:var(--orange)}
+.day-num{
+  flex-shrink:0;width:50px;height:50px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--blue-dark));
+  color:#fff;font-size:1.1rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center
+}
+.day-card.final .day-num{background:linear-gradient(135deg,var(--orange),#c0421a)}
+.day-body h4{color:var(--navy);font-size:1.08rem;font-weight:700;margin-bottom:0.25rem}
+.day-body p{font-size:0.93rem;color:var(--text);line-height:1.6}
+.day-tag{
+  display:inline-block;margin-top:0.45rem;
+  background:rgba(19,118,161,.1);color:var(--blue);
+  padding:0.18rem 0.7rem;border-radius:10px;font-size:0.75rem;font-weight:700
+}
+.day-card.final .day-tag{background:rgba(255,107,53,.12);color:var(--orange)}
+.parents-note{
+  max-width:700px;margin:1.5rem auto 0;
+  background:#fff;border-radius:12px;padding:1rem 1.4rem;
+  border-right:4px solid var(--green);
+  display:flex;align-items:center;gap:0.8rem;
+  font-size:0.95rem;font-weight:700;color:var(--dark)
+}
+
+/* ── ABOUT ── */
+.about-bg{background:#fff}
+.about-grid{
+  display:grid;grid-template-columns:270px 1fr;
+  gap:3.5rem;align-items:center;max-width:840px;margin:0 auto
+}
+.about-photo-wrap{position:relative}
+.about-photo{
+  width:100%;border-radius:20px;object-fit:cover;
+  aspect-ratio:4/5;
+  box-shadow:0 20px 52px rgba(19,118,161,.2)
+}
+.about-badge{
+  position:absolute;bottom:-.8rem;right:-.8rem;
+  background:var(--orange);color:#fff;
+  padding:.65rem 1.1rem;border-radius:12px;
+  font-weight:700;font-size:0.78rem;line-height:1.4;
+  box-shadow:0 6px 18px rgba(255,107,53,.38);text-align:center
+}
+.about-text h3{color:var(--navy);font-size:1.7rem;font-weight:700;margin-bottom:1rem}
+.about-text p{margin-bottom:.9rem;font-size:.97rem;line-height:1.88}
+.about-text strong{color:var(--navy)}
+.pills{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.2rem}
+.pill{
+  display:inline-flex;align-items:center;gap:.3rem;
+  background:var(--light);color:var(--dark);
+  padding:.35rem .85rem;border-radius:20px;font-size:.83rem;font-weight:700
+}
+
+/* ── BENEFITS ── */
+.ben-bg{background:var(--light)}
+.ben-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.ben-card{
+  background:#fff;border-radius:16px;padding:1.8rem 1.3rem;
+  text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.06);
+  transition:all .3s
+}
+.ben-card:hover{transform:translateY(-7px);box-shadow:0 14px 35px rgba(0,0,0,.11)}
+.ben-ico{font-size:2.3rem;margin-bottom:.75rem}
+.ben-card h4{color:var(--navy);font-weight:700;font-size:.98rem;margin-bottom:.35rem}
+.ben-card p{font-size:.86rem;color:var(--text);line-height:1.6}
+
+/* ── KODU ── */
+.kodu-bg{background:linear-gradient(135deg,#e8f5fc 0%,#fff 100%)}
+.kodu-inner{
+  display:grid;grid-template-columns:1fr 340px;
+  gap:3rem;align-items:center;max-width:880px;margin:0 auto
+}
+.kodu-img{width:100%;border-radius:16px;object-fit:contain;filter:drop-shadow(0 12px 28px rgba(0,0,0,.12))}
+.kodu-text h3{color:var(--navy);font-size:1.55rem;font-weight:700;margin-bottom:1rem}
+.kodu-text p{font-size:.96rem;line-height:1.85;margin-bottom:.75rem}
+
+/* ── DETAILS ── */
+.details-bg{background:var(--navy)}
+.details-inner{max-width:740px;margin:0 auto;text-align:center}
+.details-inner .sec-badge{background:rgba(255,107,53,.2);color:var(--orange)}
+.details-inner .sec-title{color:#fff}
+.details-inner .sec-line{background:var(--orange);margin-left:auto;margin-right:auto}
+.spots-banner{
+  background:rgba(255,107,53,.18);
+  border:1.5px solid var(--orange);
+  border-radius:12px;padding:.9rem 1.4rem;
+  color:var(--orange);font-weight:700;font-size:1rem;
+  margin-bottom:1.8rem;display:flex;align-items:center;justify-content:center;gap:.5rem
+}
+.details-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;
+  margin-bottom:2.2rem
+}
+.detail-card{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;padding:1.3rem 1rem;color:#fff
+}
+.detail-ico{font-size:1.7rem;margin-bottom:.45rem}
+.detail-lbl{font-size:.72rem;opacity:.55;margin-bottom:.2rem}
+.detail-val{font-size:1rem;font-weight:700;line-height:1.3}
+.price-note{
+  color:rgba(255,255,255,.7);font-size:.92rem;
+  margin-bottom:1.8rem;line-height:1.6
+}
+
+/* ── WHO ── */
+.who-bg{background:#fff}
+.who-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;max-width:680px;margin:0 auto}
+.who-item{
+  display:flex;align-items:flex-start;gap:.8rem;
+  padding:1rem 1.2rem;background:var(--light);border-radius:12px
+}
+.who-check{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  background:var(--green);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:700;margin-top:1px
+}
+.who-item p{font-size:.9rem;line-height:1.55;font-weight:600;color:var(--dark)}
+
+/* ── FINAL CTA ── */
+.cta-bg{background:linear-gradient(135deg,var(--orange) 0%,#c0421a 100%)}
+.cta-inner{text-align:center;max-width:600px;margin:0 auto;color:#fff}
+.cta-inner h2{font-size:2.1rem;font-weight:700;margin-bottom:.8rem}
+.cta-inner p{font-size:1.08rem;opacity:.92;margin-bottom:2rem;line-height:1.75}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.btn-white{
+  background:#fff;color:var(--orange);
+  padding:1rem 2.2rem;border-radius:14px;
+  text-decoration:none;font-weight:700;font-size:1.05rem;
+  box-shadow:0 8px 25px rgba(0,0,0,.2);
+  transition:all .3s;display:inline-flex;align-items:center;gap:.5rem
+}
+.btn-white:hover{transform:translateY(-3px);box-shadow:0 14px 35px rgba(0,0,0,.3)}
+.btn-dark{
+  background:rgba(0,0,0,.2);color:#fff;
+  padding:1rem 2.2rem;border-radius:14px;
+  text-decoration:none;font-weight:700;font-size:1.05rem;
+  border:2px solid rgba(255,255,255,.4);
+  transition:all .3s;display:inline-flex;align-items:center;gap:.5rem
+}
+.btn-dark:hover{background:rgba(0,0,0,.35);transform:translateY(-3px)}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--navy);color:rgba(255,255,255,.45);
+  text-align:center;padding:1.6rem 1rem;font-size:.83rem
+}
+footer a{color:var(--orange);text-decoration:none}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .about-grid{grid-template-columns:1fr;gap:2rem}
+  .about-photo-wrap{max-width:240px;margin:0 auto}
+  .kodu-inner{grid-template-columns:1fr}
+  .kodu-img{max-width:280px;margin:0 auto;display:block}
+  .ben-grid{grid-template-columns:repeat(2,1fr)}
+  .details-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .hero h1{font-size:2.2rem}
+  .hero-sub{font-size:1rem}
+  .hero-stats{gap:1.4rem}
+  .hstat-n{font-size:1.7rem}
+  .sec-title{font-size:1.65rem}
+  section{padding:3rem 1rem}
+  .who-grid{grid-template-columns:1fr}
+  .top-btn-ph{display:none}
+}
+@media(max-width:420px){
+  .hero h1{font-size:1.85rem}
+  .hero-cta{flex-direction:column;align-items:center}
+  .cta-btns{flex-direction:column;align-items:center}
+  .ben-grid{grid-template-columns:1fr}
+  .details-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ── STICKY BAR ── -->
+<div class="top-bar">
+  <span class="top-logo">Byte<span>Logicx</span></span>
+  <div class="top-btns">
+    <a href="tel:0548300670" class="top-btn top-btn-ph">📞 054-8300670</a>
+    <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20פרטים%20על%20קייטנת%20יולי" class="top-btn top-btn-wa" target="_blank">💬 וואטסאפ</a>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">🎮 GAME ON CAMP &nbsp;|&nbsp; קיץ 2026</div>
+    <h1>הם לא רק<br><span class="hl">משחקים</span> — הם <span class="hl">יוצרים</span>.</h1>
+    <p class="hero-sub">
+      קייטנת תכנות ולוגיקה לילדים — 5 ימים אינטנסיביים<br>
+      עם מורה שהגיע ישר מעולם ההייטק
+    </p>
+    <div class="hero-dates">
+      📅 12–16 ביולי 2026
+      <span class="hero-dates-sep">|</span>
+      📍 פרדס חנה
+      <span class="hero-dates-sep">|</span>
+      🎒 כיתות ד'–ו'
+    </div>
+    <div class="hero-cta">
+      <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20לשמוע%20פרטים%20על%20קייטנת%20יולי" class="btn-wa" target="_blank">💬 שמרו מקום בוואטסאפ</a>
+      <a href="#days" class="btn-ghost">מה קורה בקייטנה ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-n">10</div><div class="hstat-l">מקומות בלבד</div></div>
+      <div class="hstat"><div class="hstat-n">5</div><div class="hstat-l">ימים אינטנסיביים</div></div>
+      <div class="hstat"><div class="hstat-n">22+</div><div class="hstat-l">שנות ניסיון בהייטק</div></div>
+      <div class="hstat"><div class="hstat-n">4+</div><div class="hstat-l">שנות הוראה בשבילים</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI HOOK ── -->
+<section class="hook-bg">
+  <div class="wrap">
+    <div class="hook-inner">
+      <div class="sec-badge">🤖 למה דווקא עכשיו?</div>
+      <h2 class="sec-title">ChatGPT יכול לכתוב קוד.<br>אבל הוא לא יכול לחשוב בשבילכם.</h2>
+      <div class="sec-line"></div>
+      <p class="hook-quote">
+        בעידן שבו AI עושה הכל —<br>
+        <em>מי שמנצח הוא מי שיודע לחשוב טוב יותר.</em>
+      </p>
+      <p class="hook-body">
+        בקייטנה הזו, הילדים לא לומדים "לתכנת" בצורה מכנית.<br>
+        הם לומדים לפרק בעיה, לבנות פתרון, ולחשוב בשלבים.<br><br>
+        ואז — ממשים את כל זה למשחק מחשב שלם שיצרו בעצמם מאפס.<br>
+        כי הכי טוב ללמוד לוגיקה? כשיש לך סיבה אמיתית לרצות שזה יעבוד.
+      </p>
+      <div class="hook-tags">
+        <span class="hook-tag">פירוק בעיות</span>
+        <span class="hook-tag">בניית פתרון</span>
+        <span class="hook-tag">חשיבה בשלבים</span>
+        <span class="hook-tag">יצירה מאפס</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF STRIP ── -->
+<div class="proof-strip">
+  🏫 הביקוש לשיעור בבי"ס שבילים גדול מהמקומות הזמינים.
+  <span>הקייטנה היא ההזדמנות שלכם להצטרף לאותה חוויה.</span>
+</div>
+
+<!-- ── 5 DAYS ── -->
+<section class="days-bg" id="days">
+  <div class="wrap">
+    <div class="center">
+      <div class="sec-badge">📅 מפת הדרכים</div>
+      <h2 class="sec-title">מה קורה בכל יום</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="days-grid">
+
+      <div class="day-card">
+        <div class="day-num">1</div>
+        <div class="day-body">
+          <h4>יום ראשון — כניסה לעולם 🌍</h4>
+          <p>היכרות עם סביבת Kodu Game Lab, בניית עולם תלת-מימד ראשון ועיצוב הסביבה המשחקית. כל ילד מתחיל לבנות את העולם שלו.</p>
+          <span class="day-tag">בניית עולמות</span>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-num">2</div>
+        <div class="day-body">
+          <h4>יום שני — נותנים חוקים ⚙️</h4>
+          <p>לומדים לתכנת התנהגות של דמויות: תנאים, תגובות ולוגיקת "אם... אז...". כאן מתחיל הקסם האמיתי — הדמות עושה מה שרצית.</p>
+          <span class="day-tag">לוגיקה ותנאים</span>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-num">3</div>
+        <div class="day-body">
+          <h4>יום שלישי — יוצרים אתגרים 🎯</h4>
+          <p>מוסיפים אויבים, משימות ומסלולים. כל ילד מחליט על חוקי המשחק שלו וגורם לו להיות מהנה, מאתגר — ומקורי.</p>
+          <span class="day-tag">עיצוב משחק</span>
+        </div>
+      </div>
+
+      <div class="day-card">
+        <div class="day-num">4</div>
+        <div class="day-body">
+          <h4>יום רביעי — שדרוג ולוגיקה מתקדמת 🚀</h4>
+          <p>תנאי ניצחון והפסד, ניקוד ושלבים. הופכים משחק פשוט לחוויה שלמה עם עומק אמיתי — ובעיקר, שהיה כיף לשחק בו.</p>
+          <span class="day-tag">לוגיקה מתקדמת</span>
+        </div>
+      </div>
+
+      <div class="day-card final">
+        <div class="day-num">5</div>
+        <div class="day-body">
+          <h4>יום חמישי — יום גמר ומצגת 🏆</h4>
+          <p>דיבוג, שדרוגים אחרונים, ומצגת — כל ילד מציג את המשחק שיצר לחברים. <strong>הורים מוזמנים בסוף היום לחגוג יחד!</strong></p>
+          <span class="day-tag">פרויקט גמר</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="parents-note">
+      <span>🎉</span>
+      <span>כל ילד יוצא עם משחק מחשב מקורי שבנה בעצמו — עם עולם, דמויות וחוקים שהמציא.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section class="about-bg" id="about">
+  <div class="wrap">
+    <div class="about-grid">
+      <div class="about-photo-wrap">
+        <img src="img/yosi.jpg" alt="יוסי אלעזר" class="about-photo">
+        <div class="about-badge">✓ מורה ואיש הייטק</div>
+      </div>
+      <div class="about-text">
+        <div class="sec-badge">👨‍💻 המדריך</div>
+        <h3>יוסי אלעזר</h3>
+        <p>22 שנים בעולם התוכנה ובדיקות תוכנה בחברות הייטק — ואז בחרתי לחבר בין שני עולמות שאני אוהב: טכנולוגיה וחינוך.</p>
+        <p>כיום אני מורה מחנך בבית הספר הדמוקרטי שבילים בפרדס חנה. <strong>ילדי ד'–ה' שמגיעים לשיעור שלי לא רוצים ללכת הביתה.</strong> הביקוש גדול מהמקומות הזמינים — והקייטנה הזו היא ההזדמנות שלכם.</p>
+        <p>אני שם דגש על חשיבה לוגית ואמיתית, לא שינון. כל ילד עובד בקצב שלו, מקבל ליווי אישי, ויוצא עם תחושת מסוגלות שנשארת.</p>
+        <div class="pills">
+          <span class="pill">🏢 22+ שנה בהייטק</span>
+          <span class="pill">🏫 4+ שנות הוראה</span>
+          <span class="pill">🌱 בי"ס דמוקרטי שבילים</span>
+          <span class="pill">🎮 Microsoft Kodu</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BENEFITS ── -->
+<section class="ben-bg">
+  <div class="wrap">
+    <div class="center">
+      <div class="sec-badge">🌟 מה הם מרוויחים</div>
+      <h2 class="sec-title">יותר ממשחק — ניסיון שנשאר</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="ben-grid">
+      <div class="ben-card">
+        <div class="ben-ico">🧠</div>
+        <h4>חשיבה לוגית</h4>
+        <p>לומדים לפרק בעיות לשלבים ולבנות פתרון — כישור שמועיל בכל תחום בחיים, לא רק בתכנות</p>
+      </div>
+      <div class="ben-card">
+        <div class="ben-ico">🎮</div>
+        <h4>משחק שיצרו בעצמם</h4>
+        <p>יוצאים עם משחק מחשב מקורי שבנו מאפס — עולם תלת-מימד, דמויות, חוקים ותנאי ניצחון</p>
+      </div>
+      <div class="ben-card">
+        <div class="ben-ico">🔧</div>
+        <h4>פתרון בעיות</h4>
+        <p>מתמודדים עם "באגים" ולומדים שכישלון הוא שלב בדרך לפתרון — לא סיבה לוותר</p>
+      </div>
+      <div class="ben-card">
+        <div class="ben-ico">💪</div>
+        <h4>תחושת מסוגלות</h4>
+        <p>מגלים שהם מסוגלים ליצור טכנולוגיה, לא רק לצרוך אותה — ביטחון שנשאר</p>
+      </div>
+      <div class="ben-card">
+        <div class="ben-ico">🎨</div>
+        <h4>יצירתיות</h4>
+        <p>כל עולם, כל דמות, כל כלל — מקורי. חופש יצירתי אמיתי בתוך מסגרת מובנית</p>
+      </div>
+      <div class="ben-card">
+        <div class="ben-ico">👤</div>
+        <h4>ליווי אישי</h4>
+        <p>קבוצה של עד 10 ילדים בלבד — כל ילד מקבל תשומת לב אמיתית ומגיע לפריצת דרך</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── KODU PLATFORM ── -->
+<section class="kodu-bg">
+  <div class="wrap">
+    <div class="kodu-inner">
+      <div class="kodu-text">
+        <div class="sec-badge">🎮 הפלטפורמה</div>
+        <h3>Microsoft Kodu Game Lab</h3>
+        <p>תוכנת תכנות חינמית של מיקרוסופט, המיועדת לילדים. עובדת עם בלוקים צבעוניים וויזואליים — <strong>ללא אנגלית, ללא ידע קודם.</strong></p>
+        <p>מאחורי הממשק הנחמד: עקרונות תכנות אמיתיים — תנאים, לולאות ומשתנים. בדיוק מה שמלמדים בתואר מדעי המחשב, בגובה העיניים של ילד.</p>
+        <div class="pills" style="margin-top:1rem">
+          <span class="pill">✓ ללא ידע קודם</span>
+          <span class="pill">✓ ללא אנגלית</span>
+          <span class="pill">✓ תלת-מימד</span>
+          <span class="pill">✓ חינמי</span>
+        </div>
+      </div>
+      <img src="img/04.jpg" alt="Kodu Game Lab" class="kodu-img">
+    </div>
+  </div>
+</section>
+
+<!-- ── DETAILS ── -->
+<section class="details-bg" id="details">
+  <div class="wrap">
+    <div class="details-inner">
+      <div class="sec-badge">📋 פרטים</div>
+      <h2 class="sec-title">מה צריך לדעת</h2>
+      <div class="sec-line"></div>
+      <div class="spots-banner">
+        🔴 מספר המקומות מוגבל — 10 ילדים בלבד
+      </div>
+      <div class="details-grid">
+        <div class="detail-card">
+          <div class="detail-ico">📅</div>
+          <div class="detail-lbl">תאריכים</div>
+          <div class="detail-val">12–16 ביולי 2026</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-ico">⏰</div>
+          <div class="detail-lbl">שעות יומיות</div>
+          <div class="detail-val">09:00–13:00</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-ico">📍</div>
+          <div class="detail-lbl">מיקום</div>
+          <div class="detail-val">פרדס חנה</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-ico">🎒</div>
+          <div class="detail-lbl">גילאים</div>
+          <div class="detail-val">כיתות ד'–ו'<br><small style="opacity:.7;font-size:.8rem">גילאי 9–12</small></div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-ico">👥</div>
+          <div class="detail-lbl">גודל קבוצה</div>
+          <div class="detail-val">עד 10 ילדים</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-ico">💻</div>
+          <div class="detail-lbl">ציוד</div>
+          <div class="detail-val">כל הציוד מסופק</div>
+        </div>
+      </div>
+      <p class="price-note">לפרטי מחיר והרשמה — צרו קשר בוואטסאפ</p>
+      <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20לשמוע%20פרטים%20על%20קייטנת%20יולי" class="btn-wa" target="_blank" style="display:inline-flex;margin:0 auto">💬 לפרטים ורישום — וואטסאפ</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHO IS IT FOR ── -->
+<section class="who-bg" id="who">
+  <div class="wrap">
+    <div class="center">
+      <div class="sec-badge">✅ למי מתאים</div>
+      <h2 class="sec-title">הקייטנה מתאימה לך אם...</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="who-grid">
+      <div class="who-item"><div class="who-check">✓</div><p>הילד/ה בכיתות ד'–ו' (גילאי 9–12)</p></div>
+      <div class="who-item"><div class="who-check">✓</div><p>אין ניסיון קודם בתכנות — לא נדרש בכלל</p></div>
+      <div class="who-item"><div class="who-check">✓</div><p>לא יודע/ת אנגלית — לא צריך</p></div>
+      <div class="who-item"><div class="who-check">✓</div><p>אוהב/ת משחקי מחשב ורוצה להבין איך הם עובדים</p></div>
+      <div class="who-item"><div class="who-check">✓</div><p>רוצים קיץ פרודוקטיבי שמחשל חשיבה</p></div>
+      <div class="who-item"><div class="who-check">✓</div><p>מחפשים ליווי אישי בקבוצה קטנה ואינטימית</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ── -->
+<section class="cta-bg">
+  <div class="wrap">
+    <div class="cta-inner">
+      <h2>נשארו מקומות אחרונים</h2>
+      <p>
+        5 ימים שיגרמו לילד שלכם לחשוב אחרת.<br>
+        הם יצאו עם משחק שיצרו — ועם ראש שחושב.
+      </p>
+      <div class="cta-btns">
+        <a href="https://wa.me/972548300670?text=שלום,%20אני%20רוצה%20לשמוע%20פרטים%20על%20קייטנת%20יולי" class="btn-white" target="_blank">💬 שמרו מקום עכשיו</a>
+        <a href="tel:0548300670" class="btn-dark">📞 054-8300670</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>ByteLogicx | יוסי אלעזר © 2026 | <a href="tel:0548300670">054-8300670</a> | <a href="mailto:yosiel3@gmail.com">yosiel3@gmail.com</a></p>
+</footer>
+
+</body>
+</html>
