@@ -47,10 +47,17 @@
   <script type="text/babel">
     const { useState, useEffect, useReducer, createContext, useContext, useMemo } = React;
 
-    /* ═══════════════════════════════════════════
-       FIREBASE INIT 
-    ═══════════════════════════════════════════ */
-    firebase.initializeApp({
+    /* ═══════════════════════════════════════════════════════════════
+       ⚙️  הגדרות ארגון — כל מה שספציפי לבית ספר/ארגון מסוים מרוכז כאן.
+       להתקנה עבור ארגון נוסף: מספיק להחליף את הערכים בבלוק הזה בלבד
+       (מסד נתונים Firebase נפרד + סיסמאות + רשימת מיקומים + שם בית הספר),
+       שאר הקובץ לא צריך להשתנות.
+    ═══════════════════════════════════════════════════════════════ */
+    const APP_VERSION = '0.5';
+    const SCHOOL_NAME  = 'שבילים';
+
+    // פרטי חיבור למסד הנתונים (Firebase) — ייחודי לכל ארגון/בית ספר
+    const FIREBASE_CONFIG = {
       apiKey:            "AIzaSyB5pKO88UBzUVvpI1gOa-S2T6O6iXs9-4Y",
       authDomain:        "maintenance-9948b.firebaseapp.com",
       databaseURL:       "https://maintenance-9948b-default-rtdb.firebaseio.com",
@@ -58,7 +65,32 @@
       storageBucket:     "maintenance-9948b.firebasestorage.app",
       messagingSenderId: "297347231304",
       appId:             "1:297347231304:web:1937db9d1d773939a8b27d",
-    });
+    };
+
+    // סיסמאות כניסה למנהל ולאב הבית — ייחודי לכל ארגון
+    const PASSWORDS = { manager: 'g0987', caretaker: 'm0987' };
+
+    // רשימת המיקומים להצגה בטופס דיווח תקלה — ייחודי לכל ארגון
+    const LOCATIONS = [
+      "בניין א׳ — קומה 1 — כיתה 101", "בניין א׳ — קומה 1 — כיתה 102",
+      "בניין א׳ — קומה 1 — כיתה 103", "בניין א׳ — קומה 1 — כיתה 104",
+      "בניין א׳ — קומה 2 — כיתה 201", "בניין א׳ — קומה 2 — כיתה 202",
+      "בניין א׳ — קומה 2 — כיתה 203", "בניין א׳ — קומה 2 — כיתה 204",
+      "בניין א׳ — קומה 3 — כיתה 301", "בניין א׳ — קומה 3 — כיתה 302",
+      "בניין א׳ — קומה 3 — כיתה 303", "בניין א׳ — קומה 3 — כיתה 304",
+      "בניין ב׳ — קומה 1 — כיתה 105", "בניין ב׳ — קומה 1 — כיתה 106",
+      "בניין ב׳ — קומה 1 — כיתה 107", "בניין ב׳ — קומה 2 — כיתה 205",
+      "בניין ב׳ — קומה 2 — כיתה 206", "בניין ב׳ — קומה 2 — כיתה 207",
+      "חדר מורים", "מנהלות", "ספרייה", "חדר אוכל / קנטינה",
+      "חדר מחשבים", "אולם ספורט", "מגרש / חצר",
+      "שירותים — בניין א׳ קומה 1", "שירותים — בניין א׳ קומה 2",
+      "שירותים — בניין ב׳", "חניה / כניסה ראשית", "מחסן", "גינה / שטח חיצוני",
+    ];
+
+    /* ═══════════════════════════════════════════
+       FIREBASE INIT
+    ═══════════════════════════════════════════ */
+    firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.database();
 
     /* ═══════════════════════════════════════════
@@ -100,22 +132,6 @@
     /* ═══════════════════════════════════════════
        CONSTANTS
     ═══════════════════════════════════════════ */
-    const LOCATIONS = [
-      "בניין א׳ — קומה 1 — כיתה 101", "בניין א׳ — קומה 1 — כיתה 102",
-      "בניין א׳ — קומה 1 — כיתה 103", "בניין א׳ — קומה 1 — כיתה 104",
-      "בניין א׳ — קומה 2 — כיתה 201", "בניין א׳ — קומה 2 — כיתה 202",
-      "בניין א׳ — קומה 2 — כיתה 203", "בניין א׳ — קומה 2 — כיתה 204",
-      "בניין א׳ — קומה 3 — כיתה 301", "בניין א׳ — קומה 3 — כיתה 302",
-      "בניין א׳ — קומה 3 — כיתה 303", "בניין א׳ — קומה 3 — כיתה 304",
-      "בניין ב׳ — קומה 1 — כיתה 105", "בניין ב׳ — קומה 1 — כיתה 106",
-      "בניין ב׳ — קומה 1 — כיתה 107", "בניין ב׳ — קומה 2 — כיתה 205",
-      "בניין ב׳ — קומה 2 — כיתה 206", "בניין ב׳ — קומה 2 — כיתה 207",
-      "חדר מורים", "מנהלות", "ספרייה", "חדר אוכל / קנטינה",
-      "חדר מחשבים", "אולם ספורט", "מגרש / חצר",
-      "שירותים — בניין א׳ קומה 1", "שירותים — בניין א׳ קומה 2",
-      "שירותים — בניין ב׳", "חניה / כניסה ראשית", "מחסן", "גינה / שטח חיצוני",
-    ];
-
     const PRI_LABEL  = { urgent: 'דחוף', normal: 'רגיל', future: 'בטיפול עתידי' };
     const PRI_BADGE  = {
       urgent: 'bg-red-100 text-red-800 border-red-300',
@@ -214,7 +230,7 @@
               description:     action.payload.description,
               location:        action.payload.location,
               image:           action.payload.image || null,
-              priority:        'normal',
+              priority:        action.payload.priority || 'normal',
               status:          'open',
               executionStatus: null,
               createdAt:       new Date().toISOString(),
@@ -736,10 +752,11 @@
     /* ═══════════════════════════════════════════
        SHARED: NEW TICKET FORM
     ═══════════════════════════════════════════ */
-    function NewTicketForm() {
+    function NewTicketForm({ allowPriority = false } = {}) {
       const { dispatch } = useStore();
       const [desc, setDesc]         = useState('');
       const [location, setLocation] = useState('');
+      const [priority, setPriority] = useState('normal');
       const [image, setImage]       = useState(null);
       const [preview, setPreview]   = useState(null);
       const [done, setDone]         = useState(false);
@@ -768,7 +785,7 @@
         if (Object.keys(e).length) return;
         setSaving(true); setSaveErr('');
         try {
-          await dispatch({ type: 'ADD_TICKET', payload: { description: desc.trim(), location: location.trim(), image } });
+          await dispatch({ type: 'ADD_TICKET', payload: { description: desc.trim(), location: location.trim(), priority, image } });
           setDone(true);
         } catch(err) {
           setSaveErr(
@@ -780,7 +797,7 @@
       };
 
       const reset = () => {
-        setDesc(''); setLocation(''); setImage(null); setPreview(null);
+        setDesc(''); setLocation(''); setPriority('normal'); setImage(null); setPreview(null);
         setErrs({}); setDone(false); setSaveErr('');
       };
 
@@ -823,6 +840,25 @@
             />
             {errs.loc && <p className="text-red-500 text-xs mt-1">{errs.loc}</p>}
           </div>
+          {allowPriority && (
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">סיווג התקלה</label>
+              <div className="flex gap-2">
+                {Object.entries(PRI_LABEL).map(([k, v]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setPriority(k)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                      priority === k
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-md'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'
+                    }`}
+                  >{v}</button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
               צילום תקלה <span className="text-gray-400 font-normal">(אופציונלי)</span>
@@ -1661,7 +1697,7 @@
           {/* תוכן ראשי */}
           {mainTab === 'new' ? (
             <div className="max-w-2xl mx-auto px-4 pb-4">
-              <NewTicketForm />
+              <NewTicketForm allowPriority={true} />
             </div>
           ) : mainTab === 'settings' ? <SettingsPanel /> : mainTab === 'archive' ? <ArchiveView /> : mainTab === 'reports' ? <ReportView /> : (
             <div className="max-w-2xl mx-auto px-4 pb-4">
@@ -1848,7 +1884,6 @@
     /* ═══════════════════════════════════════════
        LOGIN
     ═══════════════════════════════════════════ */
-    const PASSWORDS = { manager: 'g0987', caretaker: 'm0987' };
     const ROLE_DEFAULT_NAME = { manager: 'מנהל', caretaker: 'אב הבית' };
 
     function Login() {
@@ -1893,8 +1928,8 @@
               style={{background:'linear-gradient(160deg,#1e3a8a 0%,#4c1d95 100%)'}}>
               <div className="text-6xl mb-3">🏫</div>
               <h1 className="text-2xl font-extrabold text-white mb-1">מערכת ניהול תקלות</h1>
-              <p className="text-blue-200 text-base">בית הספר "שבילים"</p>
-              <p className="text-blue-300/60 text-xs mt-1">גרסה 0.4</p>
+              <p className="text-blue-200 text-base">בית הספר "{SCHOOL_NAME}"</p>
+              <p className="text-blue-300/60 text-xs mt-1">גרסה {APP_VERSION}</p>
             </div>
 
             {/* גוף הטופס */}
@@ -1986,7 +2021,7 @@
           <div className="text-center text-white">
             <div className="text-7xl mb-5">🏫</div>
             <p className="text-2xl font-bold mb-1">מערכת ניהול תקלות</p>
-            <p className="text-sm opacity-60 mb-8">בית הספר "שבילים"</p>
+            <p className="text-sm opacity-60 mb-8">בית הספר "{SCHOOL_NAME}"</p>
             <div className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3">
               <span className="spin text-2xl">⏳</span>
               <span className="text-sm font-medium">מתחבר למסד הנתונים...</span>
